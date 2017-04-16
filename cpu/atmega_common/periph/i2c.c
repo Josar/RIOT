@@ -1,11 +1,11 @@
+#define ENABLE_DEBUG 	(1U)
+
 #include "periph/i2c.h"
 #include "periph_conf.h"
 #include "debug.h"
 #include <inttypes.h>
 #include <avr/io.h>
 #include <util/twi.h>
-
-#define ENABLE_DEBUG 	(1U)
 
 
 uint8_t _twbr_values(int speed)
@@ -17,7 +17,7 @@ uint32_t speeds[5] = {10000, 100000, 400000, 1000000, 3400000};
 
 int i2c_init_master(i2c_t dev, i2c_speed_t speed)
 {
-	DEBUG("I2C: Starting i2c master init");
+	DEBUG("I2C: Starting i2c master init \n");
 	if(speed >4)
 		return -2;
 	if(dev >= I2C_NUMOF)
@@ -54,14 +54,14 @@ int i2c_release(i2c_t dev)
 int i2c_write_byte(i2c_t dev, uint8_t address, uint8_t data)
 {
 	if(!i2c_acquire(dev))
-		DEBUG("MUTEX ERROR");
+		DEBUG("MUTEX ERROR \n");
 	if(dev >= I2C_NUMOF)
 		return -1;
 
 	TWCR = *(i2c_config[dev].mask)|(1<<TWSTA);
 	while (!(TWCR & (1<<TWINT)));
 	if ((TWSR & 0xF8) != TW_START)
-		DEBUG("I2C: error on sending Start");
+		DEBUG("I2C: error on sending Start \n");
 	TWDR = (address<<1) + TW_WRITE;
 	TWCR = *(i2c_config[dev].mask);
 	while (!(TWCR & (1<<TWINT))); //ACK/NACK should be received now
@@ -87,7 +87,7 @@ int i2c_write_bytes(i2c_t dev, uint8_t address, const void *data, int length)
 	TWCR = *(i2c_config[dev].mask)|(1<<TWSTA);
 	while (!(TWCR & (1<<TWINT)));
 	if ((TWSR & 0xF8) != TW_START)
-		DEBUG("I2C: error on sending Start");
+		DEBUG("I2C: error on sending Start \n");
 	TWDR = (address<<1) + TW_WRITE;
 	TWCR = *(i2c_config[dev].mask);
 	while (!(TWCR & (1<<TWINT))); //ACK/NACK should be received now
@@ -107,13 +107,13 @@ int i2c_write_bytes(i2c_t dev, uint8_t address, const void *data, int length)
 int i2c_read_byte(i2c_t dev, uint8_t address, void *data)
 {
 	if(!i2c_acquire(dev))
-			DEBUG("MUTEX ERROR");
+			DEBUG("MUTEX ERROR \n");
 	if(dev >= I2C_NUMOF)
 			return -1;
 	TWCR = *(i2c_config[dev].mask)|(1<<TWSTA);
 	while (!(TWCR & (1<<TWINT)));
 	if ((TWSR & 0xF8) != TW_START)
-		DEBUG("I2C: error on sending START");
+		DEBUG("I2C: error on sending START \n");
 	TWDR = (address<<1)|TW_READ;
 	TWCR = *(i2c_config[dev].mask);
 	while (!(TWCR & (1<<TWINT))); //ACK/NACK should be received now
@@ -139,7 +139,7 @@ int i2c_read_bytes(i2c_t dev, uint8_t address, void *data, int length)
 	TWCR = *(i2c_config[dev].mask)|(1<<TWSTA);
 	while (!(TWCR & (1<<TWINT)));
 	if ((TWSR & 0xF8) != TW_START)
-		DEBUG("I2C: error on sending START");
+		DEBUG("I2C: error on sending START \n");
 	TWDR = (address<<1)|TW_READ;
 	TWCR = *(i2c_config[dev].mask);
 	while (!(TWCR & (1<<TWINT))); //ACK/NACK should be received now

@@ -69,7 +69,25 @@ extern "C" {
 												the ALRT pin when a voltage-reset event occurs*/
 #define CMD_RESET				(0x5400)
 
+#define MAX17048_WRITE			(0x6C<<1)
+#define MAX17048_READ			(0x6D<<1)
 
+#define I2C_WRITE				(0x00)
+#define I2C_READ				(0x01)
+
+
+#define I2C_INVALID				(0xFF)
+
+//i2c_t i2c_dev;
+
+int gauge_init(i2c_t dev);
+
+void gauge_setup(uint16_t reg_mode_config, uint16_t reg_hibrt_config, uint16_t reg_config_config, \
+		uint16_t reg_valrt_config, uint16_t reg_vreset_id_config);
+
+void gauge_reboot(void);
+
+uint8_t gauge_read_id(void);
 
 #ifdef __cplusplus
 }
