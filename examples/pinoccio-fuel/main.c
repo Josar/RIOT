@@ -4,6 +4,8 @@
 int main (void)
 {
 	gauge_init(I2C_0);
-	gauge_read_id();
+	//gauge_reboot();
+	gauge_soc();
+	gauge_voltage();
 	return 0;
 }

@@ -44,7 +44,7 @@ void gauge_setup(uint16_t reg_mode_config, uint16_t reg_hibrt_config, uint16_t r
 			my_data[2] = (reg_mode_config);
 			uint8_t count=0;
 			do{
-				error = i2c_write_bytes(i2c_dev, (MAX17048_WRITE|I2C_WRITE), my_data, 3);
+				error = i2c_write_bytes(i2c_dev, (MAX17048_WRITE), my_data, 3);
 				count++;
 				DEBUG("writing regg_mode Error: %d", error);
 			}while(error != 0 && count<=3);
@@ -56,7 +56,7 @@ void gauge_setup(uint16_t reg_mode_config, uint16_t reg_hibrt_config, uint16_t r
 			my_data[2] = (reg_hibrt_config);
 			uint8_t count=0;
 			do{
-				error = i2c_write_bytes(i2c_dev, (MAX17048_WRITE|I2C_WRITE), my_data, 3);
+				error = i2c_write_bytes(i2c_dev, (MAX17048_WRITE), my_data, 3);
 				count++;
 				DEBUG("writing reg_hibrt Error: %d", error);
 			}while(error != 0 && count<=3);
@@ -68,7 +68,7 @@ void gauge_setup(uint16_t reg_mode_config, uint16_t reg_hibrt_config, uint16_t r
 			my_data[2] = (reg_config_config);
 			uint8_t count=0;
 			do{
-				error = i2c_write_bytes(i2c_dev, (MAX17048_WRITE|I2C_WRITE), my_data, 3);
+				error = i2c_write_bytes(i2c_dev, (MAX17048_WRITE), my_data, 3);
 				count++;
 				DEBUG("writing reg_config Error: %d", error);
 			}while(error != 0 && count<=3);
@@ -80,7 +80,7 @@ void gauge_setup(uint16_t reg_mode_config, uint16_t reg_hibrt_config, uint16_t r
 			my_data[2] = (reg_vreset_id_config);
 			uint8_t count=0;
 			do{
-				error = i2c_write_bytes(i2c_dev, (MAX17048_WRITE|I2C_WRITE), my_data, 3);
+				error = i2c_write_bytes(i2c_dev, (MAX17048_WRITE), my_data, 3);
 				count++;
 				DEBUG("writing reg_vreset_id Error: %d", error);
 			}while(error != 0 && count<=3);
@@ -92,7 +92,7 @@ void gauge_setup(uint16_t reg_mode_config, uint16_t reg_hibrt_config, uint16_t r
 			my_data[2] = (reg_valrt_config);
 			uint8_t count=0;
 			do{
-				error = i2c_write_bytes(i2c_dev, (MAX17048_WRITE|I2C_WRITE), my_data, 3);
+				error = i2c_write_bytes(i2c_dev, (MAX17048_WRITE), my_data, 3);
 				count++;
 				DEBUG("writing reg_hibrt Error: %d", error);
 			}while(error != 0 && count<=3);
@@ -107,7 +107,7 @@ void gauge_reboot(void)
 {
 	if(i2c_dev != I2C_INVALID){
 		uint8_t my_data[3] = {REG_CMD, (CMD_RESET>>8), (uint8_t)CMD_RESET};
-		i2c_write_bytes(i2c_dev, (MAX17048_WRITE|I2C_WRITE), my_data, 3);
+		i2c_write_bytes(i2c_dev, (MAX17048_WRITE), my_data, 3);
 	}else{
 		DEBUG("Trying to use I2C without initialisation");
 	}
@@ -116,12 +116,47 @@ void gauge_reboot(void)
 uint8_t gauge_read_id(void)
 {
 	if(i2c_dev != I2C_INVALID){
-		uint8_t my_data[2] = {REG_VRESET_ID, 0};
-		int error = i2c_write_byte(i2c_dev, (MAX17048_WRITE|I2C_WRITE), my_data[0]);
+		uint8_t my_data[2];
+		int error = i2c_write_byte(i2c_dev, (MAX17048), REG_VRESET_ID);
 		DEBUG("Write Error %d \n", error);
 		my_data[0] = 0;
-		i2c_read_bytes(i2c_dev, (MAX17048_READ|I2C_READ), my_data, 2);
-		DEBUG("Read: %u %u", my_data[0], my_data[1]);
+		i2c_read_bytes(i2c_dev, (MAX17048), my_data, 2);
+		DEBUG("Read: %u %u \n", my_data[0], my_data[1]);
+	}else{
+		DEBUG("Trying to use I2C without initialisation \n");
+	}
+	return 0;
+}
+
+uint8_t gauge_soc(void)
+{
+	if(i2c_dev != I2C_INVALID){
+		uint8_t my_data[2];
+		int error = i2c_write_byte(i2c_dev, (MAX17048), REG_SOC);
+		DEBUG("Write Error %d \n", error);
+		i2c_read_bytes(i2c_dev, (MAX17048), my_data, 2);
+		uint16_t soc = ((my_data[0]<<8) | my_data[1])/256;
+		DEBUG("Read: %x %x \n", my_data[0], my_data[1]);
+		DEBUG("SOC: %u \n", soc);
+		return soc;
+	}else{
+		DEBUG("Trying to use I2C without initialisation \n");
+	}
+	return 0;
+}
+
+float gauge_voltage(void)
+{
+	if(i2c_dev != I2C_INVALID){
+		uint8_t my_data[2];
+		int error = i2c_write_byte(i2c_dev, (MAX17048), REG_VCELL);
+		DEBUG("Write Error %d \n", error);
+		i2c_read_bytes(i2c_dev, (MAX17048), my_data, 2);
+		uint16_t temp_voltage = ((my_data[0]<<8) | my_data[1]);
+		float voltage = temp_voltage * 0.000078125;
+		DEBUG("Read: %x %x \n", my_data[0], my_data[1]);
+		DEBUG("Voltage: %.2fV \n", voltage);
+		return voltage;
 	}else{
 		DEBUG("Trying to use I2C without initialisation \n");
 	}

@@ -33,7 +33,8 @@ extern "C" {
 #include "periph/i2c.h"
 
 /* Start with defines for the configuration */
-
+#define REG_VCELL				(0x02)
+#define REG_SOC					(0x04)
 #define REG_MODE				(0x06)
 #define REG_VERSION				(0x08)
 #define REG_HIBRT				(0x0A)
@@ -69,11 +70,9 @@ extern "C" {
 												the ALRT pin when a voltage-reset event occurs*/
 #define CMD_RESET				(0x5400)
 
-#define MAX17048_WRITE			(0x6C<<1)
-#define MAX17048_READ			(0x6D<<1)
-
-#define I2C_WRITE				(0x00)
-#define I2C_READ				(0x01)
+#define MAX17048_WRITE			(0x6C)
+#define MAX17048_READ			(0x6D)
+#define MAX17048				(0b00110110)
 
 
 #define I2C_INVALID				(0xFF)
@@ -88,6 +87,10 @@ void gauge_setup(uint16_t reg_mode_config, uint16_t reg_hibrt_config, uint16_t r
 void gauge_reboot(void);
 
 uint8_t gauge_read_id(void);
+
+uint8_t gauge_soc(void);
+
+float gauge_voltage(void);
 
 #ifdef __cplusplus
 }

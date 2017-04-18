@@ -66,12 +66,12 @@ int i2c_write_byte(i2c_t dev, uint8_t address, uint8_t data)
 	TWCR = *(i2c_config[dev].mask);
 	while (!(TWCR & (1<<TWINT))); //ACK/NACK should be received now
 	if ((TWSR & 0xF8) != TW_MT_SLA_ACK)
-		DEBUG("I2C: Slave didnt ACK Adress Error:%u\n", (TWSR & 0xF8));
+		DEBUG("I2C: Slave didnt ACK Adress Error:%x\n", (TWSR & 0xF8));
 	TWDR = data;
 	TWCR = *(i2c_config[dev].mask);
 	while (!(TWCR & (1<<TWINT)));
 	if ((TWSR & 0xF8) != TW_MT_DATA_ACK)
-		DEBUG("I2C: Slave didnt ACK BYTE Error:%u \n",(TWSR & 0xF8));
+		DEBUG("I2C: Slave didnt ACK BYTE Error:%x \n",(TWSR & 0xF8));
 	i2c_release(dev);
 	return 0;
 }
@@ -92,13 +92,13 @@ int i2c_write_bytes(i2c_t dev, uint8_t address, const void *data, int length)
 	TWCR = *(i2c_config[dev].mask);
 	while (!(TWCR & (1<<TWINT))); //ACK/NACK should be received now
 	if ((TWSR & 0xF8) != TW_MT_SLA_ACK)
-		DEBUG("I2C: Slave didnt ACK Adress Error:%u\n", (TWSR & 0xF8));
+		DEBUG("I2C: Slave didnt ACK Adress Error:%x\n", (TWSR & 0xF8));
 	for(int i = 0; i <length; i++) {
 		TWDR = my_data[i];
 		TWCR = *(i2c_config[dev].mask);
 		while (!(TWCR & (1<<TWINT)));
 		if ((TWSR & 0xF8) != TW_MT_DATA_ACK)
-			DEBUG("I2C: Slave didnt ACK BYTE Error:%u  on Byte %u\n",(TWSR & 0xF8), i);
+			DEBUG("I2C: Slave didnt ACK BYTE Error:%x  on Byte %x\n",(TWSR & 0xF8), i);
 	}
 	i2c_release(dev);
 	return length;
@@ -118,7 +118,7 @@ int i2c_read_byte(i2c_t dev, uint8_t address, void *data)
 	TWCR = *(i2c_config[dev].mask);
 	while (!(TWCR & (1<<TWINT))); //ACK/NACK should be received now
 	if ((TWSR & 0xF8) != TW_MR_SLA_ACK) {
-		DEBUG("I2C: Slave didnt ACK Adress-read %u\n",(TWSR & 0xF8));
+		DEBUG("I2C: Slave didnt ACK Adress-read %x\n",(TWSR & 0xF8));
 		return -2;
 	}
 	TWCR = *(i2c_config[dev].mask)|(1<<TWEA);
@@ -144,14 +144,14 @@ int i2c_read_bytes(i2c_t dev, uint8_t address, void *data, int length)
 	TWCR = *(i2c_config[dev].mask);
 	while (!(TWCR & (1<<TWINT))); //ACK/NACK should be received now
 	if ((TWSR & 0xF8) != TW_MR_SLA_ACK) {
-		DEBUG("I2C: Slave didnt ACK Adress-read %u\n",(TWSR & 0xF8));
+		DEBUG("I2C: Slave didnt ACK Adress-read %x\n",(TWSR & 0xF8));
 		return -2;
 	}
 	for(int i=0; i<length; i++){
 		TWCR = *(i2c_config[dev].mask)|(1<<TWEA);
 		while (!(TWCR & (1<<TWINT)));
 		if ((TWSR & 0xF8) != TW_MR_DATA_ACK)
-			DEBUG("I2C: Error receiving Data from Slave Errorcode: %u", (TWSR & 0xF8));
+			DEBUG("I2C: Error receiving Data from Slave Errorcode: %x", (TWSR & 0xF8));
 		my_data[i] = TWDR;
 	}
 	i2c_release(dev);
