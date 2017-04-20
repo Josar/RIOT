@@ -31,17 +31,12 @@ int i2c_init_master(i2c_t dev, i2c_speed_t speed)
 	TWSR = 0x00;
 	/* set speed speed*/
 	TWBR = _twbr_values(speeds[speed]);
-
 	return 0;
 }
 
 int i2c_acquire(i2c_t dev)
 {
-	int result = mutex_trylock(i2c_config[dev].used);
-	if(!result)
-		/*mutex already locked */
-		return -1;
-	/*mutex now locked and i2c aquired */
+	mutex_lock(i2c_config[dev].used);
 	return 0;
 }
 
@@ -53,32 +48,39 @@ int i2c_release(i2c_t dev)
 
 int i2c_write_byte(i2c_t dev, uint8_t address, uint8_t data)
 {
-	if(!i2c_acquire(dev))
+	if(i2c_acquire(dev) != 0)
 		DEBUG("MUTEX ERROR \n");
 	if(dev >= I2C_NUMOF)
 		return -1;
 
 	TWCR = *(i2c_config[dev].mask)|(1<<TWSTA);
 	while (!(TWCR & (1<<TWINT)));
-	if ((TWSR & 0xF8) != TW_START)
+	if ((TWSR & 0xF8) != TW_START){
 		DEBUG("I2C: error on sending Start \n");
+		return 0;
+	}
 	TWDR = (address<<1) + TW_WRITE;
 	TWCR = *(i2c_config[dev].mask);
 	while (!(TWCR & (1<<TWINT))); //ACK/NACK should be received now
-	if ((TWSR & 0xF8) != TW_MT_SLA_ACK)
+	if ((TWSR & 0xF8) != TW_MT_SLA_ACK) {
 		DEBUG("I2C: Slave didnt ACK Adress Error:%x\n", (TWSR & 0xF8));
+		return 0;
+	}
 	TWDR = data;
 	TWCR = *(i2c_config[dev].mask);
 	while (!(TWCR & (1<<TWINT)));
-	if ((TWSR & 0xF8) != TW_MT_DATA_ACK)
+	if ((TWSR & 0xF8) != TW_MT_DATA_ACK) {
 		DEBUG("I2C: Slave didnt ACK BYTE Error:%x \n",(TWSR & 0xF8));
+		return 0;
+	}
+	TWCR = *(i2c_config[dev].mask)|(1<<TWSTO);
 	i2c_release(dev);
-	return 0;
+	return 1;
 }
 
 int i2c_write_bytes(i2c_t dev, uint8_t address, const void *data, int length)
 {
-	if(!i2c_acquire(dev))
+	if(i2c_acquire(dev) != 0)
 		DEBUG("MUTEX ERROR");
 	if(dev >= I2C_NUMOF)
 		return -1;
@@ -86,51 +88,65 @@ int i2c_write_bytes(i2c_t dev, uint8_t address, const void *data, int length)
 	uint8_t *my_data = (uint8_t*) data;
 	TWCR = *(i2c_config[dev].mask)|(1<<TWSTA);
 	while (!(TWCR & (1<<TWINT)));
-	if ((TWSR & 0xF8) != TW_START)
+	if ((TWSR & 0xF8) != TW_START){
 		DEBUG("I2C: error on sending Start \n");
+		return 0;
+	}
 	TWDR = (address<<1) + TW_WRITE;
 	TWCR = *(i2c_config[dev].mask);
 	while (!(TWCR & (1<<TWINT))); //ACK/NACK should be received now
-	if ((TWSR & 0xF8) != TW_MT_SLA_ACK)
+	if ((TWSR & 0xF8) != TW_MT_SLA_ACK) {
 		DEBUG("I2C: Slave didnt ACK Adress Error:%x\n", (TWSR & 0xF8));
+		return 0;
+	}
 	for(int i = 0; i <length; i++) {
 		TWDR = my_data[i];
 		TWCR = *(i2c_config[dev].mask);
 		while (!(TWCR & (1<<TWINT)));
-		if ((TWSR & 0xF8) != TW_MT_DATA_ACK)
+		if ((TWSR & 0xF8) != TW_MT_DATA_ACK){
 			DEBUG("I2C: Slave didnt ACK BYTE Error:%x  on Byte %x\n",(TWSR & 0xF8), i);
+			return (i+1);
+		}
 	}
+	TWCR = *(i2c_config[dev].mask)|(1<<TWSTO);
 	i2c_release(dev);
 	return length;
 }
 
 int i2c_read_byte(i2c_t dev, uint8_t address, void *data)
 {
-	if(!i2c_acquire(dev))
+	if(i2c_acquire(dev) != 0)
 			DEBUG("MUTEX ERROR \n");
 	if(dev >= I2C_NUMOF)
 			return -1;
 	TWCR = *(i2c_config[dev].mask)|(1<<TWSTA);
 	while (!(TWCR & (1<<TWINT)));
-	if ((TWSR & 0xF8) != TW_START)
+	if ((TWSR & 0xF8) != TW_START) {
 		DEBUG("I2C: error on sending START \n");
+		return 0;
+	}
 	TWDR = (address<<1)|TW_READ;
 	TWCR = *(i2c_config[dev].mask);
 	while (!(TWCR & (1<<TWINT))); //ACK/NACK should be received now
 	if ((TWSR & 0xF8) != TW_MR_SLA_ACK) {
 		DEBUG("I2C: Slave didnt ACK Adress-read %x\n",(TWSR & 0xF8));
-		return -2;
+		return 0;
 	}
 	TWCR = *(i2c_config[dev].mask)|(1<<TWEA);
 	while ((TWCR & (1<<TWINT)) == 0);
+	if ((TWSR & 0xF8) != TW_MR_DATA_ACK){
+				DEBUG("I2C: Error receiving Data from Slave Errorcode: %x", (TWSR & 0xF8));
+				return 0;
+	}
 	*((uint8_t*)data) = TWDR;
+	TWCR = *(i2c_config[dev].mask)|(1<<TWSTO);
 	i2c_release(dev);
 	return 1;
 }
 
 int i2c_read_bytes(i2c_t dev, uint8_t address, void *data, int length)
 {
-	if(!i2c_acquire(dev))
+	if(i2c_acquire(dev) != 0)
 			DEBUG("MUTEX ERROR");
 	if(dev >= I2C_NUMOF)
 			return -1;
@@ -138,22 +154,27 @@ int i2c_read_bytes(i2c_t dev, uint8_t address, void *data, int length)
 	uint8_t *my_data = (uint8_t*) data;
 	TWCR = *(i2c_config[dev].mask)|(1<<TWSTA);
 	while (!(TWCR & (1<<TWINT)));
-	if ((TWSR & 0xF8) != TW_START)
+	if ((TWSR & 0xF8) != TW_START) {
 		DEBUG("I2C: error on sending START \n");
+		return 0;
+	}
 	TWDR = (address<<1)|TW_READ;
 	TWCR = *(i2c_config[dev].mask);
 	while (!(TWCR & (1<<TWINT))); //ACK/NACK should be received now
 	if ((TWSR & 0xF8) != TW_MR_SLA_ACK) {
 		DEBUG("I2C: Slave didnt ACK Adress-read %x\n",(TWSR & 0xF8));
-		return -2;
+		return 0;
 	}
 	for(int i=0; i<length; i++){
 		TWCR = *(i2c_config[dev].mask)|(1<<TWEA);
 		while (!(TWCR & (1<<TWINT)));
-		if ((TWSR & 0xF8) != TW_MR_DATA_ACK)
+		if ((TWSR & 0xF8) != TW_MR_DATA_ACK){
 			DEBUG("I2C: Error receiving Data from Slave Errorcode: %x", (TWSR & 0xF8));
+			return (i+1);
+		}
 		my_data[i] = TWDR;
 	}
+	TWCR = *(i2c_config[dev].mask)|(1<<TWSTO);
 	i2c_release(dev);
 	return length;
 }
