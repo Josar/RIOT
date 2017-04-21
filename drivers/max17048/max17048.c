@@ -25,7 +25,6 @@ int gauge_init(i2c_t dev)
 		DEBUG("Error initialising i2c \n");
 		return error;
 	}
-	DEBUG("No Errors \n");
 	i2c_dev = dev;
 	return 0;
 
@@ -117,11 +116,13 @@ uint8_t gauge_read_id(void)
 {
 	if(i2c_dev != I2C_INVALID){
 		uint8_t my_data[2];
-		int error = i2c_write_byte(i2c_dev, (MAX17048), REG_VRESET_ID);
-		DEBUG("Write Error %d \n", error);
-		my_data[0] = 0;
-		i2c_read_bytes(i2c_dev, (MAX17048), my_data, 2);
-		DEBUG("Read: %u %u \n", my_data[0], my_data[1]);
+		int bytes_read = i2c_read_regs(i2c_dev, (MAX17048), REG_VRESET_ID, my_data, 2);
+		if(bytes_read == 2) {
+			//read everything
+			DEBUG("Read: %x%x \n", my_data[0], my_data[1]);
+			DEBUG("\n\nID %x \n\n”", my_data[0]);
+			return my_data[0];
+		}
 	}else{
 		DEBUG("Trying to use I2C without initialisation \n");
 	}
@@ -130,13 +131,15 @@ uint8_t gauge_read_id(void)
 
 uint8_t gauge_soc(void)
 {
-	if(i2c_dev != I2C_INVALID){
+	if(i2c_dev != I2C_INVALID) {
 		uint8_t my_data[2];
-		int error = i2c_write_byte(i2c_dev, (MAX17048), REG_SOC);
-		DEBUG("Write Error %d \n", error);
-		i2c_read_bytes(i2c_dev, (MAX17048), my_data, 2);
+		int bytes_read = i2c_read_regs(i2c_dev, MAX17048, REG_SOC, my_data, 2);
+		if(bytes_read != 2){
+				DEBUG("Error while reading VCELL, only %u Bytes read \n", bytes_read);
+				return 0;
+		}
 		DEBUG("Read: %u %u \n", my_data[0], my_data[1]);
-		DEBUG("SOC: %u \n", my_data[0]);
+		DEBUG("\n\n SOC: %u \n\n", my_data[0]);
 		return my_data[0];
 	}else{
 		DEBUG("Trying to use I2C without initialisation \n");
@@ -147,37 +150,41 @@ uint8_t gauge_soc(void)
 float gauge_voltage(void)
 {
 	if(i2c_dev != I2C_INVALID){
-		uint8_t my_data[2];
-		int error = i2c_write_byte(i2c_dev, (MAX17048), REG_VCELL);
-		DEBUG("Write Error %d \n", error);
-		i2c_read_bytes(i2c_dev, (MAX17048), my_data, 2);
-		uint16_t temp_voltage = ((my_data[0]<<8) | my_data[1]);
-		float voltage = temp_voltage * 0.000078125;
-		DEBUG("Read: %x %x \n", my_data[0], my_data[1]);
-		DEBUG("Voltage: %.2fV \n", voltage);
-		return voltage;
-	}else{
-		DEBUG("Trying to use I2C without initialisation \n");
-	}
-	return 0;
-}
-
-float gauge_charge_rate(void)
-{
-	if(i2c_dev != I2C_INVALID){
-			uint8_t my_data[2];
-			int error = i2c_write_byte(i2c_dev, (MAX17048), REG_CRATE);
-			DEBUG("Write Error %d \n", error);
-			i2c_read_bytes(i2c_dev, (MAX17048), my_data, 2);
-			uint16_t temp_charge_rate = ((my_data[0]<<8) | my_data[1]);
-			float charge_rate = temp_charge_rate * 0.208;
-			DEBUG("Read: %x %x \n", my_data[0], my_data[1]);
-			DEBUG("Charge Rate: %.2f%/h \n", charge_rate);
-			return charge_rate;
+				uint8_t my_data[2];
+				int bytes_read = i2c_read_regs(i2c_dev, MAX17048, REG_VCELL, my_data, 2);
+				if(bytes_read != 2){
+					DEBUG("Error while reading VCELL, only %u Bytes read \n", bytes_read);
+					return 0;
+				}
+				DEBUG("Read: %u %u \n", my_data[0], my_data[1]);
+				uint16_t vcell_temp = ((my_data[0]<<8)|(my_data[1]));
+				float vcell = vcell_temp * 0.000078125;
+				DEBUG(" \n\nVCELL: %.2f \n\n", vcell);
+				return vcell;
 		}else{
 			DEBUG("Trying to use I2C without initialisation \n");
 		}
 		return 0;
+}
+
+float gauge_discharge_rate(void)
+{
+	if(i2c_dev != I2C_INVALID){
+			uint8_t my_data[2];
+			int bytes_read = i2c_read_regs(i2c_dev, MAX17048, REG_CRATE, my_data, 2);
+			if(bytes_read != 2){
+				DEBUG("Error while reading CRATE, only %u Bytes read \n", bytes_read);
+				return 0;
+			}
+			DEBUG("Read: %u %u \n", my_data[0], my_data[1]);
+			uint16_t rate_temp = ((my_data[0]<<8)|(my_data[1]));
+			float rate = rate_temp * 0.208;
+			DEBUG("\n \nCharging Rate: %.2f%% \n\n", rate_temp);
+			return rate;
+	}else{
+		DEBUG("Trying to use I2C without initialisation \n");
+		return 0;
+	}
 }
 
 #ifdef __cplusplus
