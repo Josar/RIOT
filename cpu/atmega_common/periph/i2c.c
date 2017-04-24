@@ -1,4 +1,4 @@
-#define ENABLE_DEBUG 	(1U)
+#define ENABLE_DEBUG 	(1)
 
 #include "periph/i2c.h"
 #include "periph_conf.h"
@@ -18,15 +18,14 @@ uint32_t speeds[5] = {10000, 100000, 400000, 1000000, 3400000};
 uint8_t __send_start(i2c_t dev)
 {
 	TWCR = *(i2c_config[dev].mask)|(1<<TWSTA);
-	DEBUG("Before While \n");
 	while (!(TWCR & (1<<TWINT)));
-	DEBUG("After while \n");
 	return ((TWSR & 0xF8));
 }
 
 void __send_stop(i2c_t dev)
 {
 	TWCR = *(i2c_config[dev].mask)|(1<<TWSTO);
+	DEBUG("Stop Send \n");
 }
 /**
  * Sends Adress+R and reads length bytes and stores in data
@@ -59,25 +58,23 @@ int __read_bytes(i2c_t dev, uint8_t address, const void *data, int length)
 int __write_bytes(i2c_t dev, uint8_t address, const void *data, int length)
 {
 		uint8_t *my_data = (uint8_t*) data;
-		TWDR = (address<<1) + TW_WRITE;
-		TWCR = *(i2c_config[dev].mask);
-		while (!(TWCR & (1<<TWINT))); //ACK/NACK should be received now
-		if ((TWSR & 0xF8) != TW_MT_SLA_ACK) {
-			DEBUG("I2C: Slave didnt ACK Adress Error:%x\n", (TWSR & 0xF8));
-			i2c_release(dev);
-			return 0;
-		}
-		for(int i = 0; i <length; i++) {
-			TWDR = my_data[i];
-			TWCR = *(i2c_config[dev].mask);
-			while (!(TWCR & (1<<TWINT)));
-			if ((TWSR & 0xF8) != TW_MT_DATA_ACK){
-				DEBUG("I2C: Slave didnt ACK BYTE Error:%x  on Byte %x\n",(TWSR & 0xF8), i);
-				i2c_release(dev);
-				return (i+1);
-			}
-		}
-		return length;
+        TWDR = (address<<1) | TW_WRITE;
+        TWCR = *(i2c_config[dev].mask);
+        while (!(TWCR & (1<<TWINT))); //ACK/NACK should be received now
+        if ((TWSR & 0xF8) != TW_MT_SLA_ACK) {
+                DEBUG("I2C: Slave didnt ACK Adress Error:%x\n", (TWSR & 0xF8));
+                return 0;
+        }
+        for(int i = 0; i <length; i++) {
+                TWDR = my_data[i];
+                TWCR = *(i2c_config[dev].mask);
+                while (!(TWCR & (1<<TWINT)));
+                if ((TWSR & 0xF8) != TW_MT_DATA_ACK){
+                        DEBUG("I2C: Slave didnt ACK BYTE Error:%x  on Byte %x\n",(TWSR & 0xF8), i);
+                        return (i+1);
+                }
+        }
+        return length;
 }
 
 
@@ -134,9 +131,9 @@ int i2c_write_bytes(i2c_t dev, uint8_t address, const void *data, int length)
 		return 0;
 	}
 	int bytes_written = __write_bytes(dev, address, data, length);
-	TWCR = *(i2c_config[dev].mask)|(1<<TWSTO);
-	i2c_release(dev);
-	return bytes_written;
+   	TWCR = *(i2c_config[dev].mask)|(1<<TWSTO);
+   	i2c_release(dev);
+   	return bytes_written;
 }
 
 
@@ -147,6 +144,7 @@ int i2c_write_reg(i2c_t dev, uint8_t address, uint8_t reg, uint8_t data)
 	 * SAddr: Slave Adress
 	 * MAddr: Memory adress
 	 * DataN: Data Bytes
+	 * A: Ack
 	 * P: Stop
 	 */
 	uint8_t data_array[2] ={reg, data};
@@ -160,6 +158,7 @@ int i2c_write_regs(i2c_t dev, uint8_t address, uint8_t reg, const void *data, in
 	 * SAddr: Slave Adress
 	 * MAddr: Memory adress
 	 * DataN: Data Bytes
+	 * A: Ack
 	 * P: Stop
 	 */
 	uint8_t data_array[length +1];
@@ -211,27 +210,22 @@ int i2c_read_regs(i2c_t dev, uint8_t address, uint8_t reg, void *data, int lengt
 			return -1;
 		}
 		DEBUG("Send start \n");
-		uint8_t test_code = __send_start(dev);
-		DEBUG("CODE: %x \n", test_code);
-		if (test_code != TW_START){
+		if (__send_start(dev) != TW_START){
 			DEBUG("I2C: error on sending Start \n");
 			i2c_release(dev);
 			return 0;
 		}
-		DEBUG("write register \n");
 		if(__write_bytes(dev, address, &reg, 1) != 1) {
 			DEBUG("I2C: error on writing register \n");
 			i2c_release(dev);
 			return 0;
 		}
 		//Send repeated start
-		DEBUG("Send repeated start \n");
 		if (__send_start(dev) != TW_REP_START) {
 			DEBUG("I2C: Error on sending repeated start Error:%x \n",(TWSR & 0xF8));
 			i2c_release(dev);
 			return 0;
 		}
-		DEBUG("Reading bytes \n");
 		int8_t bytes_read = __read_bytes(dev, address, data, length);
 		__send_stop(dev);
 		i2c_release(dev);

@@ -2,6 +2,8 @@
 #include "shtc1.h"
 #include "shell.h"
 
+#include <stdio.h>
+
 extern int shtc1_cmd(int argc, char **argv);
 
 static const shell_command_t shell_commands[] = {
