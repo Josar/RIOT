@@ -17,6 +17,7 @@ uint32_t speeds[5] = {10000, 100000, 400000, 1000000, 3400000};
 
 uint8_t __send_start(i2c_t dev)
 {
+
 	TWCR = *(i2c_config[dev].mask)|(1<<TWSTA);
 	while (!(TWCR & (1<<TWINT)));
 	return ((TWSR & 0xF8));
@@ -43,10 +44,19 @@ int __read_bytes(i2c_t dev, uint8_t address, const void *data, int length)
 		return 0;
 	}
 	for(int i=0; i<length; i++){
-		TWCR = *(i2c_config[dev].mask)|(1<<TWEA);
+		if(i+1 == length) {
+			//ready to receive last byte, for the max17048 this needs to be Nacked instead of Acked
+			TWCR = *(i2c_config[dev].mask);
+		}else {
+			TWCR = *(i2c_config[dev].mask)|(1<<TWEA);
+		}
 		while (!(TWCR & (1<<TWINT)));
-		if ((TWSR & 0xF8) != TW_MR_DATA_ACK){
+		if ((TWSR & 0xF8) != TW_MR_DATA_ACK && (i+1) != length){
 			DEBUG("I2C: Error receiving Data from Slave Errorcode: %x on Byte %u", (TWSR & 0xF8), i);
+			i2c_release(dev);
+			return (i+1);
+		}else if((TWSR & 0xF8) != TW_MR_DATA_NACK && (i+1) == length) {
+			DEBUG("I2C: Error receiving Data from Slave, could not nack Errorcode: %x on Byte %u", (TWSR & 0xF8), i);
 			i2c_release(dev);
 			return (i+1);
 		}
@@ -209,12 +219,13 @@ int i2c_read_regs(i2c_t dev, uint8_t address, uint8_t reg, void *data, int lengt
 			i2c_release(dev);
 			return -1;
 		}
-		DEBUG("Send start \n");
+		DEBUG("Sending Start \n");
 		if (__send_start(dev) != TW_START){
 			DEBUG("I2C: error on sending Start \n");
 			i2c_release(dev);
 			return 0;
 		}
+		DEBUG("Start Send \n");
 		if(__write_bytes(dev, address, &reg, 1) != 1) {
 			DEBUG("I2C: error on writing register \n");
 			i2c_release(dev);
@@ -229,7 +240,6 @@ int i2c_read_regs(i2c_t dev, uint8_t address, uint8_t reg, void *data, int lengt
 		int8_t bytes_read = __read_bytes(dev, address, data, length);
 		__send_stop(dev);
 		i2c_release(dev);
-		DEBUG("i2c released \n");
 		if(bytes_read != length)
 		{
 			DEBUG("I2C: Error not enough Bytes read \n");
