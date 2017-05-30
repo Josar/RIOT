@@ -1,4 +1,4 @@
-#define ENABLE_DEBUG 	(1)
+#define ENABLE_DEBUG 	(0)
 
 #include "periph/i2c.h"
 #include "periph_conf.h"
@@ -141,7 +141,7 @@ int i2c_write_bytes(i2c_t dev, uint8_t address, const void *data, int length)
 		return 0;
 	}
 	int bytes_written = __write_bytes(dev, address, data, length);
-   	TWCR = *(i2c_config[dev].mask)|(1<<TWSTO);
+	__send_stop(dev);
    	i2c_release(dev);
    	return bytes_written;
 }
@@ -173,11 +173,12 @@ int i2c_write_regs(i2c_t dev, uint8_t address, uint8_t reg, const void *data, in
 	 */
 	uint8_t data_array[length +1];
 	uint8_t *casted_data = (uint8_t*) data;
+	DEBUG("data_array: 0x%x%x \n", casted_data[0], casted_data[1]);
 	data_array[0] = reg;
 	for(uint8_t i=1; i<=length; i++) {
 		data_array[i]= casted_data[i-1];
 	}
-	return i2c_write_bytes(dev, address, data_array, (length+1));
+	return i2c_write_bytes(dev, address, data_array, (length+1))-1;
 }
 
 

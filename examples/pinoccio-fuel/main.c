@@ -1,18 +1,21 @@
-#define F_CPU 16000000
 #include "max17048.h"
 #include "periph_conf.h"
 #include <stdio.h>
-#include <util/delay.h>
+
 
 int main (void)
 {
 	gauge_init(I2C_0);
-	//gauge_reboot();
-	//gauge_read_id();
+	//gauge_reset();
 	//gauge_voltage();
-	gauge_soc();
-	gauge_read_id();
-	//printf("Voltage start:");
+	//gauge_soc();
+	//gauge_id();
 	//gauge_discharge_rate();
+	//gauge_version();
+	//gauge_reset();
+	//gauge_sleep(ON);
+	//gauge_soc();
+	//gauge_version();
+	gauge_soc_alert_change(ON);
 	return 0;
 }
