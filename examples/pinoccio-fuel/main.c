@@ -13,9 +13,10 @@ int main (void)
 	//gauge_discharge_rate();
 	//gauge_version();
 	//gauge_reset();
-	//gauge_sleep(ON);
+	gauge_sleep(ON);
 	//gauge_soc();
 	//gauge_version();
 	gauge_soc_alert_change(ON);
+	gauge_soc();
 	return 0;
 }
