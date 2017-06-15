@@ -6,7 +6,6 @@
 #define ENABLE_DEBUG		(1)
 #include "debug.h"
 
-
 #define YEAR_OFFSET	(1900)
 
 static volatile struct tm no_alarm = {0,0,0,0,0,0,0,0,0};
@@ -98,6 +97,7 @@ uint8_t __compare_time(volatile struct tm* time1, volatile struct tm* time2)
 }
 
 ISR(TIMER2_OVF_vect){
+	printf("TIMER2_OVF_vect\n");
 	current_time.tm_sec++;
 	if(current_time.tm_sec == 60) {
 		current_time.tm_sec = 0;

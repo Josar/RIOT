@@ -76,6 +76,9 @@ typedef struct xtimer {
     void *arg;                   /**< argument to pass to callback function */
 } xtimer_t;
 
+/**Added this to get the Xtimer-Head, so that a decision can be made about sleep states */
+xtimer_t* get_xtimer_head(void);
+
 /**
  * @brief get the current system time as 32bit time stamp value
  *

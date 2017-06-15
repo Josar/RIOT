@@ -53,6 +53,11 @@ static void _periph_timer_callback(void *arg, int chan);
 
 static inline int _this_high_period(uint32_t target);
 
+xtimer_t* get_xtimer_head(void)
+{
+	return timer_list_head;
+}
+
 static inline int _is_set(xtimer_t *timer)
 {
     return (timer->target || timer->long_target);
