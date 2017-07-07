@@ -32,7 +32,7 @@
 #include <stdlib.h>
 
 /* set interval to 1 second */
-#define INTERVAL (2U * US_PER_SEC)
+#define INTERVAL (1U * US_PER_SEC)
 
 int main(void)
 {

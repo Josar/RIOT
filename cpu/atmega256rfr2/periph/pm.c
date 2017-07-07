@@ -1,5 +1,5 @@
 /*
-  * Copyright (C) 2016 Kaspar Schleiser <kaspar@schleiser.de>
+ * Copyright (C) 2016 Kaspar Schleiser <kaspar@schleiser.de>
  *               2014 Freie Universität Berlin, Hinnerk van Bruinehsen
  *
  * This file is subject to the terms and conditions of the GNU Lesser
@@ -38,7 +38,7 @@
 
 
 
-#define F_CPU	CLOCK_CORECLOCK
+#define F_CPU	16000000
 #define __DELAY_BACKWARD_COMPATIBLE__
 #include <util/delay.h>
 
@@ -68,11 +68,11 @@ void pm_reboot(void)
 
 void pm_set_lowest(void) {
 
-	DEBUG("#avr");
+	DEBUG("pm_set_lowest\n");
 
 	// printf("pm_set_lowest\n");
 	/* White LED ON. */
-	LED_PORT &= ~(BLUE|GREEN|RED);
+	//LED_PORT &= ~(BLUE|GREEN|RED);
 
 	/* White LED OFF. */
 	// All LED OFF
@@ -81,7 +81,7 @@ void pm_set_lowest(void) {
 
 	#ifdef RTC_NUMOF
 			/*Dumy write to Asyncrone Timer 2/RTC, makes sure Interrupt flag is cleared and powermode can be set again */
-		TCCR2B = (1<<CS22) | (1<<CS20);
+			TCCR2B = (1<<CS22) | (1<<CS20);
 			while (ASSR & ((1 << TCN2UB) | (1 << OCR2AUB) | (1 << OCR2BUB) | (1 << TCR2AUB) | (1 << TCR2BUB)));
 	#endif
 
@@ -104,17 +104,18 @@ void pm_set_lowest(void) {
 			}*/
 	//#endif
 
+	DEBUG("Going to sleep know!\n");
 	#ifdef UART_NUMOF
 		/* Test for empty output stream, so that all UART communication is send */
-	//	while(!feof(stdout));
+		while(!feof(stdout));
 	#endif
 
-	//PRR1 &= ~((1<<PRTIM5)|(1<<PRTIM4)|(1<<PRTIM3)|(1<<PRUSART1)|(1<<PRTRX24));
-	//PRR0 &= ~((1<<PRTIM0)|(1<<PRTIM1)|(1<<PRSPI)|(1<<PRADC));
+	PRR1 &= ~((1<<PRTIM5)|(1<<PRTIM4)|(1<<PRTIM3)|(1<<PRUSART1)|(1<<PRTRX24));
+	PRR0 &= ~((1<<PRTIM0)|(1<<PRTIM1)|(1<<PRSPI)|(1<<PRUSART0)|(1<<PRADC));
 	TRXPR = 1 << SLPTR; // sent transceiver to sleep
 
 	if(goto_sleep) {
-		set_sleep_mode(SLEEP_MODE_PWR_SAVE);
-		//sleep_mode();
+		set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+		sleep_mode();
 	}
 }
