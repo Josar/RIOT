@@ -45,12 +45,12 @@ extern "C" {
 #define LED_PORT			PORTB
 #define LED_PORT_DDR		DDRB
 
-#define LED_BLUE_PIN		GPIO_PIN(1, 4)
-#define LED_RED_PIN			GPIO_PIN(1, 5)
+#define LED_BLUE_PIN		GPIO_PIN(1, 5)
+#define LED_RED_PIN			GPIO_PIN(1, 7)
 #define LED_GREEN_PIN		GPIO_PIN(1, 6)
 
-#define BLUE			(1 << DDB4)
-#define RED				(1 << DDB5)
+#define BLUE			(1 << DDB5)
+#define RED				(1 << DDB7)
 #define GREEN			(1 << DDB6)
 
 // TODO clean up
@@ -96,12 +96,13 @@ extern "C" {
 // use PCINT4 until then.
 // Note that the I/O ports corresponding to PCINT23:16 are not implemented. Therefore PCIE2 has no function in this device
 #define AVR_CONTEXT_SWAP_INIT do { \
-    DDRB |= (1 << PB0); \
-    PCICR |= (1 << PCIE0); \
-    PCMSK0 |= (1 << PCINT0); \
+    DDRE |= (1 << PE7); \
+    EICRB |= (1<<ISC70); \
+    EIMSK |= (1<<INT7); \
+    sei();\
 } while (0)
-#define AVR_CONTEXT_SWAP_INTERRUPT_VECT  PCINT0_vect
-#define AVR_CONTEXT_SWAP_TRIGGER   PORTB ^= (1 << PB0)
+#define AVR_CONTEXT_SWAP_INTERRUPT_VECT  INT7_vect
+#define AVR_CONTEXT_SWAP_TRIGGER   PORTE ^= (1 << PE7)
 
 
 

@@ -33,12 +33,12 @@
 
 #include "xtimer.h"
 
-#define ENABLE_DEBUG 		(1)
+#define ENABLE_DEBUG 		(0)
 #include "debug.h"
 
 
 
-#define F_CPU	16000000
+#define F_CPU	8000000
 #define __DELAY_BACKWARD_COMPATIBLE__
 #include <util/delay.h>
 
@@ -80,42 +80,50 @@ void pm_set_lowest(void) {
 	/*TODO implement power save Modes*/
 
 	#ifdef RTC_NUMOF
-			/*Dumy write to Asyncrone Timer 2/RTC, makes sure Interrupt flag is cleared and powermode can be set again */
-			TCCR2B = (1<<CS22) | (1<<CS20);
+			//Dumy write to Asyncrone Timer 2/RTC, makes sure Interrupt flag is cleared and powermode can be set again
+			//TCCR2B = (1<<CS22) | (1<<CS20);
+			TCCR2B = 0x07;
 			while (ASSR & ((1 << TCN2UB) | (1 << OCR2AUB) | (1 << OCR2BUB) | (1 << TCR2AUB) | (1 << TCR2BUB)));
 	#endif
 
-	uint8_t goto_sleep = 1;
-	//#ifdef XTIMER_DEV
-		/*	printf("xtimer \n");
+	//uint8_t goto_sleep = 1;
+	/*#ifdef XTIMER_DEV
 			xtimer_ticks32_t ticks_in_sec = xtimer_ticks_from_usec(1000000);
 			xtimer_t* timer = get_xtimer_head();
 			xtimer_ticks32_t target;
-			printf("before while \n");
+			//printf("before while \n");
+			printf("Timer: %p \n", timer);
 			while(timer != NULL){
 				printf("Timer: %p \n", timer);
 				target.ticks32 = timer-> target;
 				if(xtimer_diff(target, xtimer_now()).ticks32 < ticks_in_sec.ticks32){
 					//one xtimer has less than a second to run -> dont go to sleep
-					goto_sleep = 0;
+					//goto_sleep = 0;
 					printf("Sleep to short");
 				}
 				timer = timer->next;
-			}*/
-	//#endif
+			}
+			printf("done");
+			_delay_ms(1000);
+	#endif*/
 
-	DEBUG("Going to sleep know!\n");
+	//DEBUG("Going to sleep know!\n");
 	#ifdef UART_NUMOF
-		/* Test for empty output stream, so that all UART communication is send */
-		while(!feof(stdout));
+		//Test for empty output stream, so that all UART communication is send
+		while(stdout->size);
 	#endif
-
-	PRR1 &= ~((1<<PRTIM5)|(1<<PRTIM4)|(1<<PRTIM3)|(1<<PRUSART1)|(1<<PRTRX24));
-	PRR0 &= ~((1<<PRTIM0)|(1<<PRTIM1)|(1<<PRSPI)|(1<<PRUSART0)|(1<<PRADC));
+		//DEBUG("#");
+	//PRR1 &= ~((1<<PRTIM5)|(1<<PRTIM4)|(1<<PRTIM3)|(1<<PRUSART1)|(1<<PRTRX24));
+	//PRR0 &= ~((1<<PRTIM0)|(1<<PRTIM1)|(1<<PRSPI)|(1<<PRUSART0)|(1<<PRADC));
 	TRXPR = 1 << SLPTR; // sent transceiver to sleep
-
-	if(goto_sleep) {
-		set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-		sleep_mode();
-	}
+	MCUCR |= (1<<JTD);
+	MCUCR |= (1<<JTD);
+			//printf("sleep now \n");
+		_delay_ms(5);
+		set_sleep_mode(SLEEP_MODE_PWR_SAVE);
+		//sleep_mode();
+		__asm__("nop");
+		__asm__("nop");
+		__asm__("nop");
+		DEBUG("wake up \n");
 }

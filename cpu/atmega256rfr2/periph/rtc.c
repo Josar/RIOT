@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include "xtimer.h"
 
-#define ENABLE_DEBUG		(1)
+#define ENABLE_DEBUG		(0)
 #include "debug.h"
 
 #define YEAR_OFFSET	(1900)
@@ -19,13 +19,18 @@ static void* alarm_arg;
 
 void rtc_init(void)
 {
-	//rtc_poweron();
-	//xtimer_sleep(1);
+	DDRG &= ~((1<<PG3)|(1<<PG4));
+	rtc_poweron();
+	for(uint8_t i=10; i; i--){
+	__asm__("nop");
+	}
 	TIMSK2 &= ~((1 << TOIE2) | (1 << OCIE2A) | (1<<OCIE2B));
 	ASSR |= (1 << AS2);
 	TCNT2 = 0;
 	TCCR2A = 0;
-	TCCR2B = (1<<CS22) | (1<<CS20);
+	//TCCR2B = (1<<CS22) | (1<<CS20);
+	TCCR2B = 0x02;
+	printf("output: %x", TCCR2B);
 	while (ASSR & ((1 << TCN2UB) | (1 << OCR2AUB) | (1 << OCR2BUB) | (1 << TCR2AUB) | (1 << TCR2BUB)));
 	TIMSK2 |= (1<<TOIE2);
 	sei();
@@ -97,7 +102,7 @@ uint8_t __compare_time(volatile struct tm* time1, volatile struct tm* time2)
 }
 
 ISR(TIMER2_OVF_vect){
-	printf("TIMER2_OVF_vect\n");
+	DEBUG("TIMER2_OVF_vect\n");
 	current_time.tm_sec++;
 	if(current_time.tm_sec == 60) {
 		current_time.tm_sec = 0;

@@ -23,7 +23,7 @@
 #include "xtimer.h"
 #include "timex.h"
 #include "rgbled.h"
-
+#include "periph/rtc.h"
 #include "board.h"
 
 
@@ -32,10 +32,26 @@
 #include <stdlib.h>
 
 /* set interval to 1 second */
-#define INTERVAL (1U * US_PER_SEC)
+#define INTERVAL (5 * US_PER_SEC)
 
 int main(void)
 {
+	printf("start \n");
+	//DDRB |= RED|GREEN|BLUE;
+	LED_PORT &= ~(RED|GREEN|BLUE);
+	LED_PORT |= GREEN;
+	printf("Green");
+	xtimer_sleep(5);
+	LED_PORT &= ~GREEN ;
+	LED_PORT |= RED;
+	printf("red");
+	xtimer_sleep(5);
+	LED_PORT &= ~RED ;
+	LED_PORT |= BLUE;
+	printf("stop\n");
+	xtimer_sleep(1);
+	printf("slept\n");
+	rtc_init();
     puts("Pinoccio Hello World!");
 
     printf("You are running RIOT on a(n) %s board.\n", RIOT_BOARD);
@@ -47,7 +63,7 @@ int main(void)
     	xtimer_periodic_wakeup(&last_wakeup, INTERVAL);
         printf("slept until %" PRIu32 "\n", xtimer_usec_from_ticks(xtimer_now()));
         // Toggle red led
-        LED_PORT ^= RED;
+        //LED_PORT ^= RED;
     }
     return 0;
 }
