@@ -27,16 +27,6 @@
 extern "C" {
 #endif
 
-/**
- * @brief    Peripheral register definitions and instances
- * @{
- */
-#if defined(USARTC0)
-// #define MEGA_UART0_BASE         ((uint16_t *)(&USARTC1))
-#define XMEGA_UART0              ((USART_t *)(&USARTC1))
-#define XMEGA_UART0_RX_ISR       USARTC1_RXC_vect
-#endif
-/** @} */
 
 #ifdef __cplusplus
 }

@@ -1,5 +1,5 @@
 # name of your application
-APPLICATION = hello-world
+APPLICATION = xmega-hello-world
 
 # If no BOARD is found in the environment, use this default:
 BOARD ?= native
@@ -14,5 +14,10 @@ CFLAGS += -DDEVELHELP
 
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 1
+
+
+USEMODULE += xtimer
+FEATURES_REQUIRED += periph_timer
+
 
 include $(RIOTBASE)/Makefile.include

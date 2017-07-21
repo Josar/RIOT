@@ -33,122 +33,34 @@ extern "C" {
 * @brief As the CPU is too slow to handle 115200 baud, we set the default
 *        baudrate to 9600 for this board
 */
-/**
- * CPU is fast enough to send 115200 baud
- * but receiving is not working, irspipe and fetching bytes seems to be to slow
- * too much data lost when using with terminal
- */
- #define UART_STDIO_BAUDRATE (9600U)
 
-// #define UART_STDIO_BAUDRATE (19200)
+#define UART_STDIO_BAUDRATE (115200U)
+#define UART_DOUBLE_SPEED (0)
 
 /**
  * @brief   LED pin definitions and handlers
  * @{
  */
-//#define LED_PORT			PORTB
-//#define LED_PORT_DDR		PORTB.
-//
-//#define LED_BLUE_PIN		GPIO_PIN(1, 4)
-//#define LED_RED_PIN			GPIO_PIN(1, 5)
-//#define LED_GREEN_PIN		GPIO_PIN(1, 6)
-//
-//#define BLUE			(1 << DDB4)
-//#define RED				(1 << DDB5)
-//#define GREEN			(1 << DDB6)
+#define LED_PORT		PORTF
 
-// TODO clean up
-// kept for compatibility
-//#define LED0_PIN            GPIO_PIN(1, 7)
-//#define LED0_MASK           (1 << DDB7)
-//#define LED0_ON             (PORTB |=  LED0_MASK)
-//#define LED0_OFF            (PORTB &= ~LED0_MASK)
-//#define LED0_TOGGLE         (PORTB ^=  LED0_MASK)
-/** @} */
-
-
-/**
- * @name Define the interface to the AT86RFR2 radio
- *
- *	No SPI and no external pins are used. its an SOC
- * {spi bus, spi speed, cs pin, int pin, reset pin, sleep pin}
- *
- * But we have to define a AT86RF2XX_PARAMS_BOARD to overwrite
- * the default parameters in
- */
-#define AT86RF2XX_PARAMS_BOARD      {}
-
-/**
- * Context swap defines
- * Setup to use PB0 which is pin change interrupt 0 (PCINT7)
- * This is configured by Setting  "Pin Change Interrupt Enable 0"
- * and enable PCINT0 at "Pin Change Mask Register 0"
- * This emulates a software triggered interrupt
- *
- * Be aware of the alternate Functions
- * SS/PCINT0 (SPI Slave Select input or Pin Change Interrupt 0)
- * and that this can't be used.
- * Its SSN on the Pinoccio board.
- *
- *
- * PB7 =  OC0A/OC1C/PCINT
- * Output Compare and PWM Output A for Timer/Counter0
- * Output Compare and PWM Output C for Timer/Counter1
- * or Pin Change Interrupt 7
- * Its D2 on the Pinoccio board.
- **/
- /*////////////////////////////////////////////////////////////
- *	ON port E0 is RX USB UART do NOT use as Context swap
- */////////////////////////////////////////////////////////////
-// TODO Check if the not implemented I/O pin interrupt could be used to not waste pin,
-// use PCINT4 until then.
-// Note that the I/O ports corresponding to PCINT23:16 are not implemented. Therefore PCIE2 has no function in this device
-// Set Port as output
-// Enable Pin Change Interrupt 0
-// Enable Pin change Interrupt 7 in Mask
-
-//#define AVR_CONTEXT_SWAP_INIT do {
-//    DDRB |= (1 << PB0);
-//    PCICR |= (1 << PCIE0);
-//    PCMSK0 |= (1 << PCINT0);
-//} while (0)
-//#define AVR_CONTEXT_SWAP_INTERRUPT_VECT  PCINT0_vect
-//#define AVR_CONTEXT_SWAP_TRIGGER   PORTB ^= (1 << PB0)
-
+#define LED1_bm			PIN3_bm
+#define LED2_bm			PIN2_bm
 
 /*
-* Context Swap Interrupt with Port E7
-*
-* clear global interrupt flag
-* Configure PE7 as output
-* Disable INT7 in External Interrupt Mask Register to avoid triggering when setting options
-* Set External Interrupt Control Register B to trigger INT7 at any edge
-* Enable INT7 in External Interrupt Mask Register
+* Context Swap Interrupt with Port A Pin 1
 */
-//#define AVR_CONTEXT_SWAP_INIT do {
-//	cli();
-//	DDRE  |= (1 << PE6);
-//	EIMSK &= ~(1<<INT6);
-//	EICRB |= (1<<ISC60);
-//	EICRB &= ~(1<<ISC61);
-//	EIMSK |= (1<<INT6);
-//} while (0)
-//
-//#define AVR_CONTEXT_SWAP_INTERRUPT_VECT  INT6_vect
-//#define AVR_CONTEXT_SWAP_TRIGGER   PORTE ^= (1 << PE6)
-
 #define AVR_CONTEXT_SWAP_INIT do { \
 	cli();\
 	PORTA.DIR |= PIN1_bm; \
 	PORTA.INT0MASK = PIN1_bm; \
 	PORTA.PIN1CTRL	= PORT_OPC_WIREDORPULL_gc | PORT_ISC_BOTHEDGES_gc; \
-	PORTA.INTCTRL	= PORT_INT0LVL_LO_gc; \
+	PORTA.INTCTRL	= PORT_INT0LVL_HI_gc; \
 	PMIC.CTRL|=PMIC_HILVLEN_bm|PMIC_MEDLVLEN_bm|PMIC_LOLVLEN_bm;\
 	sei();\
 } while (0)
 
 #define AVR_CONTEXT_SWAP_INTERRUPT_VECT PORTA_INT0_vect
-#define AVR_CONTEXT_SWAP_TRIGGER PORTA.OUTTGL = PIN1_bm
+#define AVR_CONTEXT_SWAP_TRIGGER (PORTA.OUTTGL=PIN1_bm)
 
 /**
  * @brief Initialize board specific hardware, including clock, LEDs and std-IO

@@ -21,8 +21,6 @@
 #ifndef CPU_CONF_H
 #define CPU_CONF_H
 
-#include "atmega_regs_common.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -20,8 +20,6 @@
  * @}
  */
 
-#include <avr/wdt.h>
-
 #include "cpu.h"
 
 #include "debug.h"

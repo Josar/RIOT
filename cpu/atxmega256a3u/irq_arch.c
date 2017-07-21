@@ -60,7 +60,7 @@ __attribute__((always_inline)) inline void __set_interrupt_state(uint8_t state)
  */
 unsigned int irq_arch_disable(void)
 {
-    // uint8_t mask = __get_interrupt_state();
+    uint8_t mask = __get_interrupt_state();
     cli();
     return (unsigned int) 0;// mask;
 }
@@ -71,7 +71,7 @@ unsigned int irq_arch_disable(void)
 unsigned int irq_arch_enable(void)
 {
     sei();
-    //return __get_interrupt_state();
+    return __get_interrupt_state();
     return 0;
 }
 

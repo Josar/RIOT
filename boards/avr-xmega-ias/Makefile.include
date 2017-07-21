@@ -1,99 +1,54 @@
 # define the cpu used by the ias atxmage256a3u board
-export CPU = atxmega256a3u
+export CPU = atxmega_common
 export CPU_MODEL = atxmega256a3u
 
+export INCLUDES += -I$(RIOTBOARD)/avr-xmega-ias/
 export INCLUDES += -I$(RIOTBOARD)/avr-xmega-ias/include
 
-
-#export TERMPROG = $(RIOTBASE)/dist/tools/pyterm/pyterm
-export TERMPROG = python /usr/local/bin/pyterm
-export TERMFLAGS = -b 9600 -p $(PORT)
-
-
-#############################################################################
-# Fuses read out
-# 	lfuse = 0xde		
-#	hfuse = 0xd0
-#	efuse = 0xfe
-#
-# avrdude -p atmega256rfr2 -c wiring -P /dev/ttyACM0 -b 115200 -U lfuse:r:-:h -U hfuse:r:-:h -U efuse:r:-:h -C "/etc/avrdude.conf"
-# avrdude -p atmega256rfr2 -c wiring -P /dev/ttyACM0 -b 115200 -U lfuse:r:-:i -U hfuse:r:-:i -U efuse:r:-:i -C "/etc/avrdude.conf"
-#############################################################################
-
+export CFLAGS += -v
 SIZEFLAGS = --format=avr --mcu=$(CPU_MODEL)
- 
+
 #define the flash-tool and default port depending on the host operating system
 OS = $(shell uname)
 ifeq ($(OS),Linux)
+  
   PORT ?= /dev/ttyACM0
   # -@ ignore fail and continue with next make command
   # find process using ACM0 and kill it
-  # a way to avoid the erros wouls be nice
   #PREFLASHER = sudo pgrep -f /dev/ttyACM0 2>/dev/null |xargs --no-run-if-empty kill
   
   FLASHER = avrdude
-  export FLASHER_PATH ="/etc/avrdude.conf"
+  export PROGRAMMER ?= jtag3pdi
   
-  export PROGRAMMER ?=jtag3pdi
   # -D	Disable auto erase for flash memory
   # -V  Do not verify.
-  export PROGRAMMER_FLAGS = -v 
+  export PROGRAMMER_FLAGS = 
+  export FLASHER_PATH ="/etc/avrdude.conf"
   export FFLAGS += -c $(PROGRAMMER) -p $(CPU_MODEL)  $(PROGRAMMER_FLAGS) -U flash:w:bin/$(BOARD)/$(PROJECT)$(APPLICATION).hex:i -C $(FLASHER_PATH) 
-
-  
-  #export PROGRAMMER ?= wiring
-  #export PROGRAMMER ?= stk500v2
-  #export PROGRAMMER ?= avrispv2
-  #export PROGRAMMER_FLAGS =-P $(PORT) -b 115200 -vvvvv
-  #export FFLAGS += -p $(CPU_MODEL) -c $(PROGRAMMER) $(PROGRAMMER_FLAGS) -D -U flash:w:bin/$(BOARD)/$(PROJECT)$(APPLICATION).hex:i -C $(FLASHER_PATH) 
-
-else ifeq ($(OS),Darwin)
-  PORT ?= $(firstword $(sort $(wildcard /dev/tty.usbmodem*)))
-  FLASHER = avrdude
-else ifeq ($(OS),MINGW32_NT-6.2) 
-# Windows MINGW32 Environment 
-	PORT ?= COM5
-	FLASHER = avrdude
-	export FLASHER_PATH ="C:/avrdude/avrdude.conf"
-	export FFLAGS += -p atmega256rfr2 -c $(PROGRAMMER) $(PROGRAMMER_FLAGS) -D -U flash:w:bin/$(BOARD)/$(PROJECT)$(APPLICATION).hex:i -C $(FLASHER_PATH)
 
 else
   $(info CAUTION: No flash tool for your host system found!)
   # TODO: fix for building under windows
 endif
+
 export FLASHER
 export PORT
 export DIST_PATH = $(RIOTBOARD)/$(BOARD)/dist
-export DEBUGSERVER_PORT = 4242
-export DEBUGSERVER = $(DIST_PATH)/debug_srv.sh
-export DEBUGSERVER_FLAGS = "-g -j usb :$(DEBUGSERVER_PORT)"
-export DEBUGGER_FLAGS = "-x $(RIOTBOARD)/$(BOARD)/dist/gdb.conf $(ELFFILE)"
-export DEBUGGER = $(DIST_PATH)/debug.sh $(DEBUGSERVER_FLAGS) $(DIST_PATH) $(DEBUGSERVER_PORT)
 
-# PROGRAMMER defaults to wiring which is the internal flasher via USB. Can be
-# overridden for debugging (which requires changes that require to use an ISP)
-#export PROGRAMMER ?= wiring
-
-#ifeq ($(PROGRAMMER),wiring)
-#    export PROGRAMMER_FLAGS =-P $(PORT) -b 115200
-#endif
 
 # define build specific options
 export CFLAGS_CPU   = -mmcu=$(CPU_MODEL)  $(CFLAGS_FPU)
-export CFLAGS_LINK  = -fno-builtin -fshort-enums
-export CFLAGS_DBG   = -ggdb -g3
 export CFLAGS_OPT  ?= -Os
 
-# -Wl,--relax  -mrelax 
 export CFLAGS += -mrelax -Wl,--relax -Wl,-V $(CFLAGS_CPU) $(CFLAGS_LINK) $(CFLAGS_DBG) $(CFLAGS_OPT) 
 export ASFLAGS += --linkrelax $(CFLAGS_CPU) $(CFLAGS_DBG)
-export LINKFLAGS += -Wl,-t -mrelax -Wl,--relax $(CFLAGS_CPU) $(CFLAGS_DBG) $(CFLAGS_OPT) -e reset_handler
+#export LINKFLAGS += -Wl,-t -mrelax -Wl,--relax $(CFLAGS_CPU) $(CFLAGS_DBG) $(CFLAGS_OPT) -e reset_handler
+export LINKFLAGS += -Wl,-t -mrelax -Wl,--relax -Wl,-relax $(CFLAGS_CPU) $(CFLAGS_DBG) $(CFLAGS_OPT) -Wl,-u,vfprintf -lprintf_flt -lm -static -lgcc -e reset_handler -Wl,--gc-sections
 
-#export OFLAGS += -j .text -j .data -O ihex
-#export FFLAGS += -p m2560 -c $(PROGRAMMER) $(PROGRAMMER_FLAGS) -F -D -U flash:w:bin/$(BOARD)/$(PROJECT)$(APPLICATION).hex
+#export OFLAGS += -O ihex -R .eeprom -R .fuse -R .lock -R .signature -R .user_signatures
 
-export OFLAGS += -O ihex -R .eeprom -R .fuse -R .lock -R .signature -R .user_signatures
-
+export CFLAGS += -v
+export OFLAGS += -j .text -j .data -O ihex
 
 ifeq ($(LTO),1)
   # avr-gcc <4.8.3 has a bug when using LTO which causes a warning to be printed always:
@@ -101,3 +56,5 @@ ifeq ($(LTO),1)
   # See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=59396
   export LINKFLAGS += -Wno-error
 endif
+
+

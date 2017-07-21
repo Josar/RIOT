@@ -20,7 +20,7 @@
  * @author      Josua Arndt <jarndt@ias.rwth-aachen.de>
  */
 #include "mutex.h"
-#include "periph_cpu.h"
+
 
 #ifndef PERIPH_CONF_H_
 #define PERIPH_CONF_H_
@@ -29,9 +29,6 @@
 extern "C" {
 #endif
 
-#include "periph_cpu.h"
-#include "atmega_regs_common.h"
-#include "periph_cpu_common.h"
 #include <stdint.h>
 #include <avr/io.h>
 /**
@@ -42,24 +39,16 @@ extern "C" {
 /** @} */
 
 
-
-
-
 /**
  * @brief xtimer configuration values
  * @{
  */
 
-//
-#define XTIMER_DEV					TIMER_DEV(0)   	// set ctx[0] as system counter this is MEGA_TIMER4
+#define XTIMER_DEV					TIMER_DEV(0)   	// set ctx[0] as system counter
 #define XTIMER_CHAN 				(0)				// choose channel 0
 #define XTIMER_WIDTH                (16)			// 16bit timer
-#define XTIMER_SHIFT                (2)				// xtimer prescaler value, If the underlying hardware timer is running at a power of two multiple ofFor a 16 MHz hardware timer, set XTIMER_SHIFT to 4.
-#define XTIMER_HZ                   (250000UL)	// set Timer frequency TODO think about slowing down timer for power saving
-
-//#define XTIMER_SHIFT                (4)				// xtimer prescaler value, If the underlying hardware timer is running at a power of two multiple ofFor a 16 MHz hardware timer, set XTIMER_SHIFT to 4.
-//#define XTIMER_HZ                   (16000000UL)	// set Timer frequency TODO think about slowing down timer for power saving
-
+#define XTIMER_HZ                   (125000)	// set Timer frequency TODO think about slowing down timer for power saving
+#define XTIMER_SHIFT                (3) // xtimer prescaler
 #define XTIMER_BACKOFF              (40)			// TODO look into this , All timers that are less than XTIMER_BACKOFF microseconds in the future willjust spin. This is supposed to be defined per-device in e.g., periph_conf.h.
 /** @} */
 
@@ -69,36 +58,18 @@ extern "C" {
  *
  * ATTETION Timer 0 is used for Xtimer which is system Timer
  *
- * The timer driver only supports the four 16-bit timers
- * (Timer1, TST, Timer3, Timer4, Timer5), so those are the Timer we can use here.
- * Timer 1, TST, PORT B5/6/7 Out, Port D4/6 In,  Analog Comparator Input Capture, Output Compare Modulator, PWM
- * Timer 3, TST, PORT E3/4/5 Out, Port E/6/7 In, Input or Output Compare and PWM Output
- * Timer 4, TST, It can not be connected to any I/O Pin,
- * Timer 5, TST, It can not be connected to any I/O Pin,
- *
- * Using Timer 4 and 5 seems to be the best choice
- * TODO Change the timer
+ * RIOT Timer 0 is Timer Counter D1
  * @{
  */
-#define TIMER_NUMOF         (2U)
+#define TIMER_NUMOF         (1U)
 
-#define TIMER_0             MEGA_TIMER4
-#define TIMER_0_MASK        &TIMSK4
-#define TIMER_0_FLAG        &TIFR4
-#define TIMER_0_ISRA        TIMER4_COMPA_vect
-#define TIMER_0_ISRB        TIMER4_COMPB_vect
-#define TIMER_0_ISRC        TIMER4_COMPC_vect
-
-#define TIMER_1             MEGA_TIMER5
-#define TIMER_1_MASK        &TIMSK5
-#define TIMER_1_FLAG        &TIFR5
-#define TIMER_1_ISRA        TIMER5_COMPA_vect
-#define TIMER_1_ISRB        TIMER5_COMPB_vect
-#define TIMER_1_ISRC        TIMER5_COMPC_vect
-
+#define TIMER_0             (&TCD1)
+#define TIMER_0_MASK 		()
+#define TIMER_0_FLAG		()
+#define TIMER_0_OVF         TCD1_OVF_vect
+#define TIMER_0_ISRA        TCD1_CCA_vect
+#define TIMER_0_ISRB        TCD1_CCB_vect
 /** @} */
-
-
 
 
 /**
@@ -113,10 +84,10 @@ extern "C" {
 #define UART_NUMOF          (1U)
 
 // UART0 is used for stdio
-#define UART_0              XMEGA_UART0
-#define UART_0_ISR          XMEGA_UART0_RX_ISR
-
-
+#define UART_0              (&USARTC1)
+#define UART_0_RXC_ISR		USARTC1_RXC_vect /* Reception Complete Interrupt */
+#define UART_0_DRE_ISR		USARTC1_DRE_vect /* Data Register Empty Interrupt */
+#define UART_0_TXC_ISR		USARTC1_TXC_vect /* Transmission Complete Interrupt */
 /** @} */
 
 

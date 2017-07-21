@@ -44,6 +44,7 @@ static FILE uart_stdin = FDEV_SETUP_STREAM(NULL, uart_getchar, _FDEV_SETUP_READ)
 
 #define time_to_wait 50
 
+
 void board_init(void)
 {
 	uint8_t *reg = (uint8_t *)&PR.PRGEN;
@@ -76,35 +77,41 @@ void board_init(void)
 	* Wait for OSC to stabilize
 	*/
 	while(   !( (OSC.STATUS) & OSC_RC32MRDY_bm)   );
-	/*
-	* Set Regirester Protection signature
-	*/
-	CCP=CCP_IOREG_gc; //0xD8;
-	/*
-	* Possible prescaler config:
-	* 0x00 = NO prescaler
-	* CLK_PSADIVx_bm | CLK_PSBCDIVy_bm;
-	* x = A prescaler config: 0, 1, 2, 3, 4;
-	* y = B & C prescaler config: 0, 1;
-	*
-	* Now Disabling prescaler
-	*/
-	CLK.PSCTRL = 0x00;
+//	/*
+//	* Set Regirester Protection signature
+//	*/
+//	CCP=CCP_IOREG_gc; //0xD8;
+//	/*
+//	* Possible prescaler config:
+//	* 0x00 = NO prescaler
+//	* CLK_PSADIVx_bm | CLK_PSBCDIVy_bm;
+//	* x = A prescaler config: 0, 1, 2, 3, 4;
+//	* y = B & C prescaler config: 0, 1;
+//	*
+//	* Now Disabling prescaler
+//	*/
+//	CLK.PSCTRL = 0x00;
+
+	/* Disable CCP for Protected IO registerand set new value*/
+     PROTECTED_WRITE(CLK.PSCTRL, 0x00);
 	/*
 	* Previous instruction takes 3 clk cycles with -Os option
 	* we need another clk cycle before we can reuse it.
 	*/
 	__asm__ __volatile__("nop");
-	/*
-	* Set Regirester Protection signature
-	*/
-	CCP=CCP_IOREG_gc; //0xD8;
-	/*
-	* Selecting Clock source
-	* Equivalent to CCPWrite(&CLK.CTRL, CLK_SCLKSEL0_bm);
-	*/
-	CLK.CTRL = CLK_SCLKSEL0_bm;
 
+//	/*
+//	* Set Regirester Protection signature
+//	*/
+//	CCP=CCP_IOREG_gc; //0xD8;
+//	/*
+//	* Selecting Clock source
+//	* Equivalent to CCPWrite(&CLK.CTRL, CLK_SCLKSEL0_bm);
+//	*/
+//	CLK.CTRL = CLK_SCLKSEL0_bm;
+
+	/* Disable CCP for Protected IO registerand set new value*/
+     PROTECTED_WRITE(CLK.CTRL, CLK_SCLKSEL0_bm);
 
 	/* config LEDs*/
 	PORTF.DIRSET =  PIN3_bm|PIN2_bm ; // Set pins 2, 3 on port D to be output.
@@ -161,6 +168,7 @@ void board_init(void)
      irq_enable();
 
     puts("Board init");
+
 }
 
 /**
@@ -168,6 +176,10 @@ void board_init(void)
  */
 void system_stdio_init(void)
 {
+
+	/* initialize Pins used for stdout */
+	PORTC.DIRSET =  PIN7_bm ; // output
+	PORTC.DIRCLR =  PIN6_bm ; // output
 
 	/* initialize UART_0 for use as stdout */
     uart_stdio_init();
