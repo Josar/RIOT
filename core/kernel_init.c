@@ -65,10 +65,10 @@ static void *idle_thread(void *arg)
 {
     (void) arg;
 
-   while (1) {
+  while (1) {
     	DEBUG("idle_thread\n");
         pm_set_lowest();
-    }
+  }
 
     return NULL;
 }

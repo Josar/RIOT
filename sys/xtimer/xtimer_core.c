@@ -25,7 +25,7 @@
 #include "irq.h"
 
 /* WARNING! enabling this will have side effects and can lead to timer underflows. */
-#define ENABLE_DEBUG 0
+#define ENABLE_DEBUG 1
 #include "debug.h"
 
 static volatile int _in_handler = 0;
@@ -56,6 +56,10 @@ static inline int _this_high_period(uint32_t target);
 xtimer_t* get_xtimer_head(void)
 {
 	return timer_list_head;
+}
+xtimer_t* get_xtimer_head_long(void)
+{
+	return long_list_head;
 }
 
 static inline int _is_set(xtimer_t *timer)

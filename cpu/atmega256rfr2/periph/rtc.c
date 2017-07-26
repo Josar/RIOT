@@ -28,9 +28,7 @@ void rtc_init(void)
 	ASSR |= (1 << AS2);
 	TCNT2 = 0;
 	TCCR2A = 0;
-	//TCCR2B = (1<<CS22) | (1<<CS20);
-	TCCR2B = 0x02;
-	printf("output: %x", TCCR2B);
+	TCCR2B = (1<<CS22) | (1<<CS20);
 	while (ASSR & ((1 << TCN2UB) | (1 << OCR2AUB) | (1 << OCR2BUB) | (1 << TCR2AUB) | (1 << TCR2BUB)));
 	TIMSK2 |= (1<<TOIE2);
 	sei();
