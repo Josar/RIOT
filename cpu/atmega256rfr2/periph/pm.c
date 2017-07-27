@@ -74,13 +74,15 @@ uint8_t __goto_sleep_xtimer(xtimer_t* timer)
 		xtimer_ticks32_t ticks_in_sec = xtimer_ticks_from_usec(1000000);
 		uint32_t now = 0;
 		while(timer != NULL){
-			DEBUG("timer: %p Timer-short: %lu Timer-long %lu \n", timer, timer->long_target, timer->target);
+			//DEBUG("timer: %p Timer-short: %lu Timer-long %lu \n", timer, timer->target, timer->long_target);
 			now = xtimer_now().ticks32;
+			DEBUG("long-target: %lx now: %lx diff: %lx ticks-sec: %lx \n", timer->target, now, (timer->target-now), xtimer_ticks_from_usec(1000000).ticks32);
 			if((timer->target-now)< ticks_in_sec.ticks32){
 				//one xtimer has less than a second to run -> dont go to sleep
-				DEBUG("Dont sleep \n");
+				//DEBUG("Dont sleep \n");
 				return 0;
 			}
+			//DEBUG("sleep \n");
 			timer = timer->next;
 		}
 		//printf("Diff %lu \n", timer->target-now);
@@ -91,7 +93,7 @@ static inline void __correct_sleep_xtimer(void)
 {
 	extern volatile uint32_t _xtimer_high_cnt;
 	//uint32_t cnt_now = timer_read(XTIMER_DEV);
-	//printf("old cnt4 %x old-high %lx \n", TCNT4, _xtimer_high_cnt);
+	///DEBUG("old cnt4 %x old-high %lx \n", TCNT4, _xtimer_high_cnt);
 	if(timer_read(XTIMER_DEV) < 6072){
 		//overflow
 		TCNT4 += xtimer_ticks_from_usec(1000000).ticks32;
@@ -101,12 +103,11 @@ static inline void __correct_sleep_xtimer(void)
 		TCNT4 += xtimer_ticks_from_usec(1000000).ticks32;
 		_xtimer_high_cnt += 0x20000;
 	}
-	//printf("new cnt4 %x new-high %lx \n", TCNT4, _xtimer_high_cnt);
+	//DEBUG("new cnt4 %x new-high %lx \n", TCNT4, _xtimer_high_cnt);
 }
 
 void pm_set_lowest(void) {
-	/*printf("pm_set_lowest \n");
-	_delay_ms(100);*/
+	//DEBUG("pm_set_lowest \n");
 	//DEBUG("pm_set_lowest\n");
 
 	// printf("pm_set_lowest\n");
@@ -118,23 +119,16 @@ void pm_set_lowest(void) {
 	// LED_PORT |= BLUE|GREEN|RED;
 	/*TODO implement power save Modes*/
 
-/*	#ifdef RTC_NUMOF
-			//Dumy write to Asyncrone Timer 2/RTC, makes sure Interrupt flag is cleared and powermode can be set again
-			TCCR2B = (1<<CS22) | (1<<CS20);
-			//TCCR2B = 0x07;
-			while (ASSR & ((1 << TCN2UB) | (1 << OCR2AUB) | (1 << OCR2BUB) | (1 << TCR2AUB) | (1 << TCR2BUB)));
-	#endif*/
-
 	//DEBUG("Going to sleep know!\n");
 		//DEBUG("#");
 	//PRR1 &= ~((1<<PRTIM5)|(1<<PRTIM4)|(1<<PRTIM3)|(1<<PRUSART1)|(1<<PRTRX24));
 	//PRR0 &= ~((1<<PRTIM0)|(1<<PRTIM1)|(1<<PRSPI)|(1<<PRUSART0)|(1<<PRADC));
-/*	TRXPR = 1 << SLPTR; // sent transceiver to sleep
+	TRXPR = 1 << SLPTR; // sent transceiver to sleep
 	MCUCR |= (1<<JTD);
-	MCUCR |= (1<<JTD);*/
+	MCUCR |= (1<<JTD);
 			//printf("sleep now \n");
 	//printf("long-target-long %lu long-target %lu xtimer_now %lu \n",get_xtimer_head_long()->long_target,get_xtimer_head_long()->target, xtimer_now().ticks32);
-/*uint8_t goto_sleep_long, goto_sleep_short;
+uint8_t goto_sleep_long, goto_sleep_short;
 	#ifdef XTIMER_DEV
 			goto_sleep_long = __goto_sleep_xtimer(get_xtimer_head_long());
 			goto_sleep_short= __goto_sleep_xtimer(get_xtimer_head());
@@ -142,21 +136,34 @@ void pm_set_lowest(void) {
 			goto_sleep_long = 1;
 			goto_sleep_short = 1;
 	#endif
+	set_sleep_mode(SLEEP_MODE_PWR_SAVE);
+	cli();
 	if(goto_sleep_long && goto_sleep_short){
-		printf("sleep \n");*/
-	/*_delay_ms(5);
+		DEBUG("sleep \n");
+			while(stdout->size);
+		#ifdef RTC_NUMOF
+		//Dumy write to Asyncrone Timer 2/RTC, makes sure Interrupt flag is cleared and powermode can be set again
+		TCCR2B = (1<<CS22) | (1<<CS20);
+		TCNT2 = 0;
+		TIFR2 |= (1<<TOV2);
+			while (ASSR & ((1 << TCN2UB) | (1 << OCR2AUB) | (1 << OCR2BUB) | (1 << TCR2AUB) | (1 << TCR2BUB)));
+		#endif
 	//printf("long-target-long %lu long-target %lu xtimer_now %lu \n",get_xtimer_head_long()->long_target,get_xtimer_head_long()->target, xtimer_now().ticks32);
-		set_sleep_mode(SLEEP_MODE_PWR_SAVE);
-		sleep_mode();
+		sleep_enable();
+	    sei();
+	    sleep_cpu();
+	    sleep_disable();
 		__asm__("nop");
 		__asm__("nop");
 		__asm__("nop");
 		#ifdef XTIMER_DEV
 		__correct_sleep_xtimer();
 			//	DEBUG("After timer_long %lu timer %lu \n", get_xtimer_head_long()->target, get_xtimer_head()->target);
-		#endif*/
-		/*	DEBUG("after sleep %lu \n", xtimer_now().ticks32);
-	}*/
+		#endif
+		//thread_yield();
+		//	DEBUG("after sleep %lu \n", xtimer_now().ticks32);
+	}
+	sei();
 		//DEBUG("wake up \n");
 	//DEBUG("return \n");
 }

@@ -40,7 +40,7 @@ extern "C" {
 #define THREAD_STACKSIZE_DEFAULT   (512)
 #endif
 
-#define THREAD_STACKSIZE_IDLE      (128)
+#define THREAD_STACKSIZE_IDLE      (1024)
 #define ISR_STACKSIZE              (0)
 /** @} */
 
