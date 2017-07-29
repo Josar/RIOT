@@ -41,7 +41,7 @@ static xtimer_t *timer_list_head = NULL;
 static xtimer_t *overflow_list_head = NULL;
 static xtimer_t *long_list_head = NULL;
 
-static void _add_timer_to_list(xtimer_t **list_head, xtimer_t *timer);
+void _add_timer_to_list(xtimer_t **list_head, xtimer_t *timer);
 static void _add_timer_to_long_list(xtimer_t **list_head, xtimer_t *timer);
 static void _shoot(xtimer_t *timer);
 static void _remove(xtimer_t *timer);
@@ -57,9 +57,17 @@ xtimer_t* get_xtimer_head(void)
 {
 	return timer_list_head;
 }
+xtimer_t** get_xtimer_head_pointer(void)
+{
+	return &timer_list_head;
+}
 xtimer_t* get_xtimer_head_long(void)
 {
 	return long_list_head;
+}
+xtimer_t** get_xtimer_head_pointer_long(void)
+{
+	return &long_list_head;
 }
 
 static inline int _is_set(xtimer_t *timer)
@@ -228,7 +236,7 @@ int _xtimer_set_absolute(xtimer_t *timer, uint32_t target)
     return res;
 }
 
-static void _add_timer_to_list(xtimer_t **list_head, xtimer_t *timer)
+void _add_timer_to_list(xtimer_t **list_head, xtimer_t *timer)
 {
     while (*list_head && (*list_head)->target <= timer->target) {
         list_head = &((*list_head)->next);
