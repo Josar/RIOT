@@ -1,3 +1,6 @@
+#ifndef TPS6274X_SETTINGS_H
+#define TPS6274X_SETTINGS_H
+
 #include "periph/gpio.h"
 #include "board.h"
 #include "tps6274x.h"
@@ -17,3 +20,5 @@ static const converter_config_t converter_config = {
 		.vsel4_pin = GPIO_PIN(PORT_G,2),
 		.ctrl_pin = GPIO_PIN(PORT_G, 5)
 };
+
+#endif

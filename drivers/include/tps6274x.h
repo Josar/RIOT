@@ -18,6 +18,9 @@
  * @author      Steffen Robertz <steffen.robertz@rwth-aachen.de>
  */
 
+#ifndef TPS6274X_H
+#define TPS6274X_H
+
 #include "periph/gpio.h"
 #include "inttypes.h"
 
@@ -57,4 +60,4 @@ void stepdown_enable_load(void);
  */
 void stepdown_disabel_load(void);
 
-
+#endif
