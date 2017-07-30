@@ -1,3 +1,12 @@
+/*
+ * Copyright (C) 2017 RWTH Aachen
+ *
+ * This file is subject to the terms and conditions of the GNU Lesser
+ * General Public License v2.1. See the file LICENSE in the top level
+ * directory for more details.
+ */
+
+
 #include "tps6274x.h"
 #include "tps6274x_settings.h"
 
