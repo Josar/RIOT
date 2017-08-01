@@ -1,12 +1,10 @@
 #include "periph/i2c.h"
 #include "periph_conf.h"
-#define ENABLE_DEBUG 	(1U)
+#define ENABLE_DEBUG 	(0U)
 #include "debug.h"
 #include <inttypes.h>
 #include <avr/io.h>
 #include <util/twi.h>
-
-#define ENABLE_DEBUG 	(1U)
 
 
 uint8_t _twbr_values(int speed)

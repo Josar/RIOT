@@ -35,8 +35,8 @@ int main(void)
     gauge_init(I2C_0);
 while(1){
    printf("Voltage in mV: %u \n", gauge_get_voltage(I2C_0));
-   printf("RSOC: %u\% \n", gauge_get_rsoc(I2C_0));
-   printf("Ite in 0.1%: %u \n", gauge_get_ite(I2C_0));
+   printf("RSOC: %u \n", gauge_get_rsoc(I2C_0));
+   printf("Ite in 0.1: %u \n", gauge_get_ite(I2C_0));
    printf("ID: %u \n", gauge_get_id(I2C_0));
    printf("Cell Temp in 0.1C: %u \n", gauge_get_cell_temp(I2C_0));
    _delay_ms(5000);

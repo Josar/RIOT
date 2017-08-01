@@ -1,3 +1,4 @@
+/*
 #include "max17048_interrupt.h"
 #include "stdio.h"
 
@@ -56,3 +57,4 @@ ISR(INT7_vect)
 	i2c_write_regs(I2C_0, MAX17048, REG_CONFIG, config,2);
 	restart_alert_interrupt();
 }
+*/

@@ -44,12 +44,10 @@ int8_t gauge_init(i2c_t dev)
 
 uint16_t gauge_get_voltage(i2c_t dev)
 {
-	int8_t control = 0;
-	control = i2c_write_byte(dev, 0xb, 0x9);
 	uint8_t rec_buf[3];
-	control += i2c_write_bytes(dev, 0xb, rec_buf, 3);
+	int8_t control = i2c_read_regs(dev, 0xb, 0x9, rec_buf, 3);
 
-	if(control != 4){
+	if(control != 3){
 		DEBUG("get_voltage(): Error  reading or writing\n");
 		return 0;
 	}
@@ -62,12 +60,10 @@ uint16_t gauge_get_voltage(i2c_t dev)
 
 uint8_t gauge_get_rsoc(i2c_t dev)
 {
-	int8_t control = 0;
-	control = i2c_write_byte(dev, 0xb, 0xD);
 	uint8_t rec_buf[3];
-	control += i2c_write_bytes(dev, 0xb, rec_buf, 3);
+	int8_t control = i2c_read_regs(dev, 0xb, 0xd, rec_buf, 3);
 
-	if(control != 4){
+	if(control != 3){
 		DEBUG("get_rsoc(): Error  reading or writing\n");
 		return 0;
 	}
@@ -80,30 +76,26 @@ uint8_t gauge_get_rsoc(i2c_t dev)
 
 uint16_t gauge_get_ite(i2c_t dev)
 {
-	int8_t control = 0;
-	control = i2c_write_byte(dev, 0xb, 0xf);
 	uint8_t rec_buf[3];
-	control += i2c_write_bytes(dev, 0xb, rec_buf, 3);
+	int8_t control = i2c_read_regs(dev, 0xb, 0xf, rec_buf, 3);
 
-	if(control != 4){
+	if(control != 3){
 		DEBUG("get_rsoc(): Error  reading or writing\n");
 		return 0;
 	}
-	if(_check_crc(rec_buf, rec_buf[2])){
+	/*if(_check_crc(rec_buf, rec_buf[2])){
 		DEBUG("CRC Error \n");
 		return 0;
-	}
+	}*/
 	return (((uint16_t)rec_buf[1]<<8)|rec_buf[0]);
 }
 
 uint16_t gauge_get_id(i2c_t dev)
 {
-	int8_t control = 0;
-	control = i2c_write_byte(dev, 0xb, 0x11);
 	uint8_t rec_buf[3];
-	control += i2c_write_bytes(dev, 0xb, rec_buf, 3);
+	int8_t control = i2c_read_regs(dev, 0xb, 0x11, rec_buf, 3);
 
-	if(control != 4){
+	if(control != 3){
 		DEBUG("get_id(): Error  reading or writing\n");
 		return 0;
 	}
@@ -116,18 +108,174 @@ uint16_t gauge_get_id(i2c_t dev)
 
 uint16_t gauge_get_cell_temp(i2c_t dev)
 {
-	int8_t control = 0;
-	control = i2c_write_byte(dev, 0xb, 0x8);
 	uint8_t rec_buf[3];
-	control += i2c_write_bytes(dev, 0xb, rec_buf, 3);
+	int8_t control = i2c_read_regs(dev, 0xb, 0x8, rec_buf, 3);
 
-	if(control != 4){
+	if(control != 3){
 		DEBUG("get_cell_temp(): Error  reading or writing\n");
 		return 0;
 	}
-	if(_check_crc(rec_buf, rec_buf[2])){
+	/*if(_check_crc(rec_buf, rec_buf[2])){
 		DEBUG("CRC Error \n");
 		return 0;
+	}*/
+	return ((((uint16_t)rec_buf[1]<<8)|rec_buf[0])-2731.5);
+}
+
+uint8_t gauge_get_status_bit(i2c_t dev)
+{
+	uint8_t rec_buf[3];
+	int8_t control = i2c_read_regs(dev, 0xb, 0x16, rec_buf, 3);
+
+	if(control != 3){
+		DEBUG("get_status_bit(): Error  reading or writing\n");
+		return 0;
 	}
-	return ((((uint16_t)rec_buf[1]<<8)|rec_buf[0])-273.15);
+	/*if(_check_crc(rec_buf, rec_buf[2])){
+		DEBUG("CRC Error \n");
+		return 0;
+	}*/
+	return (((uint16_t)rec_buf[1]<<8)|rec_buf[0]);
+}
+
+uint8_t gauge_get_power_mode(i2c_t dev)
+{
+	uint8_t rec_buf[3];
+	int8_t control = i2c_read_regs(dev, 0xb, 0x15, rec_buf, 3);
+
+	if(control != 3){
+		DEBUG("get_power_mode(): Error  reading or writing\n");
+		return 0;
+	}
+	/*if(_check_crc(rec_buf, rec_buf[2])){
+		DEBUG("CRC Error \n");
+		return 0;
+	}*/
+	return (((uint16_t)rec_buf[1]<<8)|rec_buf[0]);
+}
+
+uint16_t gauge_get_alarm_low_voltage(i2c_t dev)
+{
+	uint8_t rec_buf[3];
+	int8_t control = i2c_read_regs(dev, 0xb, 0x14, rec_buf, 3);
+
+	if(control != 3){
+		DEBUG("get_alarm_low_voltage(): Error  reading or writing\n");
+		return 0;
+	}
+	/*if(_check_crc(rec_buf, rec_buf[2])){
+		DEBUG("CRC Error \n");
+		return 0;
+	}*/
+	return (((uint16_t)rec_buf[1]<<8)|rec_buf[0]);
+}
+
+uint8_t gauge_get_alarm_low_rsoc(i2c_t dev)
+{
+	uint8_t rec_buf[3];
+	int8_t control = i2c_read_regs(dev, 0xb, 0x13, rec_buf, 3);
+
+	if(control != 3){
+		DEBUG("get_alarm_low_rsoc(): Error  reading or writing\n");
+		return 0;
+	}
+	/*if(_check_crc(rec_buf, rec_buf[2])){
+		DEBUG("CRC Error \n");
+		return 0;
+	}*/
+	return (((uint16_t)rec_buf[1]<<8)|rec_buf[0]);
+}
+
+uint8_t gauge_get_change_of_parameter(i2c_t dev)
+{
+	uint8_t rec_buf[3];
+	int8_t control = i2c_read_regs(dev, 0xb, 0x12, rec_buf, 3);
+
+	if(control != 3){
+		DEBUG("get_change_of_parameter(): Error  reading or writing\n");
+		return 0;
+	}
+	/*if(_check_crc(rec_buf, rec_buf[2])){
+		DEBUG("CRC Error \n");
+		return 0;
+	}*/
+	return (((uint16_t)rec_buf[1]<<8)|rec_buf[0]);
+}
+
+uint16_t gauge_get_apt(i2c_t dev)
+{
+	uint8_t rec_buf[3];
+	int8_t control = i2c_read_regs(dev, 0xb, 0xc, rec_buf, 3);
+
+	if(control != 3){
+		DEBUG("get_apt(): Error  reading or writing\n");
+		return 0;
+	}
+	/*if(_check_crc(rec_buf, rec_buf[2])){
+		DEBUG("CRC Error \n");
+		return 0;
+	}*/
+	return (((uint16_t)rec_buf[1]<<8)|rec_buf[0]);
+}
+
+uint8_t gauge_get_apa(i2c_t dev)
+{
+	uint8_t rec_buf[3];
+	int8_t control = i2c_read_regs(dev, 0xb, 0xb, rec_buf, 3);
+
+	if(control != 3){
+		DEBUG("get_apa(): Error  reading or writing\n");
+		return 0;
+	}
+	/*if(_check_crc(rec_buf, rec_buf[2])){
+		DEBUG("CRC Error \n");
+		return 0;
+	}*/
+	return (((uint16_t)rec_buf[1]<<8)|rec_buf[0]);
+}
+
+uint16_t gauge_get_current_direction(i2c_t dev)
+{
+	uint8_t rec_buf[3];
+	int8_t control = i2c_read_regs(dev, 0xb, 0xa, rec_buf, 3);
+
+	if(control != 3){
+		DEBUG("get_current_direction(): Error  reading or writing\n");
+		return 0;
+	}
+	/*if(_check_crc(rec_buf, rec_buf[2])){
+		DEBUG("CRC Error \n");
+		return 0;
+	}*/
+	return (((uint16_t)rec_buf[1]<<8)|rec_buf[0]);
+}
+
+uint16_t gauge_get_thermistor_b(i2c_t dev)
+{
+	uint8_t rec_buf[3];
+	int8_t control = i2c_read_regs(dev, 0xb, 0x6, rec_buf, 3);
+
+	if(control != 3){
+		DEBUG("get_thermistor_b(): Error  reading or writing\n");
+		return 0;
+	}
+	/*if(_check_crc(rec_buf, rec_buf[2])){
+		DEBUG("CRC Error \n");
+		return 0;
+	}*/
+	return (((uint16_t)rec_buf[1]<<8)|rec_buf[0]);
+}
+
+int8_t gauge_set_rsoc_initialization(i2c_t dev)
+{
+	uint8_t send_buf[2] = {0x55, 0xAA};
+	TODO: Add crc checking
+	return i2c_write_regs(dev, 0xb, 0x4, send_buf, 2);
+}
+
+int8_t gauge_set_thermistor_b(i2c_t dev, uint16_t value)
+{
+	uint8_t send_buf[2] = {value, value<<8};
+	TODO: Add crc checking
+	return i2c_write_regs(dev, 0xb, 0x6, send_buf, 2);
 }
