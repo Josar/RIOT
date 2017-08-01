@@ -17,18 +17,18 @@
  */
 int8_t _check_crc(uint8_t *rec_values, uint8_t right_crc)
 {
-	uint8_t crc = 0xFF;
-	//uint8_t crc = 0x00;
+	//uint8_t crc = 0xFF;
+	uint8_t crc = 0x00;
 	uint8_t current_byte;
 	uint8_t bit;
 
-	for (current_byte = 0; current_byte < 2; current_byte++)
+	for (current_byte = 0; current_byte < 5; current_byte++)
 	{
 		crc ^= (rec_values[current_byte]);
 		for (bit = 8; bit > 0; bit--)
 		{
 			if (crc & 0x80)
-				crc = (crc << 1) ^ 0xD5;
+				crc = (crc << 1) ^ 0x07;
 			else
 				crc = (crc << 1);
 		}
@@ -67,10 +67,11 @@ uint8_t gauge_get_rsoc(i2c_t dev)
 		DEBUG("get_rsoc(): Error  reading or writing\n");
 		return 0;
 	}
-	/*if(_check_crc(rec_buf, rec_buf[2])){
+	uint8_t crc_buf[5] = {0x16, 0xd, 0x17, rec_buf[0], rec_buf[1]};
+	if(_check_crc(crc_buf, rec_buf[2])){
 		DEBUG("CRC Error \n");
 		return 0;
-	}*/
+	}
 	return (((uint16_t)rec_buf[1]<<8)|rec_buf[0]);
 }
 
@@ -269,13 +270,11 @@ uint16_t gauge_get_thermistor_b(i2c_t dev)
 int8_t gauge_set_rsoc_initialization(i2c_t dev)
 {
 	uint8_t send_buf[2] = {0x55, 0xAA};
-	TODO: Add crc checking
 	return i2c_write_regs(dev, 0xb, 0x4, send_buf, 2);
 }
 
 int8_t gauge_set_thermistor_b(i2c_t dev, uint16_t value)
 {
 	uint8_t send_buf[2] = {value, value<<8};
-	TODO: Add crc checking
 	return i2c_write_regs(dev, 0xb, 0x6, send_buf, 2);
 }
