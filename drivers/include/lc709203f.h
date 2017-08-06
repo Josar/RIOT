@@ -23,6 +23,27 @@
 
 #include "periph/i2c.h"
 
+typedef enum{
+	AUTO_MODE = 0x0,
+	CHARGE_MODE = 0x1,
+	DISCHARGE_MODE = 0xffff
+}current_direction;
+
+typedef enum{
+	BAT_PROFILE_1 = 0,
+	BAT_PROFILE_2 = 1
+}battery_profile;
+
+typedef enum{
+	OPERATIONAL_MODE = 1,
+	SLEEP_MODE = 2
+}power_mode;
+
+typedef enum{
+	I2C_MODE = 0,
+	THERMISTOR_MODE = 1
+} temp_obtaining_mode;
+
 /**
  * @brief initializes the sensor and i2c
  *
@@ -177,15 +198,127 @@ uint16_t gauge_get_thermistor_b(i2c_t dev);
  * @return                  the number of bytes that were written
  * @return                  -1 on undefined device given
  */
-int8_t gauge_set_rsoc_initialization(i2c_t dev);
+int8_t gauge_set_rsoc_before(i2c_t dev);
 
 /**
  * @brief  Sets B constant of the Thermistor
+ *
+ * @param[in] dev			i2c device to be used
+ * @param[in] value			Bconstant of thermistor
+ *
+ * @return                  the number of bytes that were written
+ * @return                  -1 on undefined device given
+ */
+int8_t gauge_set_thermistor_b(i2c_t dev, uint16_t value);
+
+/**
+ * @brief  Executes RSOC initialization
  *
  * @param[in] dev			i2c device to be used
  *
  * @return                  the number of bytes that were written
  * @return                  -1 on undefined device given
  */
-int8_t gauge_set_thermistor_b(i2c_t dev, uint16_t value);
+int8_t gauge_set_rsoc_initial(i2c_t dev);
+
+/**
+ * @brief  Sets cell temperature in i2c-mode
+ *
+ * @param[in] dev			i2c device to be used
+ * @param[in] value			temp in 0.1K 0xAAC=0°C
+ *
+ * @return                  the number of bytes that were written
+ * @return                  -1 on undefined device given
+ * @return					-2 on invalid value
+ */
+int8_t gauge_set_cell_temp(i2c_t dev, uint16_t value);
+
+/**
+ * @brief  Sets current direction
+ *
+ * @param[in] dev			i2c device to be used
+ * @param[in] direction	current direction (enum), AUTO_MODE, CHARGE_MODE, DISCHARGE_MODE
+ *
+ * @return                  the number of bytes that were written
+ * @return                  -1 on undefined device given
+ */
+int8_t gauge_set_current_direction(i2c_t dev, current_direction direction);
+
+/**
+ * @brief  Sets parasitic impedance (adjustment pack application)
+ *
+ * @param[in] dev			i2c device to be used
+ * @param[in] value			impedance in 1mOhm steps
+ *
+ * @return                  the number of bytes that were written
+ * @return                  -1 on undefined device given
+ */
+int8_t gauge_set_apa(i2c_t dev, uint8_t value);
+
+/**
+ * @brief  Sets value to adjust temperature measurement delay timing (adjusmtent pack thermistor)
+ *
+ * @param[in] dev			i2c device to be used
+ * @param[in] value			adjustment value
+ *
+ * @return                  the number of bytes that were written
+ * @return                  -1 on undefined device given
+ */
+int8_t gauge_set_apt(i2c_t dev, uint16_t value);
+
+/**
+ * @brief  Sets battery profile
+ *
+ * @param[in] dev			i2c device to be used
+ * @param[in] value			profile (enum) BAT_PROFILE_1 BAT_PROFILE_2
+ *
+ * @return                  the number of bytes that were written
+ * @return                  -1 on undefined device given
+ */
+int8_t gauge_set_change_of_parameter(i2c_t dev, battery_profile value);
+
+/**
+ * @brief  Sets threshold for low rsoc alert
+ *
+ * @param[in] dev			i2c device to be used
+ * @param[in] value			alert threshold (0-100%)
+ *
+ * @return                  the number of bytes that were written
+ * @return                  -1 on undefined device given
+ */
+int8_t gauge_set_alarm_low_rsoc(i2c_t dev, uint8_t value);
+
+/**
+ * @brief  Sets threshold for low cell voltage alert
+ *
+ * @param[in] dev			i2c device to be used
+ * @param[in] value			alert threshold in 1mV steps
+ *
+ * @return                  the number of bytes that were written
+ * @return                  -1 on undefined device given
+ */
+int8_t gauge_set_alarm_low_rsoc(i2c_t dev, uint16_t value);
+
+/**
+ * @brief  Sets power mode
+ *
+ * @param[in] dev			i2c device to be used
+ * @param[in] value			Power mode (enum) OPERATIONAL_MODE, SLEEP_MODE
+ *
+ * @return                  the number of bytes that were written
+ * @return                  -1 on undefined device given
+ */
+int8_t gauge_set_power_mode(i2c_t dev, power_mode value);
+
+
+/**
+ * @brief  Sets temperature obtaining method
+ *
+ * @param[in] dev			i2c device to be used
+ * @param[in] value			method to be used (enum) I2C_MODE, THERMISTOR_MODE
+ *
+ * @return                  the number of bytes that were written
+ * @return                  -1 on undefined device given
+ */
+int8_t gauge_set_status_bit(i2c_t dev, temp_obtaining_mode value);
 #endif
