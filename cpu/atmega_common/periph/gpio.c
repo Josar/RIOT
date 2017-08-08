@@ -157,7 +157,8 @@ int gpio_init_int(gpio_t pin, gpio_mode_t mode, gpio_flank_t flank,
             }
 #if defined(EICRB)
             else {
-                EICRB |= (3 << (pin_num * 2) % 4);
+                //EICRB |= (3 << (pin_num * 2) % 4);
+            	 EICRB |= (3 << ((pin_num - 4)*2));		//not working on atmega256rfr2 pin_num is 6,, this should fix it
             }
 #endif
             break;
@@ -167,7 +168,7 @@ int gpio_init_int(gpio_t pin, gpio_mode_t mode, gpio_flank_t flank,
             }
 #if defined(EICRB)
             else {
-                EICRB |= (2 << (pin_num * 2) % 4);
+                EICRB |= (2 << ((pin_num - 4)*2));		//not working on atmega256rfr2 pin_num is 6, bit 5 in EICRB should be set, but instead bit 1 was set, this should fix it
             }
 #endif
             break;
@@ -177,7 +178,8 @@ int gpio_init_int(gpio_t pin, gpio_mode_t mode, gpio_flank_t flank,
             }
 #if defined(EICRB)
             else {
-                EICRB |= (1 << (pin_num * 2) % 4);
+               // EICRB |= (1 << (pin_num * 2) % 4);
+            	 EICRB |= (1 << ((pin_num - 4)*2));		//not working on atmega256rfr2 pin_num is 6, bit 4 in EICRB should be set, but instead bit 0 was set, this should fix it
             }
 #endif
             break;
@@ -198,6 +200,7 @@ int gpio_init_int(gpio_t pin, gpio_mode_t mode, gpio_flank_t flank,
 void gpio_irq_enable(gpio_t pin)
 {
     EIMSK |= (1 << _pin_num(pin));
+    printf("EIMSK %x \n", EIMSK);
 }
 
 void gpio_irq_disable(gpio_t pin)
