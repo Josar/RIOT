@@ -22,6 +22,7 @@
 #define LC709203F_H
 
 #include "periph/i2c.h"
+#include "periph/gpio.h"
 
 typedef enum{
 	AUTO_MODE = 0x0,
@@ -44,16 +45,27 @@ typedef enum{
 	THERMISTOR_MODE = 1
 } temp_obtaining_mode;
 
+typedef void (*gauge_cb_t)(void *arg);
+
+typedef struct{
+	gpio_t alarm_pin;
+	gauge_cb_t cb;
+	void *arg;
+}gauge_setting_t;
+
 /**
  * @brief initializes the sensor and i2c
  *
- * @param[in] dev			i2c device to be used
+ * @param[in] dev				i2c device to be used
+ * @param[in] alarm_pin		alarm pin that is used for interrupt
+ * @param[in] cb					function pointer for the function that will be called on interrupt
+ * @param[in] arg					pointer to the argument thats going to be fed into the cb function
  *
  * @return					0 on a working initialization
  * @return                  -1 on undefined i2c device given in periph_conf
  * @return                  -2 on unsupported speed value
  */
-int8_t gauge_init(i2c_t dev);
+int8_t gauge_init(i2c_t dev, gpio_t alarm_pin, gauge_cb_t cb, void *arg);
 
 /**
  * @brief  reads battery voltage from Sensor
@@ -297,7 +309,7 @@ int8_t gauge_set_alarm_low_rsoc(i2c_t dev, uint8_t value);
  * @return                  the number of bytes that were written
  * @return                  -1 on undefined device given
  */
-int8_t gauge_set_alarm_low_rsoc(i2c_t dev, uint16_t value);
+int8_t gauge_set_alarm_low_cell_voltage(i2c_t dev, uint16_t value);
 
 /**
  * @brief  Sets power mode

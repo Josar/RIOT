@@ -8,9 +8,13 @@
 
 #include "lc709203f.h"
 
+#include "avr/interrupt.h"
+
 #define ENABLE_DEBUG		(1)
 #include "debug.h"
 
+
+gauge_setting_t conf;
 
 /*
  * does a crc check and returns 0 for passed and -1 for failed
@@ -36,8 +40,12 @@ uint8_t _get_crc(uint8_t *rec_values, uint8_t len)
 }
 
 
-int8_t gauge_init(i2c_t dev)
+int8_t gauge_init(i2c_t dev, gpio_t alarm_pin, gauge_cb_t cb, void *arg)
 {
+	conf.alarm_pin = alarm_pin;
+	conf.cb = cb;
+	conf.arg = arg;
+	gpio_init_int(alarm_pin, GPIO_IN, GPIO_FALLING,cb, arg);
 	return i2c_init_master(dev, I2C_SPEED_FAST);
 }
 
@@ -282,21 +290,21 @@ uint16_t gauge_get_thermistor_b(i2c_t dev)
 int8_t gauge_set_rsoc_before(i2c_t dev)
 {
 	uint8_t crc_buf[4] = {0x16, 0x4, 0x55, 0xAA};
-	uint8_t send_buf[2] = {crc_buf[2], crc_buf[3], _get_crc(crc_buf, 4)};
+	uint8_t send_buf[3] = {crc_buf[2], crc_buf[3], _get_crc(crc_buf, 4)};
 	return i2c_write_regs(dev, 0xb, crc_buf[1], send_buf, 3);
 }
 
 int8_t gauge_set_thermistor_b(i2c_t dev, uint16_t value)
 {
 	uint8_t crc_buf[4] = {0x16, 0x6, value, value<<8};
-	uint8_t send_buf[2] = {crc_buf[2], crc_buf[3], _get_crc(crc_buf, 4)};
+	uint8_t send_buf[3] = {crc_buf[2], crc_buf[3], _get_crc(crc_buf, 4)};
 	return i2c_write_regs(dev, 0xb, crc_buf[1], send_buf, 3);
 }
 
 int8_t gauge_set_rsoc_initial(i2c_t dev)
 {
 	uint8_t crc_buf[4] = {0x16, 0x7, 0x55, 0xAA};
-	uint8_t send_buf[2] = {crc_buf[2], crc_buf[3], _get_crc(crc_buf, 4)};
+	uint8_t send_buf[3] = {crc_buf[2], crc_buf[3], _get_crc(crc_buf, 4)};
 	return i2c_write_regs(dev, 0xb, crc_buf[1], send_buf, 3);
 }
 
@@ -307,62 +315,62 @@ int8_t gauge_set_cell_temp(i2c_t dev, uint16_t value)
 		return -2;
 	}
 	uint8_t crc_buf[4] = {0x16, 0x8, value, value<<8};
-	uint8_t send_buf[2] = {crc_buf[2], crc_buf[3], _get_crc(crc_buf, 4)};
+	uint8_t send_buf[3] = {crc_buf[2], crc_buf[3], _get_crc(crc_buf, 4)};
 	return i2c_write_regs(dev, 0xb, crc_buf[1], send_buf, 3);
 }
 
 int8_t gauge_set_current_direction(i2c_t dev, current_direction direction)
 {
 	uint8_t crc_buf[4] = {0x16, 0xA,(uint8_t)direction, (uint8_t)direction<<8};
-	uint8_t send_buf[2] = {crc_buf[2], crc_buf[3], _get_crc(crc_buf, 4)};
+	uint8_t send_buf[3] = {crc_buf[2], crc_buf[3], _get_crc(crc_buf, 4)};
 	return i2c_write_regs(dev, 0xb, crc_buf[1], send_buf, 3);
 }
 
 int8_t gauge_set_apa(i2c_t dev, uint8_t value)
 {
 	uint8_t crc_buf[4] = {0x16, 0xb, value,0};
-	uint8_t send_buf[2] = {crc_buf[2], crc_buf[3], _get_crc(crc_buf, 4)};
+	uint8_t send_buf[3] = {crc_buf[2], crc_buf[3], _get_crc(crc_buf, 4)};
 	return i2c_write_regs(dev, 0xb, crc_buf[1], send_buf, 3);
 }
 
 int8_t gauge_set_apt(i2c_t dev, uint16_t value)
 {
 	uint8_t crc_buf[4] = {0x16, 0xc, value,value<<8};
-	uint8_t send_buf[2] = {crc_buf[2], crc_buf[3], _get_crc(crc_buf, 4)};
+	uint8_t send_buf[3] = {crc_buf[2], crc_buf[3], _get_crc(crc_buf, 4)};
 	return i2c_write_regs(dev, 0xb, crc_buf[1], send_buf, 3);
 }
 
 int8_t gauge_set_change_of_parameter(i2c_t dev, battery_profile value)
 {
 	uint8_t crc_buf[4] = {0x16, 0x12, (uint8_t) value, (uint8_t) value<<8};
-	uint8_t send_buf[2] = {crc_buf[2], crc_buf[3], _get_crc(crc_buf, 4)};
+	uint8_t send_buf[3] = {crc_buf[2], crc_buf[3], _get_crc(crc_buf, 4)};
 	return i2c_write_regs(dev, 0xb, crc_buf[1], send_buf, 3);
 }
 
 int8_t gauge_set_alarm_low_rsoc(i2c_t dev, uint8_t value)
 {
 	uint8_t crc_buf[4] = {0x16, 0x13, value, 0};
-	uint8_t send_buf[2] = {crc_buf[2], crc_buf[3], _get_crc(crc_buf, 4)};
+	uint8_t send_buf[3] = {crc_buf[2], crc_buf[3], _get_crc(crc_buf, 4)};
 	return i2c_write_regs(dev, 0xb, crc_buf[1], send_buf, 3);
 }
 
-int8_t gauge_set_alarm_low_rsoc(i2c_t dev, uint16_t value)
+int8_t gauge_set_alarm_low_cell_voltage(i2c_t dev, uint16_t value)
 {
 	uint8_t crc_buf[4] = {0x16, 0x14, value, value<<8};
-	uint8_t send_buf[2] = {crc_buf[2], crc_buf[3], _get_crc(crc_buf, 4)};
+	uint8_t send_buf[3] = {crc_buf[2], crc_buf[3], _get_crc(crc_buf, 4)};
 	return i2c_write_regs(dev, 0xb, crc_buf[1], send_buf, 3);
 }
 
 int8_t gauge_set_power_mode(i2c_t dev, power_mode value)
 {
 	uint8_t crc_buf[4] = {0x16, 0x15, (uint8_t) value, 0};
-	uint8_t send_buf[2] = {crc_buf[2], crc_buf[3], _get_crc(crc_buf, 4)};
+	uint8_t send_buf[3] = {crc_buf[2], crc_buf[3], _get_crc(crc_buf, 4)};
 	return i2c_write_regs(dev, 0xb, crc_buf[1], send_buf, 3);
 }
 
 int8_t gauge_set_status_bit(i2c_t dev, temp_obtaining_mode value)
 {
 	uint8_t crc_buf[4] = {0x16, 0x15, (uint8_t) value, 0};
-	uint8_t send_buf[2] = {crc_buf[2], crc_buf[3], _get_crc(crc_buf, 4)};
+	uint8_t send_buf[3] = {crc_buf[2], crc_buf[3], _get_crc(crc_buf, 4)};
 	return i2c_write_regs(dev, 0xb, crc_buf[1], send_buf, 3);
 }
