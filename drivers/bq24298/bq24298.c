@@ -13,12 +13,50 @@
  */
 
 #include "bq24298.h"
+#include "board.h"
+#include <stdlib.h>
 
 #define ENABLE_DEBUG		(1)
 #include "debug.h"
 
-int8_t charger_init(i2c_t dev)
+#define JIMMINY_BOARD
+
+typedef struct{
+	i2c_t dev;
+	charger_cb_t cb;
+	void* arg;
+}callback_t;
+static callback_t mycallback;
+
+typedef enum{
+		PCINT_FALLING = 0,
+		PCINT_RISING		= 1
+}pcint_stat;
+static volatile pcint_stat my_stat= PCINT_FALLING;
+
+static inline void _charger_cb(void)
 {
+	uint8_t fault = charger_get_new_fault(mycallback.dev);
+	uint8_t status = charger_get_system_status(mycallback.dev);
+	DEBUG("Charger_fault: 0x%x  status: 0x%x \n", fault, status);
+	mycallback.cb(fault, status, mycallback.arg);
+}
+
+
+int8_t charger_init(i2c_t dev, gpio_t alarm_pin, charger_cb_t cb, void *arg)
+{
+	#ifdef JIMMINY_BOARD
+		DEBUG("Pinoccio detected \n");
+		gpio_init(alarm_pin, GPIO_IN);
+		PCICR |= (1<<PCIE0);
+		PCMSK0 |= (1<<PCINT4);
+		DEBUG("PCICR %x PCMSK %x \n", PCICR, PCMSK0);
+	#elif
+	gpio_init_int(alarm_pin, GPIO_IN, GPIO_FALLING,cb, arg);
+	#endif
+	mycallback.cb = cb;
+	mycallback.arg = arg;
+	mycallback.dev = dev;
 	return i2c_init_master(dev, I2C_SPEED_FAST);
 }
 
@@ -142,7 +180,24 @@ uint8_t charger_get_misc_operation(i2c_t dev)
 	return rec_buf;
 }
 
-uint8_t charger_reg_reset(i2c_t dev, uint8_t reg)
+int8_t charger_reg_reset(i2c_t dev, uint8_t reg)
 {
 	return i2c_write_reg(dev, 0x6b, reg, reset_value[reg]);
 }
+
+int8_t charger_write_reg(i2c_t dev, uint8_t reg, uint8_t settings)
+{
+	return i2c_write_reg(dev, 0x6b, reg, settings);
+}
+
+ISR(PCINT0_vect){
+	__enter_isr();
+	if(my_stat == PCINT_FALLING){
+		my_stat = PCINT_RISING;
+		_charger_cb();
+	}else{
+		my_stat = PCINT_FALLING;
+	}
+	 __exit_isr();
+}
+

@@ -16,6 +16,7 @@ CFLAGS += -DDEVELHELP
 QUIET ?= 0
 
 USEMODULE += bq24298
+USEMODULE += lc709203f
 
 include $(RIOTBASE)/Makefile.include
 

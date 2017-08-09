@@ -200,7 +200,6 @@ int gpio_init_int(gpio_t pin, gpio_mode_t mode, gpio_flank_t flank,
 void gpio_irq_enable(gpio_t pin)
 {
     EIMSK |= (1 << _pin_num(pin));
-    printf("EIMSK %x \n", EIMSK);
 }
 
 void gpio_irq_disable(gpio_t pin)
@@ -294,10 +293,11 @@ ISR(INT6_vect, ISR_BLOCK)
     irq_handler(6); /**< predefined interrupt pin */
 }
 #endif
-
+//INT7 used as contex swap
+/*
 #if defined(INT7_vect)
 ISR(INT7_vect, ISR_BLOCK)
 {
-    irq_handler(7); /**< predefined interrupt pin */
+    irq_handler(7); ///< predefined interrupt pin
 }
-#endif
+#endif*/
