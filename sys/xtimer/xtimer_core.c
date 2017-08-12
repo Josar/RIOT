@@ -439,7 +439,6 @@ static void _next_period(void)
  */
 static void _timer_callback(void)
 {
-	//printf("callback \n");
     uint32_t next_target;
     uint32_t reference;
 
@@ -546,7 +545,5 @@ overflow:
     _in_handler = 0;
 
     /* set low level timer */
-    DEBUG("LLTIMER %u \n", TCNT4);
     _lltimer_set(next_target);
-    DEBUG("DONE \n");
 }
