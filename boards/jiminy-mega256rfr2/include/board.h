@@ -53,13 +53,6 @@ extern "C" {
 #define RED				(1 << DDB7)
 #define GREEN			(1 << DDB6)
 
-// TODO clean up
-// kept for compatibility
-#define LED0_PIN            GPIO_PIN(1, 7)
-#define LED0_MASK           (1 << DDB7)
-#define LED0_ON             (PORTB |=  LED0_MASK)
-#define LED0_OFF            (PORTB &= ~LED0_MASK)
-#define LED0_TOGGLE         (PORTB ^=  LED0_MASK)
 /** @} */
 
 /**
@@ -67,12 +60,7 @@ extern "C" {
  *
  * {spi bus, spi speed, cs pin, int pin, reset pin, sleep pin}
  */
-#define AT86RF2XX_PARAMS_BOARD      {.spi = 0, \
-                                     .spi_speed = 86F2, \
-                                     .cs_pin = 0, \
-                                     .int_pin = 0, \
-                                     .sleep_pin = 0, \
-                                     .reset_pin = 0}
+#define AT86RF2XX_PARAMS_BOARD      {}
 
 /**
  * Context swap defines

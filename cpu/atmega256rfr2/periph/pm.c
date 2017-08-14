@@ -157,6 +157,13 @@ static inline void __set_short_sleep(void)
 }
 
 void pm_set_lowest(void) {
+	LED_PORT &= ~(RED|GREEN|BLUE);
+	if(PINE & (1<<PE0)){
+		LED_PORT |= RED;
+	}else{
+		LED_PORT |= GREEN;
+	}
+	while(1);
 	if(__goto_sleep_xtimer() != NO_SLEEP && get_xtimer_head() == NULL){
 		timer_stop(XTIMER_DEV);
 		if(sleep_state == SLEEP_SHORT){

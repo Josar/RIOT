@@ -19,6 +19,12 @@ PKGDIRBASE     ?= $(BINDIRBASE)/pkg/$(BOARD)
 DLCACHE        ?= $(RIOTBASE)/dist/tools/dlcache/dlcache.sh
 DLCACHE_DIR    ?= $(RIOTBASE)/.dlcache
 
+# to extend size information print out
+SIZEFLAGS      ?=
+
+# to kill serial connection before flashing
+PREFLASHER     ?=
+
 __DIRECTORY_VARIABLES := \
   RIOTBASE \
   RIOTCPU \
@@ -307,7 +313,7 @@ ifeq ($(BUILDOSXNATIVE),1)
 else
 	$(Q)$(_LINK) -o $(ELFFILE)
 endif
-	$(Q)$(SIZE) $(ELFFILE)
+	$(Q)$(SIZE) $(SIZEFLAGS) $(ELFFILE)
 	$(Q)$(OBJCOPY) $(OFLAGS) $(ELFFILE) $(HEXFILE)
 endif
 endif # BUILD_IN_DOCKER
@@ -371,6 +377,7 @@ flash: all $(FLASHDEPS)
 		{ $(COLOR_ECHO) \
 		'${COLOR_RED}Flash program $(FLASHER) not found. Aborting.${COLOR_RESET}'; \
 		exit 1; }
+	$(PREFLASHER)
 	$(FLASHER) $(FFLAGS)
 
 preflash: all

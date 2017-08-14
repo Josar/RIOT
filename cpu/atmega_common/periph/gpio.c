@@ -295,10 +295,12 @@ ISR(INT6_vect, ISR_BLOCK)
 }
 #endif
 //INT7 used as contex swap
+//TODO: change to ifdef BOARD
 /*
 #if defined(INT7_vect)
 ISR(INT7_vect, ISR_BLOCK)
 {
     irq_handler(7); ///< predefined interrupt pin
 }
-#endif*/
+#endif
+*/

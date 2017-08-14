@@ -23,6 +23,7 @@
 #include <stdbool.h>
 #include <errno.h>
 #include "kernel_init.h"
+#include "sched.h"
 #include "thread.h"
 #include "irq.h"
 #include "log.h"
@@ -64,10 +65,9 @@ static void *idle_thread(void *arg)
 {
     (void) arg;
 
-  while (1) {
-    	DEBUG("idle_thread\n");
-        pm_set_lowest();
-  }
+    while (1) {
+         pm_set_lowest();
+    }
 
     return NULL;
 }
