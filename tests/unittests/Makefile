@@ -7,6 +7,7 @@ BOARD_INSUFFICIENT_MEMORY := airfy-beacon \
                              arduino-mkr1000 \
                              arduino-uno \
                              arduino-zero \
+                             b-l072z-lrwan1 \
                              calliope-mini \
                              cc2538dk \
                              cc2650stk \
@@ -34,6 +35,7 @@ BOARD_INSUFFICIENT_MEMORY := airfy-beacon \
                              nucleo-f410 \
                              nucleo-l053 \
                              nucleo-l073 \
+                             nz32-sc151 \
                              opencm904 \
                              openmote \
                              openmote-cc2538 \
@@ -76,6 +78,7 @@ ARM_CORTEX_M_BOARDS := airfy-beacon \
                        arduino-due \
                        arduino-mkr1000 \
                        arduino-zero \
+                       b-l072z-lrwan1 \
                        cc2538dk \
                        ek-lm4f120xl \
                        f4vi1 \
@@ -90,6 +93,7 @@ ARM_CORTEX_M_BOARDS := airfy-beacon \
                        nrf52840dk \
                        nrf6310 \
                        nucleo144-f303 \
+                       nucleo144-f412 \
                        nucleo144-f429 \
                        nucleo144-f446 \
                        nucleo32-f031 \
@@ -108,8 +112,9 @@ ARM_CORTEX_M_BOARDS := airfy-beacon \
                        nucleo-f411 \
                        nucleo-l053 \
                        nucleo-l073 \
-                       nucleo-l1 \
+                       nucleo-l152 \
                        nucleo-l476 \
+                       nz32-sc151 \
                        opencm904 \
                        openmote-cc2538 \
                        pba-d-01-kw2x \

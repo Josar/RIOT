@@ -30,7 +30,6 @@
 
 #include <stdint.h>
 
-#include "saul.h"
 #include "periph/gpio.h"
 
 #ifdef __cplusplus
@@ -79,14 +78,6 @@ typedef struct {
 typedef dht_t dht_params_t;
 
 /**
- * @brief export SAUL endpoints
- * @{
- */
-extern const saul_driver_t dht_temp_saul_driver;
-extern const saul_driver_t dht_hum_saul_driver;
-/** @} */
-
-/**
  * @brief auto-initialize all configured DHT devices
  */
 void dht_auto_init(void);
@@ -116,7 +107,7 @@ int dht_init(dht_t *dev, const dht_params_t *params);
  * @return              -1 on checksum error
  * @return              -2 on parsing error
  */
-int dht_read(dht_t *dev, int16_t *temp, int16_t *hum);
+int dht_read(const dht_t *dev, int16_t *temp, int16_t *hum);
 
 #ifdef __cplusplus
 }

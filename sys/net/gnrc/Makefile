@@ -22,6 +22,9 @@ endif
 ifneq (,$(filter gnrc_ipv6_netif,$(USEMODULE)))
     DIRS += network_layer/ipv6/netif
 endif
+ifneq (,$(filter gnrc_ipv6_nib,$(USEMODULE)))
+    DIRS += network_layer/ipv6/nib
+endif
 ifneq (,$(filter gnrc_ipv6_whitelist,$(USEMODULE)))
     DIRS += network_layer/ipv6/whitelist
 endif
@@ -64,8 +67,14 @@ endif
 ifneq (,$(filter gnrc_pkt,$(USEMODULE)))
     DIRS += pkt
 endif
+ifneq (,$(filter gnrc_lwmac,$(USEMODULE)))
+    DIRS += link_layer/lwmac
+endif
 ifneq (,$(filter gnrc_pktbuf_static,$(USEMODULE)))
     DIRS += pktbuf_static
+endif
+ifneq (,$(filter gnrc_pktbuf,$(USEMODULE)))
+    DIRS += pktbuf
 endif
 ifneq (,$(filter gnrc_priority_pktqueue,$(USEMODULE)))
     DIRS += priority_pktqueue

@@ -184,7 +184,8 @@
  * gcoap includes server and client capability. Available features include:
  *
  * - Message Type: Supports non-confirmable (NON) messaging. Additionally
- *   provides a callback on timeout.
+ *   provides a callback on timeout. Provides piggybacked ACK response to a
+ *   confirmable (CON) request.
  * - Observe extension: Provides server-side registration and notifications.
  * - Server and Client provide helper functions for writing the
  *   response/request. See the CoAP topic in the source documentation for
@@ -209,7 +210,10 @@
 #ifndef NET_GCOAP_H
 #define NET_GCOAP_H
 
+#include <stdint.h>
+#include <stdatomic.h>
 #include "net/sock/udp.h"
+#include "mutex.h"
 #include "nanocoap.h"
 #include "xtimer.h"
 
@@ -238,9 +242,9 @@ extern "C" {
  * @brief   Size of the buffer used to write options, other than Uri-Path, in a
  *          request
  *
- * Accommodates Content-Format.
+ * Accommodates Content-Format and Uri-Queries
  */
-#define GCOAP_REQ_OPTIONS_BUF   (8)
+#define GCOAP_REQ_OPTIONS_BUF   (40)
 
 /**
  * @brief   Size of the buffer used to write options in a response
@@ -387,6 +391,13 @@ extern "C" {
 /** @} */
 
 /**
+ * @brief Stack size for module thread
+ */
+#ifndef GCOAP_STACK_SIZE
+#define GCOAP_STACK_SIZE (THREAD_STACKSIZE_DEFAULT + DEBUG_EXTRA_STACKSIZE)
+#endif
+
+/**
  * @brief   A modular collection of resources for a server
  */
 typedef struct gcoap_listener {
@@ -402,7 +413,8 @@ typedef struct gcoap_listener {
  *
  * If request timed out, the packet header is for the request.
  */
-typedef void (*gcoap_resp_handler_t)(unsigned req_state, coap_pkt_t* pdu);
+typedef void (*gcoap_resp_handler_t)(unsigned req_state, coap_pkt_t* pdu,
+                                     sock_udp_ep_t *remote);
 
 /**
  * @brief   Memo to handle a response for a request
@@ -430,12 +442,13 @@ typedef struct {
  * @brief   Container for the state of gcoap itself
  */
 typedef struct {
+    mutex_t lock;                       /**< Shares state attributes safely */
     gcoap_listener_t *listeners;        /**< List of registered listeners */
     gcoap_request_memo_t open_reqs[GCOAP_REQ_WAITING_MAX];
                                         /**< Storage for open requests; if first
                                              byte of an entry is zero, the entry
                                              is available */
-    uint16_t last_message_id;           /**< Last message ID used */
+    atomic_uint next_message_id;        /**< Next message ID to use */
     sock_udp_ep_t observers[GCOAP_OBS_CLIENTS_MAX];
                                         /**< Observe clients; allows reuse for
                                              observe memos */
@@ -620,6 +633,43 @@ size_t gcoap_obs_send(const uint8_t *buf, size_t len,
  * @return  count of unanswered requests
  */
 uint8_t gcoap_op_state(void);
+
+/**
+ * @brief   Get the resource list, currently only `CoRE Link Format`
+ *          (COAP_FORMAT_LINK) supported
+ *
+ * If @p buf := NULL, nothing will be written but the size of the resulting
+ * resource list is computed and returned.
+ *
+ * @param[out] buf      output buffer to write resource list into, my be NULL
+ * @param[in]  maxlen   length of @p buf, ignored if @p buf is NULL
+ * @param[in]  cf       content format to use for the resource list, currently
+ *                      only COAP_FORMAT_LINK supported
+ *
+ * @todo    add support for `JSON CoRE Link Format`
+ * @todo    add support for 'CBOR CoRE Link Format`
+ *
+ * @return  the number of bytes written to @p buf
+ * @return  -1 on error
+ */
+int gcoap_get_resource_list(void *buf, size_t maxlen, uint8_t cf);
+
+/**
+ * @brief   Adds a single Uri-Query option to a CoAP request
+ *
+ * To add multiple Uri-Query options, simply call this function multiple times.
+ * The Uri-Query options will be added in the order those calls.
+ *
+ * @param[out] pdu      The package that is being build
+ * @param[in]  key      Key to add to the query string
+ * @param[in]  val      Value to assign to @p key (may be NULL)
+ *
+ * @pre     ((pdu != NULL) && (key != NULL))
+ *
+ * @return  overall length of new query string
+ * @return  -1 on error
+ */
+int gcoap_add_qstring(coap_pkt_t *pdu, const char *key, const char *val);
 
 #ifdef __cplusplus
 }

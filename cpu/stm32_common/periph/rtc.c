@@ -9,7 +9,8 @@
  */
 
 /**
- * @ingroup     cpu_stm32_common
+ * @ingroup     cpu_cortexm_common
+ * @ingroup     drivers_periph_rtc
  * @{
  * @file
  * @brief       Low-level RTC driver implementation
@@ -27,7 +28,8 @@
 
 #if defined(CPU_FAM_STM32F0) || defined(CPU_FAM_STM32F2) || \
     defined(CPU_FAM_STM32F3) || defined(CPU_FAM_STM32F4) || \
-    defined(CPU_FAM_STM32F7) || defined(CPU_FAM_STM32L1)
+    defined(CPU_FAM_STM32F7) || defined(CPU_FAM_STM32L0) || \
+    defined(CPU_FAM_STM32L1)
 
 /* guard file in case no RTC device was specified */
 #if RTC_NUMOF
@@ -65,7 +67,7 @@ void rtc_init(void)
     PWR->CR |= PWR_CR_DBP;
 #endif
 
-#if defined(CPU_FAM_STM32L1)
+#if defined(CPU_FAM_STM32L1) || defined(CPU_FAM_STM32L0)
     if (!(RCC->CSR & RCC_CSR_RTCEN)) {
 #else
     if (!(RCC->BDCR & RCC_BDCR_RTCEN)) {
@@ -131,17 +133,25 @@ int rtc_set_time(struct tm *time)
     RTC->ISR &= (uint32_t) ~RTC_ISR_INIT;
     /* Enable RTC write protection */
     RTC->WPR = 0xFF;
+
+    /* wait till the new calender values are synced and can actually be read from the rtc */
+    while((RTC->ISR & RTC_ISR_RSF) == 0){}
+
     return 0;
 }
 
 int rtc_get_time(struct tm *time)
 {
+    /* reading TR locks the content in DR till DR is read to ensure consistency between both */
+    uint32_t tr = RTC->TR;
+    uint32_t dr = RTC->DR;
+
     time->tm_year = MCU_YEAR_OFFSET;
-    time->tm_year += (((RTC->DR & RTC_DR_YT)  >> 20) * 10) + ((RTC->DR & RTC_DR_YU)  >> 16);
-    time->tm_mon  = (((RTC->DR & RTC_DR_MT)  >> 12) * 10) + ((RTC->DR & RTC_DR_MU)  >>  8) - 1;
-    time->tm_mday = (((RTC->DR & RTC_DR_DT)  >>  4) * 10) + ((RTC->DR & RTC_DR_DU)  >>  0);
-    time->tm_hour = (((RTC->TR & RTC_TR_HT)  >> 20) * 10) + ((RTC->TR & RTC_TR_HU)  >> 16);
-    if (RTC->TR & RTC_TR_PM) {
+    time->tm_year += (((dr & RTC_DR_YT)  >> 20) * 10) + ((dr & RTC_DR_YU)  >> 16);
+    time->tm_mon  = (((dr & RTC_DR_MT)  >> 12) * 10) + ((dr & RTC_DR_MU)  >>  8) - 1;
+    time->tm_mday = (((dr & RTC_DR_DT)  >>  4) * 10) + ((dr & RTC_DR_DU)  >>  0);
+    time->tm_hour = (((tr & RTC_TR_HT)  >> 20) * 10) + ((tr & RTC_TR_HU)  >> 16);
+    if (tr & RTC_TR_PM) {
         /* 12PM is noon */
         if (time->tm_hour != 12) {
             time->tm_hour += 12;
@@ -151,8 +161,8 @@ int rtc_get_time(struct tm *time)
         /* 12AM is midnight */
         time->tm_hour -= 12;
     }
-    time->tm_min  = (((RTC->TR & RTC_TR_MNT) >> 12) * 10) + ((RTC->TR & RTC_TR_MNU) >>  8);
-    time->tm_sec  = (((RTC->TR & RTC_TR_ST)  >>  4) * 10) + ((RTC->TR & RTC_TR_SU)  >>  0);
+    time->tm_min  = (((tr & RTC_TR_MNT) >> 12) * 10) + ((tr & RTC_TR_MNU) >>  8);
+    time->tm_sec  = (((tr & RTC_TR_ST)  >>  4) * 10) + ((tr & RTC_TR_SU)  >>  0);
     return 0;
 }
 
@@ -192,9 +202,15 @@ int rtc_set_alarm(struct tm *time, rtc_alarm_cb_t cb, void *arg)
     /* Enable RTC write protection */
     RTC->WPR = 0xFF;
 
+#if defined(CPU_FAM_STM32L0)
+    EXTI->IMR  |= EXTI_IMR_IM17;
+#else
     EXTI->IMR  |= EXTI_IMR_MR17;
+#endif
+
     EXTI->RTSR |= EXTI_RTSR_TR17;
-#if defined(CPU_FAM_STM32F0)
+
+#if defined(CPU_FAM_STM32F0) || defined(CPU_FAM_STM32L0)
     NVIC_SetPriority(RTC_IRQn, 10);
     NVIC_EnableIRQ(RTC_IRQn);
 #else
@@ -235,7 +251,7 @@ void rtc_clear_alarm(void)
 
 void rtc_poweron(void)
 {
-#if defined(CPU_FAM_STM32L1)
+#if defined(CPU_FAM_STM32L1) || defined(CPU_FAM_STM32L0)
     /* Reset RTC domain */
     RCC->CSR |= RCC_CSR_RTCRST;
     RCC->CSR &= ~(RCC_CSR_RTCRST);
@@ -274,7 +290,7 @@ void rtc_poweron(void)
 
 void rtc_poweroff(void)
 {
-#if defined(CPU_FAM_STM32L1)
+#if defined(CPU_FAM_STM32L1) || defined(CPU_FAM_STM32L0)
     /* Reset RTC domain */
     RCC->CSR |= RCC_CSR_RTCRST;
     RCC->CSR &= ~(RCC_CSR_RTCRST);
@@ -293,7 +309,7 @@ void rtc_poweroff(void)
 #endif
 }
 
-#if defined(CPU_FAM_STM32F0)
+#if defined(CPU_FAM_STM32F0) || defined(CPU_FAM_STM32L0)
 void isr_rtc(void)
 #else
 void isr_rtc_alarm(void)
@@ -331,4 +347,5 @@ static uint8_t byte2bcd(uint8_t value)
 
 #endif /* defined(CPU_FAM_STM32F0) || defined(CPU_FAM_STM32F2) || \
           defined(CPU_FAM_STM32F3) || defined(CPU_FAM_STM32F4) || \
-          defined(CPU_FAM_STM32F7) || defined(CPU_FAM_STM32L1) */
+          defined(CPU_FAM_STM32F7) || defined(CPU_FAM_STM32L0) || \
+          defined(CPU_FAM_STM32L1) */

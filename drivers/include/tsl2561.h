@@ -7,9 +7,9 @@
  */
 
 /**
- * @defgroup    drivers_tsl2561 TSL2561
+ * @defgroup    drivers_tsl2561 TSL2561 illuminance sensor
  * @ingroup     drivers_sensors
- * @brief       Device driver interface for the illuminance  TSL2561 sensor
+ * @brief       Device driver interface for the illuminance TSL2561 sensor
  * @{
  *
  * @file
@@ -103,7 +103,7 @@ int tsl2561_init(tsl2561_t *dev, i2c_t i2c, uint8_t addr,
  *
  * @return                  Illuminance in Lux (lx)
  */
-uint16_t tsl2561_read_illuminance(tsl2561_t *dev);
+uint16_t tsl2561_read_illuminance(const tsl2561_t *dev);
 
 #ifdef __cplusplus
 }

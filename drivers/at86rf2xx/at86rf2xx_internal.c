@@ -147,10 +147,8 @@ void at86rf2xx_hardware_reset(at86rf2xx_t *dev)
 
 void at86rf2xx_configure_phy(at86rf2xx_t *dev)
 {
-    uint8_t state = at86rf2xx_get_status(dev);
-
     /* we must be in TRX_OFF before changing the PHY configuration */
-    at86rf2xx_set_state(dev, AT86RF2XX_STATE_TRX_OFF);
+    uint8_t prev_state = at86rf2xx_set_state(dev, AT86RF2XX_STATE_TRX_OFF);
 
 #ifdef MODULE_AT86RF212B
     /* The TX power register must be updated after changing the channel if
@@ -200,7 +198,7 @@ void at86rf2xx_configure_phy(at86rf2xx_t *dev)
 #endif
 
     /* Return to the state we had before reconfiguring */
-    at86rf2xx_set_state(dev, state);
+    at86rf2xx_set_state(dev, prev_state);
 }
 
 #if defined(MODULE_AT86RF233) || defined(MODULE_AT86RF231)
@@ -224,8 +222,7 @@ void at86rf2xx_get_random(at86rf2xx_t *dev, uint8_t *data, const size_t len)
 
 void at86rf2xx_force_trx_off(const at86rf2xx_t *dev)
 {
-    at86rf2xx_reg_write(dev,
-                        AT86RF2XX_REG__TRX_STATE,
+    at86rf2xx_reg_write(dev, AT86RF2XX_REG__TRX_STATE,
                         AT86RF2XX_TRX_STATE__FORCE_TRX_OFF);
-    while (at86rf2xx_get_status(dev) != AT86RF2XX_STATE_TRX_OFF);
+    while (at86rf2xx_get_status(dev) != AT86RF2XX_STATE_TRX_OFF) {}
 }

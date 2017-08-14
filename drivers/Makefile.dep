@@ -173,6 +173,11 @@ ifneq (,$(filter mpu9150,$(USEMODULE)))
     USEMODULE += xtimer
 endif
 
+ifneq (,$(filter mtd_sdcard,$(USEMODULE)))
+  USEMODULE += mtd
+  USEMODULE += sdcard_spi
+endif
+
 ifneq (,$(filter nrfmin,$(USEMODULE)))
     FEATURES_REQUIRED += radio_nrfmin
     FEATURES_REQUIRED += periph_cpuid
@@ -215,6 +220,13 @@ ifneq (,$(filter srf08,$(USEMODULE)))
   USEMODULE += xtimer
 endif
 
+ifneq (,$(filter sx127%,$(USEMODULE)))
+  FEATURES_REQUIRED += periph_gpio
+  FEATURES_REQUIRED += periph_spi
+  USEMODULE += xtimer
+  USEMODULE += sx127x
+endif
+
 ifneq (,$(filter veml6070,$(USEMODULE)))
   FEATURES_REQUIRED += periph_i2c
 endif
@@ -252,4 +264,10 @@ endif
 ifneq (,$(filter lsm6dsl,$(USEMODULE)))
   FEATURES_REQUIRED += periph_i2c
   USEMODULE += xtimer
+endif
+
+ifneq (,$(filter adc%1c,$(USEMODULE)))
+  FEATURES_REQUIRED += periph_gpio
+  FEATURES_REQUIRED += periph_i2c
+  USEMODULE += adcxx1c
 endif

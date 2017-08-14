@@ -8,9 +8,16 @@
  */
 
 /**
- * @defgroup    drivers_bmx280 BMX280
+ * @defgroup    drivers_bmx280 BMP280/BME280 temperature, pressure and humidity sensor
  * @ingroup     drivers_sensors
- * @brief       Device driver interface for the BMX280 sensors (BMP280 and BME280).
+ * @brief       Device driver interface for the Bosch BMP280 and BME280 sensors.
+ *
+ * BMP280 and BME280 measure temperature in centi °C and pressure in Pa. BME280
+ * can also measure relative humidity in %.
+ *
+ * For more information, see the datasheets:
+ * * [BMP280](https://ae-bst.resource.bosch.com/media/_tech/media/datasheets/BST-BMP280-DS001-18.pdf)
+ * * [BME280](https://ae-bst.resource.bosch.com/media/_tech/media/datasheets/BST-BME280_DS001-11.pdf)
  *
  * @{
  * @file
@@ -183,7 +190,7 @@ int bmx280_init(bmx280_t* dev, const bmx280_params_t* params);
  * @returns                 The temperature in centi Celsius. In case of an error
  *                          it returns INT16_MIN.
  */
-int16_t bmx280_read_temperature(bmx280_t* dev);
+int16_t bmx280_read_temperature(const bmx280_t* dev);
 
 /**
  * @brief Read air pressure value from the given BMX280 device, returned in PA
@@ -195,7 +202,7 @@ int16_t bmx280_read_temperature(bmx280_t* dev);
  *
  * @returns                 The air pressure in Pa
  */
-uint32_t bmx280_read_pressure(bmx280_t *dev);
+uint32_t bmx280_read_pressure(const bmx280_t *dev);
 
 #if defined(MODULE_BME280)
 /**
@@ -208,7 +215,7 @@ uint32_t bmx280_read_pressure(bmx280_t *dev);
  *
  * @returns                 Humidity in centi %RH (i.e. the percentage times 100)
  */
-uint16_t bme280_read_humidity(bmx280_t *dev);
+uint16_t bme280_read_humidity(const bmx280_t *dev);
 #endif
 
 #ifdef __cplusplus

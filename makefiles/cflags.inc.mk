@@ -25,13 +25,25 @@ ifeq ($(shell $(CC) -fno-delete-null-pointer-checks -E - 2>/dev/null >/dev/null 
   endif
 endif
 
+# Use colored compiler output if the compiler supports this and if this is not
+# disabled by the user
+CC_NOCOLOR ?= 0
+ifeq ($(CC_NOCOLOR),0)
+  ifeq ($(shell $(CC) -fdiagnostics-color -E - 2>/dev/null >/dev/null </dev/null ; echo $$?),0)
+    CFLAGS += -fdiagnostics-color
+  endif
+endif
+
 # Fast-out on old style function definitions.
 # They cause unreadable error compiler errors on missing semicolons.
 # Worse yet they hide errors by accepting wildcard argument types.
 ifeq ($(shell $(CC) -Wstrict-prototypes -Werror=strict-prototypes -Wold-style-definition -Werror=old-style-definition -E - 2>/dev/null >/dev/null </dev/null ; echo $$?),0)
   # duplicated parameters don't hurt
-  CFLAGS += -Wstrict-prototypes -Werror=strict-prototypes -Wold-style-definition -Werror=old-style-definition
+  CFLAGS += -Wstrict-prototypes -Wold-style-definition
   CXXUWFLAGS += -Wstrict-prototypes -Wold-style-definition
+  ifeq ($(WERROR),1)
+    CFLAGS += -Werror=strict-prototypes -Werror=old-style-definition
+  endif
 endif
 
 # Unwanted flags for c++
