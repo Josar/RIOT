@@ -46,7 +46,7 @@ int8_t shtc1_measure(i2c_t dev, crc_type crc, shtc1_values_t* received_values)
 	uint8_t data[] = { 0x7C, 0xA2 };
 	i2c_write_bytes(dev, 0x70, data, 2);
 	uint8_t received[6];
-	i2c_read_bytes(I2C_0, 0x70, received, 6);
+	i2c_read_bytes(dev, 0x70, received, 6);
 	uint16_t temp_f = ((received[0]<<8)|received[1]);
 	uint16_t abs_humidity = ((received[3]<<8)|received[4]);
 	if(crc){
