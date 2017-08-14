@@ -1,5 +1,5 @@
 # name of your application
-APPLICATION = pinoccio-hello-world
+APPLICATION = pinoccio-rtc
 
 # If no BOARD is found in the environment, use this default:
 BOARD ?= native
@@ -14,10 +14,7 @@ CFLAGS += -DDEVELHELP
 
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 0
-
-USEMODULE += xtimer
-FEATURES_REQUIRED += periph_timer
-FEATURES_REQUIRED += periph_rtc
+FEATURE += periph_rtc
 
 include $(RIOTBASE)/Makefile.include
 

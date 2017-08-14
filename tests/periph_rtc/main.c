@@ -28,6 +28,8 @@
 #include "periph/rtc.h"
 #include "xtimer.h"
 
+#include "sched.h"
+
 #define TM_YEAR_OFFSET              (1900)
 
 #if RTC_NUMOF < 1
@@ -37,12 +39,11 @@
 void cb(void *arg)
 {
     (void)arg;
-
     puts("Alarm!");
 
     struct tm time;
     rtc_get_alarm(&time);
-    time.tm_sec  += 10;
+    time.tm_sec  += 5;
     if ( time.tm_sec > 60 )
         rtc_clear_alarm();
     rtc_set_alarm(&time, cb, 0);
@@ -74,7 +75,7 @@ int main(void)
                                                     time.tm_sec);
     rtc_set_time(&time);
 
-    xtimer_usleep(100);
+//    xtimer_usleep(100);
 
     rtc_get_time(&time);
     printf("Clock set to %04d-%02d-%02d %02d:%02d:%02d\n",
@@ -97,7 +98,7 @@ int main(void)
                                                     time.tm_sec);
     rtc_set_alarm(&time, cb, 0);
 
-    xtimer_usleep(100);
+    //xtimer_usleep(100);
 
     rtc_get_alarm(&time);
     printf("Alarm set to %04d-%02d-%02d %02d:%02d:%02d\n",
@@ -110,7 +111,18 @@ int main(void)
 
     puts("The alarm should trigger every 10 seconds for 4 times.");
 
-    while(1);
+    //while(1);
+    printf("Testing\n");
+    xtimer_sleep(2);
+    printf("Testing\n");
 
+    xtimer_sleep(2);
+    printf("Testing\n");
+    xtimer_sleep(2);
+    printf("Testing\n");
+
+    //sched_task_exit();
+    // sched_switch(15);
+    //while(1);
     return 0;
 }
