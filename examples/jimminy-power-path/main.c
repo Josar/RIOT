@@ -60,6 +60,12 @@ int main(void)
     //charger_write_reg(I2C_0, REG_POWER_ON_CONFIG, reset_value[REG_POWER_ON_CONFIG]|REG1_I2C_WATCHDOG_TIMER_RESET);
     printf("Status register: 0x%x \n", charger_get_system_status(I2C_0));
     printf("new fault register: 0x%x \n", charger_get_new_fault(I2C_0));
+    charger_status_t status = charger_get_status_struct();
+    printf("power good %u \n", status.power_good);
+    printf("Status_charge %u \n", status.status_charge);
+    if(status.power_good && status.status_charge == CHARGE_STATUS_CHARGE_TERMINATION){
+    	printf("Power good, charging stopped \n");
+    }
 
     while(1){
     	//printf("new fault register: 0x%x \n", charger_get_new_fault(I2C_0));
