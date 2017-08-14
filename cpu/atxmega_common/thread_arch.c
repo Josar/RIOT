@@ -27,6 +27,9 @@
 #include "cpu.h"
 #include "board.h"
 
+#define F_CPU   32000000UL
+#define __DELAY_BACKWARD_COMPATIBLE__
+#include <util/delay.h>
 
 /**
  * @brief AVR_CONTEXT_SWAP_INIT intialize the context swap trigger
@@ -152,6 +155,19 @@ char *thread_arch_stack_init(thread_task_func_t task_func, void *arg,
     stk--;
     *stk = (uint8_t) 0x00;
 #endif
+#if defined(RAMPY)
+    stk--;
+    *stk = (uint8_t) 0x00;
+#endif
+#if defined(RAMPX)
+    stk--;
+    *stk = (uint8_t) 0x00;
+#endif
+
+#if defined(RAMPD)
+    stk--;
+    *stk = (uint8_t) 0x00;
+#endif
 
     /* r1 - has always to be 0 */
     stk--;
@@ -265,12 +281,7 @@ void NORETURN __enter_thread_mode(void)
 }
 
 void thread_arch_yield(void) {
-//	int i=0;
-	 printf("thread_arch_yield\n");
-
-//	 while(i++){
-//		 __asm__ volatile("nop");
-//	 }
+	printf("thread_arch_yield\n");
     AVR_CONTEXT_SWAP_TRIGGER;
 }
 
@@ -278,13 +289,8 @@ void thread_arch_yield(void) {
 // Use this interrupt to perform all context switches
 ISR(AVR_CONTEXT_SWAP_INTERRUPT_VECT, ISR_NAKED) {
 
-	int i=0;
-
 	printf("AVR_CONTEXT_SWAP_INTERRUPT_VECT\n");
 
-	while(i++){
-		__asm__ volatile("nop");
-	}
 	__context_save();
     sched_run();
     __context_restore();
@@ -294,13 +300,26 @@ ISR(AVR_CONTEXT_SWAP_INTERRUPT_VECT, ISR_NAKED) {
 
 __attribute__((always_inline)) static inline void __context_save(void)
 {
+	printf("__context_save\n");
     __asm__ volatile(
         "push r0                             \n\t"
         "in   r0, __SREG__                   \n\t"
         "cli                                 \n\t"
         "push r0                             \n\t"
+#if defined(RAMPD)
+        "in     r0, 0x38               \n\t"
+        "push   r0                           \n\t"
+#endif
+#if defined(RAMPX)
+        "in     r0, 0x39                \n\t"
+        "push   r0                           \n\t"
+#endif
+#if defined(RAMPY)
+        "in     r0, 0x3A                \n\t"
+        "push   r0                           \n\t"
+#endif
 #if defined(RAMPZ)
-        "in     r0, __RAMPZ__                \n\t"
+        "in     r0, 0x3B                \n\t"
         "push   r0                           \n\t"
 #endif
 #if defined(EIND)
@@ -351,6 +370,7 @@ __attribute__((always_inline)) static inline void __context_save(void)
 
 __attribute__((always_inline)) static inline void __context_restore(void)
 {
+	printf("__context_restore\n");
     __asm__ volatile(
         "lds  r26, sched_active_thread       \n\t"
         "lds  r27, sched_active_thread + 1   \n\t"
@@ -395,7 +415,19 @@ __attribute__((always_inline)) static inline void __context_restore(void)
 #endif
 #if defined(RAMPZ)
         "pop    r0                           \n\t"
-        "out    __RAMPZ__, r0                \n\t"
+        "out    0x3B, r0                \n\t"
+#endif
+#if defined(RAMPY)
+        "pop    r0                           \n\t"
+        "out    0x3A, r0                \n\t"
+#endif
+#if defined(RAMPX)
+        "pop    r0                           \n\t"
+        "out    0x39, r0                \n\t"
+#endif
+#if defined(RAMPD)
+        "pop    r0                           \n\t"
+        "out    0x38, r0                \n\t"
 #endif
         "pop  r0                             \n\t"
         "out  __SREG__, r0                   \n\t"

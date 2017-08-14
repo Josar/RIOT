@@ -62,17 +62,17 @@ void pm_set_lowest(void) {
 	// thread_arch_stack_print();
 	printf("\npm_set_lowest\n");
 
-	PORTF.OUTSET = PIN3_bm ;
+	PORTF.OUTCLR = PIN3_bm ;
 	PORTF.OUTCLR = PIN2_bm ;
-	PORTE.OUTSET = PIN7_bm ;
+	PORTE.OUTCLR = PIN7_bm ;
 	PORTE.OUTCLR = PIN6_bm ;
 
-	_delay_ms(500);
+	_delay_ms(100);
 
 	PORTF.OUTSET = PIN2_bm ;
-	PORTF.OUTCLR = PIN3_bm ;
+	PORTF.OUTSET = PIN3_bm ;
 	PORTE.OUTSET = PIN6_bm ;
-	PORTE.OUTCLR = PIN7_bm ;
+	PORTE.OUTSET = PIN7_bm ;
 
 	_delay_ms(1000);
 

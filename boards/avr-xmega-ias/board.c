@@ -114,35 +114,38 @@ void board_init(void)
      PROTECTED_WRITE(CLK.CTRL, CLK_SCLKSEL0_bm);
 
 	/* config LEDs*/
-	PORTF.DIRSET =  PIN3_bm|PIN2_bm ; // Set pins 2, 3 on port D to be output.
+	PORTF.DIRSET =  PIN3_bm|PIN2_bm ; // Set pins 2, 3 on port F to be output.
 	PORTE.DIRSET =  PIN7_bm|PIN6_bm ;
+
+	PORTF.OUTCLR = PIN3_bm|PIN2_bm ; // Set pins 2, 3 on port F to low.
+	PORTE.OUTCLR = PIN7_bm|PIN6_bm ;
 
 	/* config stdio UART */
 	PORTC.DIRSET =  PIN7_bm; // output for TX
 	PORTC.DIRCLR =  PIN6_bm;  // input for RX
 
 
-	uint8_t wait=0;
+//	uint8_t wait=0;
 
-	 while( wait < 5){ // loop
-		 wait++;
+//	 while( wait < 5){ // loop
+//		 wait++;
+//
+//
+//		 if( (PORTF.IN & PIN3_bm)!=0 ){
+//			  PORTF.OUTSET = PIN2_bm ;
+//
+//			  PORTF.OUTCLR = PIN3_bm ;
+//		 }else
+//		 {
+//			 PORTF.OUTCLR = PIN2_bm ;
+//			 PORTF.OUTSET = PIN3_bm ;
+//		 }
+//
+//		 _delay_ms( time_to_wait );
+//	 }
 
-
-		 if( (PORTF.IN & PIN3_bm)!=0 ){
-			  PORTF.OUTSET = PIN2_bm ;
-
-			  PORTF.OUTCLR = PIN3_bm ;
-		 }else
-		 {
-			 PORTF.OUTCLR = PIN2_bm ;
-			 PORTF.OUTSET = PIN3_bm ;
-		 }
-
-		 _delay_ms( time_to_wait );
-	 }
-
-	 PORTF.OUTCLR = PIN3_bm ;
-	 PORTF.OUTCLR = PIN2_bm ;
+//	 PORTF.OUTCLR = PIN3_bm ;
+//	 PORTF.OUTCLR = PIN2_bm ;
 
 
 	/* initialize stdio via USART_0 */
@@ -178,8 +181,8 @@ void system_stdio_init(void)
 {
 
 	/* initialize Pins used for stdout */
-	PORTC.DIRSET =  PIN7_bm ; // output
-	PORTC.DIRCLR =  PIN6_bm ; // output
+	PORTC.DIRSET =  PIN7_bm ; // output for TX
+	PORTC.DIRCLR =  PIN6_bm ; // input for RX
 
 	/* initialize UART_0 for use as stdout */
     uart_stdio_init();

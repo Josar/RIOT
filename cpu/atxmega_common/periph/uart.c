@@ -87,28 +87,29 @@ static const mega_uart_t *dev[] = { NULL };
  */
 static uart_isr_ctx_t isr_ctx[UART_NUMOF];
 
-static void _update_brr(uart_t uart, uint16_t brr, bool double_speed)
+static void _update_brr(uart_t uart, uint16_t BSEL, bool double_speed)
 {
-	/* set four most-significant bits of BSEL */
-	dev[uart]->BAUDCTRLB = (uint8_t)( 0x0f & (brr>>8) );
-	/* set lower 8 bits of BSEL */
-	dev[uart]->BAUDCTRLA = (uint8_t)(0xff & brr);
+	/* set four most-significant bits of BSEL; BAUDCTRLB = BSCALE[3:0] BSEL[11:8] */
+	dev[uart]->BAUDCTRLB = (uint8_t)( 0x0f & ( BSEL>>8 ) );
+	/* set lower 8 bits of BAUDCTRLA = BSEL[7:0] */
+	dev[uart]->BAUDCTRLA = (uint8_t)(0xff & BSEL);
 
     if (double_speed) {
         dev[uart]->CTRLB |= USART_CLK2X_bm ;
     }
 }
 
-static void _set_brr(uart_t uart, uint32_t baudrate)
+static void _set_baut(uart_t uart, uint32_t baudrate)
 {
-    uint16_t brr;
+	//uint8_t BSCALE;
+	uint16_t BSEL;
 
 #if defined(UART_DOUBLE_SPEED)
-    brr = (CLOCK_CORECLOCK ) / (8UL * baudrate) - 1UL;
-    _update_brr(uart, brr, true);
+    BSEL = (CLOCK_CORECLOCK ) / (8UL * baudrate) - 1UL;
+    _update_brr(uart, BSEL, true);
 #else
-    brr = (CLOCK_CORECLOCK) / (16UL * baudrate) - 1UL;
-    _update_brr(uart, brr, false);
+    BSEL = (CLOCK_CORECLOCK) / (16UL * baudrate) - 1UL;
+    _update_brr(uart, BSEL, false);
 #endif
 }
 
@@ -134,16 +135,20 @@ int uart_init(uart_t uart, uint32_t baudrate, uart_rx_cb_t rx_cb, void *arg)
     dev[uart]->CTRLC = USART_CMODE_ASYNCHRONOUS_gc|USART_PMODE_DISABLED_gc| USART_CHSIZE_8BIT_gc ;
     /* set clock divider */
 
-    _set_brr(uart, baudrate);
+    _set_baut(uart, baudrate);
 
     // set uasart to 9600BAUD
      dev[uart]->BAUDCTRLA = (3317 & 0xff) << USART_BSEL_gp;
      dev[uart]->BAUDCTRLB = ((-4) << USART_BSCALE_gp) | ((3317 >> 8) << USART_BSEL_gp);
 
-     // set uasart to 500000BAUD
-     dev[uart]->BAUDCTRLA = (3 & 0xff) << USART_BSEL_gp;
-     dev[uart]->BAUDCTRLB = ((0) << USART_BSCALE_gp) | ((3>> 8) << USART_BSEL_gp);
+     // set uasart to 576000BAUD
+//     dev[uart]->BAUDCTRLA = (79 & 0xff);
+//     dev[uart]->BAUDCTRLB = ((-5) << USART_BSCALE_gp) | ((79 >> 8) );
 
+//
+//     // set uasart to 1MegBuad // geht noch nicht
+//     dev[uart]->BAUDCTRLA = (1 & 0xff);
+//     dev[uart]->BAUDCTRLB = ((0) << USART_BSCALE_gp) | ((1 >> 8) );
 
 
      /* enable RX and TX Interrupts and set level*/
@@ -165,12 +170,12 @@ int uart_init(uart_t uart, uint32_t baudrate, uart_rx_cb_t rx_cb, void *arg)
 
 void uart_write(uart_t uart, const uint8_t *data, size_t len)
 {
-	PORTE.OUTSET = PIN6_bm ;
+	// PORTE.OUTSET = PIN6_bm ;
 	for (size_t i = 0; i < len; i++) {
 		while ( !( dev[uart]->STATUS & USART_DREIF_bm)  ) {};
 		dev[uart]->DATA = data[i];
     }
-	PORTE.OUTCLR = PIN6_bm ;
+	//PORTE.OUTCLR = PIN6_bm ;
 }
 
 static inline void isr_handler(int num)
@@ -191,7 +196,7 @@ static inline void isr_handler(int num)
 ISR(USARTC1_RXC_vect, ISR_BLOCK)
 {
     __enter_isr();
-    PORTE.OUTTGL = PIN6_bm ;
+    // PORTE.OUTTGL = PIN6_bm ;
     isr_handler(0);
     __exit_isr();
 }

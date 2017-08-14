@@ -213,7 +213,7 @@ static inline void _isr(tim_t tim, int channel)
 
     ctx[tim].cb(ctx[tim].arg, channel);
 
-    PORTE.OUTTGL = PIN7_bm ;
+    //PORTE.OUTTGL = PIN7_bm ;
 
     if (sched_context_switch_request) {
         thread_yield();

@@ -18,7 +18,8 @@ ifeq ($(OS),Linux)
   #PREFLASHER = sudo pgrep -f /dev/ttyACM0 2>/dev/null |xargs --no-run-if-empty kill
   
   FLASHER = avrdude
-  export PROGRAMMER ?= jtag3pdi
+  # export PROGRAMMER ?= jtag3pdi
+  export PROGRAMMER ?= atmelice_pdi
   
   # -D	Disable auto erase for flash memory
   # -V  Do not verify.

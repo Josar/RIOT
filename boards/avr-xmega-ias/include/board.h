@@ -34,7 +34,7 @@ extern "C" {
 *        baudrate to 9600 for this board
 */
 
-#define UART_STDIO_BAUDRATE (115200U)
+#define UART_STDIO_BAUDRATE (115200)
 #define UART_DOUBLE_SPEED (0)
 
 /**
@@ -52,15 +52,18 @@ extern "C" {
 #define AVR_CONTEXT_SWAP_INIT do { \
 	cli();\
 	PORTA.DIR |= PIN1_bm; \
+	PORTA.OUTCLR= 	PIN1_bm; \
 	PORTA.INT0MASK = PIN1_bm; \
-	PORTA.PIN1CTRL	= PORT_OPC_WIREDORPULL_gc | PORT_ISC_BOTHEDGES_gc; \
+	PORTA.PIN1CTRL	= PORT_OPC_TOTEM_gc | PORT_ISC_BOTHEDGES_gc; \
 	PORTA.INTCTRL	= PORT_INT0LVL_HI_gc; \
 	PMIC.CTRL|=PMIC_HILVLEN_bm|PMIC_MEDLVLEN_bm|PMIC_LOLVLEN_bm;\
 	sei();\
 } while (0)
 
 #define AVR_CONTEXT_SWAP_INTERRUPT_VECT PORTA_INT0_vect
-#define AVR_CONTEXT_SWAP_TRIGGER (PORTA.OUTTGL=PIN1_bm)
+#define AVR_CONTEXT_SWAP_TRIGGER do { \
+	PORTA.OUTTGL=PIN1_bm;\
+}while(0)
 
 /**
  * @brief Initialize board specific hardware, including clock, LEDs and std-IO

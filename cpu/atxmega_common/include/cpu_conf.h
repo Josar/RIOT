@@ -21,8 +21,6 @@
 #ifndef CPU_CONF_H
 #define CPU_CONF_H
 
-#include <avr/io.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -41,14 +39,14 @@ extern "C" {
  * THREAD_STACKSIZE_IDLE > THREAD_EXTRA_STACKSIZE_PRINTF
  * to avoid not printing of debug in interrupts
  */
-#define THREAD_EXTRA_STACKSIZE_PRINTF    (0) //128
+#define THREAD_EXTRA_STACKSIZE_PRINTF    (128) //128
 
 #ifndef THREAD_STACKSIZE_DEFAULT
 #define THREAD_STACKSIZE_DEFAULT   (512)
 #endif
 /** @} */
 
-#define THREAD_STACKSIZE_IDLE      (129) // 129
+#define THREAD_STACKSIZE_IDLE      (129)
 /**
  * @brief   Stack size used for the exception (ISR) stack
  * @{
