@@ -77,7 +77,7 @@ void pm_reboot(void)
  * will return 0 if a xtimer is running with less than a second to go so we don't go to sleep
  * will return 1 if the timer runs long enough to go to sleep
  */
-
+#ifdef MODULE_XTIMER
 static inline uint8_t __goto_sleep_xtimer(void)
 {
 	xtimer_t* timer = get_xtimer_head_long();
@@ -168,6 +168,7 @@ void pm_set_lowest(void) {
 		while(stdout->size);
 		__dummy_async_write();
 		if(get_xtimer_head() == NULL){
+			_delay_ms(5);
 				sleep_mode();
 				__correct_sleep_xtimer(sleep_state);
 		}
@@ -180,3 +181,4 @@ void pm_set_lowest(void) {
 ISR(TIMER2_COMPA_vect){
 	TIMSK2 &=~(1<<OCIE2A);
 }
+#endif
