@@ -8,7 +8,7 @@ export TERMFLAGS = -b 9600 -p $(PORT)
 #define the flash-tool and default port depending on the host operating system
 OS = $(shell uname)
 ifeq ($(OS),Linux)
-  PORT ?= /dev/ttyACM0
+  PORT ?= /dev/ttyACM1
   FLASHER = avrdude
   export FLASHER_PATH ="/etc/avrdude.conf"
   export FFLAGS += -p atmega256rfr2 -c $(PROGRAMMER) $(PROGRAMMER_FLAGS) -D -U flash:w:bin/$(BOARD)/$(PROJECT)$(APPLICATION).hex:i -C $(FLASHER_PATH) 
