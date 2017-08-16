@@ -21,6 +21,8 @@
 
 #define JIMMINY_BOARD
 
+charger_status_t my_charger_status;
+
 typedef struct{
 	i2c_t dev;
 	charger_cb_t cb;
@@ -38,8 +40,18 @@ static inline void _charger_cb(void)
 {
 	uint8_t fault = charger_get_new_fault(mycallback.dev);
 	uint8_t status = charger_get_system_status(mycallback.dev);
+	my_charger_status.watchdog_expired = (fault&(1<<7))>>7;
+	my_charger_status.otg_boost_error = (fault&(1<<6))>>6;
+	my_charger_status.charge_fault = (charge_fault_t)((fault&(3<<4))>>4);
+	my_charger_status.bat_ovp = (fault&(1<<3))>>3;
+	my_charger_status.ntc_fault = (ntc_fault_t)(fault&3);
+	my_charger_status.status_vbus = (vbus_stat_t) ((status&(3<<6))>>6);
+	my_charger_status.status_charge = (charge_stat_t) ((status&(3<<4))>>4);
+	my_charger_status.power_good = (status&(1<<2))>>2;
 	DEBUG("Charger_fault: 0x%x  status: 0x%x \n", fault, status);
-	mycallback.cb(fault, status, mycallback.arg);
+	if(mycallback.cb != NULL){
+			mycallback.cb(fault, status, mycallback.arg);
+	}
 }
 
 
@@ -57,7 +69,23 @@ int8_t charger_init(i2c_t dev, gpio_t alarm_pin, charger_cb_t cb, void *arg)
 	mycallback.cb = cb;
 	mycallback.arg = arg;
 	mycallback.dev = dev;
-	return i2c_init_master(dev, I2C_SPEED_FAST);
+	int8_t error = i2c_init_master(dev, I2C_SPEED_FAST);
+	uint8_t fault = charger_get_new_fault(mycallback.dev);
+	uint8_t status = charger_get_system_status(mycallback.dev);
+	my_charger_status.watchdog_expired = (fault&(1<<7))>>7;
+	my_charger_status.otg_boost_error = (fault&(1<<6))>>6;
+	my_charger_status.charge_fault = (charge_fault_t)((fault&(3<<4))>>4);
+	my_charger_status.bat_ovp = (fault&(1<<3))>>3;
+	my_charger_status.ntc_fault = (ntc_fault_t)(fault&3);
+	my_charger_status.status_vbus = (vbus_stat_t) ((status&(3<<6))>>6);
+	my_charger_status.status_charge = (charge_stat_t) ((status&(3<<4))>>4);
+	my_charger_status.power_good = (status&(1<<2))>>2;
+	return error;
+}
+
+
+charger_status_t charger_get_status_struct(void){
+	return my_charger_status;
 }
 
 uint8_t charger_get_system_status(i2c_t dev)

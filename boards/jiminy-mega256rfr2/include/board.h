@@ -46,12 +46,13 @@ extern "C" {
 #define LED_PORT_DDR		DDRB
 
 #define LED_BLUE_PIN		GPIO_PIN(1, 5)
-#define LED_RED_PIN			GPIO_PIN(1, 7)
 #define LED_GREEN_PIN		GPIO_PIN(1, 6)
+#define LED_RED_PIN			GPIO_PIN(1, 7)
 
 #define BLUE			(1 << DDB5)
-#define RED				(1 << DDB7)
 #define GREEN			(1 << DDB6)
+#define RED				(1 << DDB7)
+
 
 /** @} */
 

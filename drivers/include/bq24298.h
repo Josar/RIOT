@@ -25,6 +25,47 @@
 #include "periph/i2c.h"
 #include "inttypes.h"
 
+
+typedef enum{
+	CHRARGE_FAULT_INPUT_FAULT = 1,
+	CHARGE_FAULT_THERMAL_SHUTDOWN =  2,
+	CHARGE_FAULT_TIMER_EXPIRED = 3
+}charge_fault_t;
+
+typedef enum{
+	NTC_FAULT_NORMAL = 0,
+	NTC_FAULT_COLD = 2,
+	NTC_FAULT_HOT = 1
+}ntc_fault_t;
+
+typedef enum{
+	VBUS_STAT_UNKNOWN=0,
+	VBUS_STAT_USB_HOST=1,
+	VBUS_STAT_ADAPTER_PORT=2,
+	VBUS_STAT_OTG=3
+}vbus_stat_t;
+
+typedef enum{
+	CHARGE_STATUS_NOT_CHARGING = 0,
+	CHARGE_STATUS_PRE_CHARGE = 1,
+	CHARGE_STATUS_FAST_CHARGING = 2,
+	CHARGE_STATUS_CHARGE_TERMINATION = 3
+}charge_stat_t;
+
+
+typedef struct {
+	uint8_t watchdog_expired;
+	uint8_t otg_boost_error;
+	charge_fault_t charge_fault;
+	uint8_t bat_ovp; //overvoltage
+	ntc_fault_t ntc_fault;
+	vbus_stat_t status_vbus;
+	charge_stat_t status_charge;
+	uint8_t power_good;
+}charger_status_t;
+
+
+
 /* help definitions */
 
 #define REG_INPUT_SOURCE_CONTROL											(0x00)
@@ -151,6 +192,14 @@ typedef void (*charger_cb_t)(uint8_t fault, uint8_t status, void *arg);
  * @return                  -2 on unsupported speed value
  */
 int8_t charger_init(i2c_t dev, gpio_t alarm_pin, charger_cb_t cb, void *arg);
+
+/**
+ * @brief  returns charger status struct
+ *
+ *
+ * @return 						status struct
+ */
+charger_status_t charger_get_status_struct(void);
 
 /**
  * @brief  reads system status from sensor

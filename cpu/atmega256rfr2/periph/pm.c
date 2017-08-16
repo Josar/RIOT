@@ -53,11 +53,11 @@ void pm_off(void)
 {
 	// TODO
 	/* White LED ON. */
-	LED_PORT &= ~(BLUE|GREEN|RED);
+	LED_PORT |= (BLUE|GREEN|RED);
 
 	/* White LED OFF. */
 	// All LED OFF
-	LED_PORT |= BLUE|GREEN|RED;
+	LED_PORT &= ~BLUE|GREEN|RED;
 
 	printf("pm_off\n");
 }
@@ -77,6 +77,8 @@ void pm_reboot(void)
  * will return 0 if a xtimer is running with less than a second to go so we don't go to sleep
  * will return 1 if the timer runs long enough to go to sleep
  */
+#define DONT_SLEEP
+#ifndef DONT_SLEEP
 #ifdef MODULE_XTIMER
 static inline uint8_t __goto_sleep_xtimer(void)
 {
@@ -157,13 +159,6 @@ static inline void __set_short_sleep(void)
 }
 
 void pm_set_lowest(void) {
-	LED_PORT &= ~(RED|GREEN|BLUE);
-	if(PINE & (1<<PE0)){
-		LED_PORT |= RED;
-	}else{
-		LED_PORT |= GREEN;
-	}
-	while(1);
 	if(__goto_sleep_xtimer() != NO_SLEEP && get_xtimer_head() == NULL){
 		timer_stop(XTIMER_DEV);
 		if(sleep_state == SLEEP_SHORT){
@@ -188,4 +183,5 @@ void pm_set_lowest(void) {
 ISR(TIMER2_COMPA_vect){
 	TIMSK2 &=~(1<<OCIE2A);
 }
+#endif
 #endif
