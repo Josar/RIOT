@@ -55,7 +55,7 @@
 
 	#include "avr/interrupt.h"
 	// saved device Pointer for Interrupt callback
-	static netdev_t* static_dev;
+	static netdev_t* static_dev =0;
 	// static kernel_pid_t at86rfr2_interrupt_thread_pid;
 
 //	/*
@@ -491,12 +491,15 @@ void at86rf2xx_reset(at86rf2xx_t *dev)
 
     /* get an 8-byte unique ID to use as hardware address */
     luid_get(addr_long.uint8, IEEE802154_LONG_ADDRESS_LEN);
+
+
     /* make sure we mark the address as non-multicast and not globally unique */
     addr_long.uint8[0] &= ~(0x01);
     addr_long.uint8[0] |=  (0x02);
     /* set short and long address */
     at86rf2xx_set_addr_long(dev, ntohll(addr_long.uint64.u64));
     at86rf2xx_set_addr_short(dev, ntohs(addr_long.uint16[0].u16));
+
 
     /* set default PAN id */
     at86rf2xx_set_pan(dev, AT86RF2XX_DEFAULT_PANID);
@@ -671,3 +674,11 @@ void at86rf2xx_tx_exec(at86rf2xx_t *dev)
         netdev->event_callback(netdev, NETDEV_EVENT_TX_STARTED);
     }
 }
+
+#if defined(MODULE_AT86RFR2)
+void at86rf2xx_get_random_num(uint8_t *data, const size_t len){
+	if( static_dev !=0 ){
+		at86rf2xx_get_random( (at86rf2xx_t *)static_dev, data, len);
+	}
+}
+#endif
