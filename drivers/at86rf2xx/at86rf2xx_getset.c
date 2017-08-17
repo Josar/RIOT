@@ -31,7 +31,7 @@
 	#include "periph/spi.h"
 #endif
 
-#define ENABLE_DEBUG (1)
+#define ENABLE_DEBUG (0)
 #include "debug.h"
 
 #ifdef MODULE_AT86RF212B

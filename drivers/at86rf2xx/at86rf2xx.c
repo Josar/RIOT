@@ -37,7 +37,7 @@
 #ifdef DEBUG_AT86RF2XX
 #define ENABLE_DEBUG (1)
 #else
-#define ENABLE_DEBUG (1)
+#define ENABLE_DEBUG (0)
 #endif
 #include "debug.h"
 
@@ -648,10 +648,6 @@ size_t at86rf2xx_tx_load(at86rf2xx_t *dev, uint8_t *data,
 {
     dev->tx_frame_len += (uint8_t)len;
     at86rf2xx_sram_write(dev, offset + 1, data, len);
-    DEBUG("at86rf2xx_tx_load(): Offset: %d DATA: ", offset);
-    for(uint8_t i = 0; i<len; i++){
-    	DEBUG("0x%x ", data[i]);
-    }
     return offset + len;
 }
 
