@@ -18,5 +18,9 @@ QUIET ?= 0
 USEMODULE += bq24298
 USEMODULE += lc709203f
 
+# Add also the shell, some shell commands
+USEMODULE += shell
+USEMODULE += shell_commands
+
 include $(RIOTBASE)/Makefile.include
 

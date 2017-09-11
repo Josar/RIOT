@@ -26,7 +26,9 @@
 
 #include "atmega_regs_common.h"
 
-#include "at86rf2xx_netdev.h"
+#ifdef AT86RF2XX_NETDEV_H
+	#include "at86rf2xx_netdev.h"
+#endif
 
 #include "debug.h"
 #define ENABLE_DEBUG 1
@@ -58,11 +60,16 @@
  * So to initialize different addresses to different nodes the
  * random part is introduced.
  */
+
 void cpuid_get(void *id)
 {
 	/* use random number generator to get last byte for the ID */
 	uint8_t random;
+#ifdef AT86RF2XX_NETDEV_H
 	at86rf2xx_get_random_num( &random, 1);
+#else
+	random= 0x11;
+#endif
 
 	uint8_t addr[] = {
 			random,
