@@ -63,8 +63,8 @@ int8_t charger_init(i2c_t dev, gpio_t alarm_pin, charger_cb_t cb, void *arg)
 		PCICR |= (1<<PCIE0);
 		PCMSK0 |= (1<<PCINT4);
 		DEBUG("PCICR %x PCMSK %x \n", PCICR, PCMSK0);
-	#elif
-	gpio_init_int(alarm_pin, GPIO_IN, GPIO_FALLING,cb, arg);
+	#else
+		gpio_init_int(alarm_pin, GPIO_IN, GPIO_FALLING, (gpio_cb_t)cb, arg);
 	#endif
 	mycallback.cb = cb;
 	mycallback.arg = arg;
