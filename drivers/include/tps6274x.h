@@ -55,9 +55,9 @@ uint8_t stepdown_switch_voltage(uint16_t voltage);
 void stepdown_enable_load(void);
 
 /**
- * @brief sets ctrl pin low to poweroff a subsystem connected on the load pin
+ * @brief sets ctrl pin low to power off a subsystem connected on the load pin
  *
  */
-void stepdown_disabel_load(void);
+void stepdown_disable_load(void);
 
 #endif

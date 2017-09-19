@@ -15,12 +15,21 @@ CFLAGS += -DDEVELHELP
 # Change this to 0 show compiler invocation lines by default:
 QUIET ?= 0
 
+# Batterie charger and power path IC
 USEMODULE += bq24298
+# Battery Fuel Gauge
 USEMODULE += lc709203f
+# Step Down Converter 1.8-3.3V
+USEMODULE += tps6274x
 
 # Add also the shell, some shell commands
 USEMODULE += shell
 USEMODULE += shell_commands
+USEMODULE += ps
+
+#Add support for xtimer
+USEMODULE += xtimer
+FEATURES_REQUIRED += periph_timer
 
 include $(RIOTBASE)/Makefile.include
 

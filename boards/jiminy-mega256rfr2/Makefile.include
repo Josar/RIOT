@@ -5,6 +5,8 @@ export CPU_MODEL = atmega256rfr2
 export TERMPROG = $(RIOTBASE)/dist/tools/pyterm/pyterm
 export TERMFLAGS = -b 9600 -p $(PORT)
 
+export SIZEFLAGS = --format=avr --mcu=atmega256rfr2
+
 #define the flash-tool and default port depending on the host operating system
 OS = $(shell uname)
 ifeq ($(OS),Linux)

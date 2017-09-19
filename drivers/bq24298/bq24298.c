@@ -39,6 +39,8 @@ static volatile pcint_stat my_stat= PCINT_FALLING;
 static inline void _charger_cb(void)
 {
 	uint8_t fault = charger_get_new_fault(mycallback.dev);
+	// current status manual p. 24
+	fault = charger_get_new_fault(mycallback.dev);
 	uint8_t status = charger_get_system_status(mycallback.dev);
 	my_charger_status.watchdog_expired = (fault&(1<<7))>>7;
 	my_charger_status.otg_boost_error = (fault&(1<<6))>>6;
@@ -48,7 +50,17 @@ static inline void _charger_cb(void)
 	my_charger_status.status_vbus = (vbus_stat_t) ((status&(3<<6))>>6);
 	my_charger_status.status_charge = (charge_stat_t) ((status&(3<<4))>>4);
 	my_charger_status.power_good = (status&(1<<2))>>2;
-	DEBUG("Charger_fault: 0x%x  status: 0x%x \n", fault, status);
+
+
+	if( (status & 0x20)!= 0 )
+	{
+		// stop charging
+		charger_write_reg(I2C_0,01, 11);
+		printf("Stopped charging.\n");
+	}
+
+	DEBUG("Charger_fault: 0x%02x  status: 0x%02x \n", fault, status);
+
 	if(mycallback.cb != NULL){
 			mycallback.cb(fault, status, mycallback.arg);
 	}
