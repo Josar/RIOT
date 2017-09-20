@@ -142,7 +142,7 @@ uint8_t start_measuring(uint8_t cycle, capacity_result_t *my_result)
 	my_result->capacity = 1.0/(1.386*100000*my_result->frequency);
 
 	DEBUG("Capacity %.3f pF\n", my_result->capacity*1000000000000);
-	EBUG("Frequency %.2f Hz\n", my_result->frequency);
+	DEBUG("Frequency %.2f Hz\n", my_result->frequency);
 	DEBUG("Timestamp %.3f us\n", my_result->timestamp*1000000);
 	DEBUG("Debug: Average %u \n", my_result->average);
 	return 0;

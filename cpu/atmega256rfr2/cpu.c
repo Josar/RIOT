@@ -193,7 +193,7 @@ ISR(BADISR_vect)
 //		__exit_isr();
 //	}
 
-	ISR(TIMER1_CAPT_vect , ISR_BLOCK)
+/*	ISR(TIMER1_CAPT_vect , ISR_BLOCK)
 	{
 		__enter_isr();
 		DEBUG("TIMER1_CAPT_vect \n");
@@ -224,8 +224,8 @@ ISR(BADISR_vect)
 		__exit_isr();
 	}
 
-
-	ISR(TIMER0_COMPA_vect, ISR_BLOCK)
+*/
+	/*ISR(TIMER0_COMPA_vect, ISR_BLOCK)
 	{
 		__enter_isr();
 		DEBUG("TIMER0_COMPA_vect \n");
@@ -249,7 +249,7 @@ ISR(BADISR_vect)
 		__enter_isr();
 		DEBUG("SPI_STC_vect \n");
 		__exit_isr();
-	}
+	}*/
 // Defined in atmega_common/periph/uart.c
 //	ISR(USART0_RX_vect, ISR_BLOCK)
 //	{
@@ -272,12 +272,12 @@ ISR(BADISR_vect)
 		__exit_isr();
 	}
 
-	ISR(ANALOG_COMP_vect, ISR_BLOCK)
+	/*ISR(ANALOG_COMP_vect, ISR_BLOCK)
 	{
 		__enter_isr();
 		DEBUG("ANALOG_COMP_vect \n");
 		__exit_isr();
-	}
+	}*/
 	ISR(ADC_vect, ISR_BLOCK)
 	{
 		__enter_isr();
