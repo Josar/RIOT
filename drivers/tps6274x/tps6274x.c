@@ -10,7 +10,7 @@
 #include "tps6274x.h"
 #include "tps6274x_settings.h"
 
-#define ENABLE_DEBUG		(1)
+#define ENABLE_DEBUG		(0)
 #include "debug.h"
 
 uint8_t stepdown_init(uint16_t voltage)
