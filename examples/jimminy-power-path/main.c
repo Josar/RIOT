@@ -151,6 +151,7 @@ int supply_cmd(int argc, char **argv){
 
 /* set interval to 1 second */
 #define INTERVAL (30 * US_PER_SEC)
+#define Test_INTERVAL_long (1 * US_PER_SEC)
 
 void *charger_status_thread(void *arg)
 {
@@ -220,6 +221,37 @@ int main(void)
 	stepdown_init(3000);
 
 
+	_delay_ms(1000);
+
+    stepdown_switch_voltage(1800);
+	_delay_ms(500);
+	stepdown_enable_load();
+	_delay_ms(500);
+	stepdown_disable_load();
+	_delay_ms(500);
+
+    stepdown_switch_voltage(2200);
+	_delay_ms(500);
+	stepdown_enable_load();
+	_delay_ms(500);
+	stepdown_disable_load();
+	_delay_ms(500);
+
+    stepdown_switch_voltage(2600);
+	_delay_ms(500);
+	stepdown_enable_load();
+	_delay_ms(500);
+	stepdown_disable_load();
+	_delay_ms(500);
+
+    stepdown_switch_voltage(3000);
+	_delay_ms(500);
+	stepdown_enable_load();
+	_delay_ms(500);
+	stepdown_disable_load();
+	_delay_ms(500);
+
+
     puts("\nJimminy Fuel Gauge\n");
     gauge_init(I2C_0, GPIO_PIN(PORT_E, 6), _gauge_cb, NULL);
     gauge_set_alarm_low_rsoc(I2C_0, 0);
@@ -250,8 +282,6 @@ int main(void)
 
 	// set current limit to 500mA
     charger_write_reg(I2C_0, 0x02 , 0x00 );
-
-
 
 
     // thread to read out charger status
