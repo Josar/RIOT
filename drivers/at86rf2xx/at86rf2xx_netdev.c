@@ -743,7 +743,7 @@ static void _isr(netdev_t *netdev){
 		 */
 		/* should not be necessary*/
 		// at86rf2xx_set_state(dev, AT86RF2XX_TRX_STATE__RX_AACK_ON);
-		LED_PORT |= GREEN;
+		//LED_PORT |= GREEN;
 		return;
 	}
 
@@ -827,7 +827,7 @@ static void _isr(netdev_t *netdev){
 				}
 			}
 		}
-		LED_PORT |= BLUE;
+		//LED_PORT |= BLUE;
 		return;
 	}
 

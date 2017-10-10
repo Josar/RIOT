@@ -210,7 +210,7 @@
 	ISR(TRX24_PLL_LOCK_vect, ISR_BLOCK)
 	{
 		__enter_isr();
-		LED_PORT &= ~GREEN;
+		////LED_PORT &= ~GREEN;
 		((at86rf2xx_t*)static_dev)->irq_status |= AT86RF2XX_IRQ_STATUS_MASK__PLL_LOCK_EN;
 		static_dev->event_callback(static_dev, NETDEV_EVENT_ISR);
 		DEBUG("TRX24_PLL_LOCK\n");
@@ -225,7 +225,7 @@
 		__enter_isr();
 		((at86rf2xx_t*)static_dev)->irq_status |= AT86RF2XX_IRQ_STATUS_MASK__PLL_UNLOCK_EN;
 		static_dev->event_callback(static_dev, NETDEV_EVENT_ISR);
-		LED_PORT |= GREEN;
+		//LED_PORT |= GREEN;
 		DEBUG("TRX24_PLL_UNLOCK\n");
 		__exit_isr();
 	}
@@ -239,7 +239,7 @@
 	ISR(TRX24_RX_START_vect, ISR_BLOCK)
 	{
 		__enter_isr();
-		LED_PORT &= ~GREEN;
+		//LED_PORT &= ~GREEN;
 		((at86rf2xx_t*)static_dev)->irq_status |= AT86RF2XX_IRQ_STATUS_MASK__RX_START_EN;
 		static_dev->event_callback(static_dev, NETDEV_EVENT_ISR);
 		DEBUG("TRX24_RX_START\n");
@@ -264,7 +264,7 @@
 		 */
 		*AT86RF2XX_REG__TRX_STATE =  AT86RF2XX_TRX_STATE__FORCE_PLL_ON;
 
-		LED_PORT &= ~GREEN;
+		//LED_PORT &= ~GREEN;
 		((at86rf2xx_t*)static_dev)->irq_status |= AT86RF2XX_IRQ_STATUS_MASK__RX_END_EN;
 		/*
 		 * p. 99, 9.8.7 Dynamic Frame Buffer Protection
@@ -320,7 +320,7 @@
 	ISR(TRX24_TX_END_vect, ISR_BLOCK)
 	{
 		__enter_isr();
-		LED_PORT &= ~BLUE;
+		//LED_PORT &= ~BLUE;
 		((at86rf2xx_t*)static_dev)->irq_status |= AT86RF2XX_IRQ_STATUS_MASK__TX_END_EN;
 		static_dev->event_callback(static_dev, NETDEV_EVENT_ISR);
 		/* don't set transceiver back to receiving state
@@ -400,7 +400,7 @@
 		__enter_isr();
 		((at86rf2xx_t*)static_dev)->irq_status1 |= AT86RF2XX_IRQ_STATUS_MASK1__TX_START_EN;
 		static_dev->event_callback(static_dev, NETDEV_EVENT_ISR);
-		LED_PORT |= RED;
+		//LED_PORT |= RED;
 		DEBUG("TRX24_TX_START\n");
 		__exit_isr();
 	}

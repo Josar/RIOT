@@ -37,8 +37,8 @@ static const shell_command_t shell_commands[] = {
 
 int main(void)
 {
-	LED_PORT |= BLUE|GREEN|RED;
-	LED_PORT ^= RED;
+	//LED_PORT = BLUE|GREEN|RED;
+	//LED_PORT ^= RED;
 
     /* we need a message queue for the thread running the shell in order to
      * receive potentially fast incoming networking packets */
