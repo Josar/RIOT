@@ -20,7 +20,7 @@ USEMODULE += gnrc_netdev_default
 USEMODULE += auto_init_gnrc_netif
 
 # Specify the mandatory networking modules for IPv6 and UDP
-USEMODULE += gnrc_ipv6_router_default
+USEMODULE += gnrc_ipv6_default
 USEMODULE += gnrc_udp
 # Add a routing protocol
 USEMODULE += gnrc_rpl
@@ -46,8 +46,8 @@ USEMODULE += netstats_rpl
 CFLAGS += -DDEVELHELP
 
 # Debugginhg the at86rf2xx implementation
-CFLAGS += -DDEBUG_AT86RF2XX
-CFLAGS += -DDEBUG_AT86RF2XX_NETDEV
+#CFLAGS += -DDEBUG_AT86RF2XX
+#CFLAGS += -DDEBUG_AT86RF2XX_NETDEV
 
 # Uncomment the following 2 lines to specify static link lokal IPv6 address
 # this might be useful for testing, in cases where you cannot or do not want to

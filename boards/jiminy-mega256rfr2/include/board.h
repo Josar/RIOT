@@ -36,7 +36,7 @@ extern "C" {
 /**
  * CPU is fast enough to send 115200 baud but receiving is not working
  */
-#define UART_STDIO_BAUDRATE (9600U)
+#define UART_STDIO_BAUDRATE (250000U)
 
 /**
  * @brief   LED pin definitions and handlers
