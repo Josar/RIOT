@@ -13,11 +13,12 @@ RIOTBASE ?= $(CURDIR)/../..
 CFLAGS += -DDEVELHELP
 
 # Change this to 0 show compiler invocation lines by default:
-QUIET ?= 1
-
+QUIET ?= 0
 
 USEMODULE += xtimer
+
 FEATURES_REQUIRED += periph_timer
+FEATURES_REQUIRED += periph_uart
 
 
 include $(RIOTBASE)/Makefile.include

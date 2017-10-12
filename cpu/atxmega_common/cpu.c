@@ -38,8 +38,6 @@
  */
 void cpu_init(void)
 {
-
-
 	wdt_reset();
 	wdt_disable();
 
@@ -76,68 +74,3 @@ ISR(BADISR_vect)
 		 _delay_ms( 50 );
 	};
 }
-
-/* All Interrupts are liste here to test them.*/
-/*TODO Remove not needed interupt vector routines */
-
-/*INT0 - 7 defined in gpio.c */
-//	ISR(INT0_vect, ISR_BLOCK)
-//	{
-//		__enter_isr();
-//		DEBUG("INT0_vect \n");
-//		__exit_isr();
-//	}
-//	ISR(INT1_vect, ISR_BLOCK)
-//	{
-//		__enter_isr();
-//		DEBUG("INT1_vect \n");
-//		__exit_isr();
-//	}
-//	ISR(INT2_vect, ISR_BLOCK)
-//	{
-//		__enter_isr();
-//		DEBUG("INT2_vect \n");
-//		__exit_isr();
-//	}
-//	ISR(INT3_vect , ISR_BLOCK)
-//	{
-//		__enter_isr();
-//		DEBUG("INT3_vect \n");
-//		__exit_isr();
-//	}
-//
-//	ISR(INT4_vect, ISR_BLOCK)
-//	{
-//		__enter_isr();
-//		DEBUG("INT4_vect \n");
-//		__exit_isr();
-//	}
-//	ISR(INT5_vect, ISR_BLOCK)
-//	{
-//		__enter_isr();
-//		DEBUG("INT5_vect \n");
-//		__exit_isr();
-//	}
-//	ISR(INT6_vect, ISR_BLOCK)
-//	{
-//		__enter_isr();
-//		DEBUG("INT6_vect \n");
-//		__exit_isr();
-//	}
-//	ISR(INT7_vect , ISR_BLOCK)
-//	{
-//		__enter_isr();
-//		DEBUG("INT7_vect \n");
-//		__exit_isr();
-//	}
-
-
-// context save interrupt
-//	ISR(PCINT0_vect, ISR_BLOCK)
-//	{
-//		__enter_isr();
-//		DEBUG("PCINT0_vect \n");
-//		LED_PORT |= RED;
-//		__exit_isr();
-//	}
-

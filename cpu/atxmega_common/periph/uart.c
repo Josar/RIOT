@@ -32,7 +32,9 @@
 #include "sched.h"
 #include "thread.h"
 
+#include "include/board.h"
 #include "periph/uart.h"
+
 
 #include <avr/io.h>
 
@@ -138,17 +140,17 @@ int uart_init(uart_t uart, uint32_t baudrate, uart_rx_cb_t rx_cb, void *arg)
     _set_baut(uart, baudrate);
 
     // set uasart to 9600BAUD
-     dev[uart]->BAUDCTRLA = (3317 & 0xff) << USART_BSEL_gp;
-     dev[uart]->BAUDCTRLB = ((-4) << USART_BSCALE_gp) | ((3317 >> 8) << USART_BSEL_gp);
+//     dev[uart]->BAUDCTRLA = (3317 & 0xff) << USART_BSEL_gp;
+//     dev[uart]->BAUDCTRLB = ((-4) << USART_BSCALE_gp) | ((3317 >> 8) << USART_BSEL_gp);
 
-     // set uasart to 576000BAUD
-//     dev[uart]->BAUDCTRLA = (79 & 0xff);
-//     dev[uart]->BAUDCTRLB = ((-5) << USART_BSCALE_gp) | ((79 >> 8) );
+     // set uasart to 115200BAUD
+     dev[uart]->BAUDCTRLA = ( 2158 & 0xff)<< USART_BSEL_gp;
+     dev[uart]->BAUDCTRLB = ((-7) << USART_BSCALE_gp) | ( ( 2158 >> 8) << USART_BSEL_gp );
 
-//
-//     // set uasart to 1MegBuad // geht noch nicht
-//     dev[uart]->BAUDCTRLA = (1 & 0xff);
-//     dev[uart]->BAUDCTRLB = ((0) << USART_BSCALE_gp) | ((1 >> 8) );
+#if defined(UART_DOUBLE_SPEED)
+         dev[uart]->CTRLB |= USART_CLK2X_bm ;
+#endif
+
 
 
      /* enable RX and TX Interrupts and set level*/

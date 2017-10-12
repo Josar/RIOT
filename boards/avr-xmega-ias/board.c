@@ -42,7 +42,7 @@ static int uart_getchar(FILE *stream);
 static FILE uart_stdout = FDEV_SETUP_STREAM(uart_putchar, NULL, _FDEV_SETUP_WRITE);
 static FILE uart_stdin = FDEV_SETUP_STREAM(NULL, uart_getchar, _FDEV_SETUP_READ);
 
-#define time_to_wait 50
+#define time_to_wait 500
 
 
 void board_init(void)
@@ -61,57 +61,40 @@ void board_init(void)
 		*(reg++) = 0x00;
 	}
 
+
+	/* XMEGA A3U [DATASHEET] p.23 After reset, the device starts up running from the 2MHz internal oscillator.
+	 * The other clock sources, DFLLs and PLL, are turned off by default.*/
+
+	// Configure clock to 32MHz with calibration
+	// application note AVR1003
+
+	// From errata http://www.avrfreaks.net/forum/xmega-dfll-does-it-work
+	// In order to use the automatic runtime calibration for the 2 MHz or the 32 MHz internal oscillators, the DFLL for both oscillators and both oscillators has to be enabled for one to work.
+	OSC.CTRL |= OSC_RC32MEN_bm | OSC_RC32KEN_bm;  /* Enable the internal 32MHz & 32KHz oscillators */
+	while(!(OSC.STATUS & OSC_RC32KRDY_bm));       /* Wait for 32Khz oscillator to stabilize */
+	while(!(OSC.STATUS & OSC_RC32MRDY_bm));       /* Wait for 32MHz oscillator to stabilize */
+	DFLLRC32M.CTRL = DFLL_ENABLE_bm ;             /* Enable DFLL - defaults to calibrate against internal 32Khz clock */
+	DFLLRC2M.CTRL = DFLL_ENABLE_bm ;             /* Enable DFLL - defaults to calibrate against internal 32Khz clock */
+
+	/* Disable CCP for Protected IO register and set new value*/
 	/* Set system clock prescalers to zero */
-	CLK.CTRL = CLK_PSADIV_1_gc;
+	/* PSCTRL contains A Prescaler Value and one value for and B and C Prescaler */
+     PROTECTED_WRITE(CLK.PSCTRL, CLK_PSADIV_1_gc|CLK_PSBCDIV_1_1_gc);
+     /*
+     	* Previous instruction takes 3 clk cycles with -Os option
+     	* we need another clk cycle before we can reuse it.
+     	*/
+     __asm__ __volatile__("nop");
+
+     /* Disable CCP for Protected IO register and set new value*/
+     /* Switch to 32MHz clock */
+     PROTECTED_WRITE(CLK.CTRL, CLK_SCLKSEL_RC32M_gc);
+
+	// OSC.CTRL &= ~OSC_RC2MEN_bm;                   /* Disable 2Mhz oscillator */
 
 
-	/*
-	* From avr1003 (doc8072.pdf)
-	* There are five internal clock sources (including the internal PLL),
-	* ranging from an ultra low-power 32 kHz RC oscillator to a 32 MHz
-	* factory-calibrated ring oscillator with auto-calibration features.
-	* All but one can be used for the main system clock.
-	*/
-	OSC.CTRL |=OSC_RC32MEN_bm;
-	/*
-	* Wait for OSC to stabilize
-	*/
-	while(   !( (OSC.STATUS) & OSC_RC32MRDY_bm)   );
-//	/*
-//	* Set Regirester Protection signature
-//	*/
-//	CCP=CCP_IOREG_gc; //0xD8;
-//	/*
-//	* Possible prescaler config:
-//	* 0x00 = NO prescaler
-//	* CLK_PSADIVx_bm | CLK_PSBCDIVy_bm;
-//	* x = A prescaler config: 0, 1, 2, 3, 4;
-//	* y = B & C prescaler config: 0, 1;
-//	*
-//	* Now Disabling prescaler
-//	*/
-//	CLK.PSCTRL = 0x00;
-
-	/* Disable CCP for Protected IO registerand set new value*/
-     PROTECTED_WRITE(CLK.PSCTRL, 0x00);
-	/*
-	* Previous instruction takes 3 clk cycles with -Os option
-	* we need another clk cycle before we can reuse it.
-	*/
-	__asm__ __volatile__("nop");
-
-//	/*
-//	* Set Regirester Protection signature
-//	*/
-//	CCP=CCP_IOREG_gc; //0xD8;
-//	/*
-//	* Selecting Clock source
-//	* Equivalent to CCPWrite(&CLK.CTRL, CLK_SCLKSEL0_bm);
-//	*/
-//	CLK.CTRL = CLK_SCLKSEL0_bm;
-
-	/* Disable CCP for Protected IO registerand set new value*/
-     PROTECTED_WRITE(CLK.CTRL, CLK_SCLKSEL0_bm);
+     /* wait for calibratin to finisch */
+//      _delay_ms( time_to_wait );
 
 	/* config LEDs*/
 	PORTF.DIRSET =  PIN3_bm|PIN2_bm ; // Set pins 2, 3 on port F to be output.
@@ -124,40 +107,11 @@ void board_init(void)
 	PORTC.DIRSET =  PIN7_bm; // output for TX
 	PORTC.DIRCLR =  PIN6_bm;  // input for RX
 
-
-//	uint8_t wait=0;
-
-//	 while( wait < 5){ // loop
-//		 wait++;
-//
-//
-//		 if( (PORTF.IN & PIN3_bm)!=0 ){
-//			  PORTF.OUTSET = PIN2_bm ;
-//
-//			  PORTF.OUTCLR = PIN3_bm ;
-//		 }else
-//		 {
-//			 PORTF.OUTCLR = PIN2_bm ;
-//			 PORTF.OUTSET = PIN3_bm ;
-//		 }
-//
-//		 _delay_ms( time_to_wait );
-//	 }
-
-//	 PORTF.OUTCLR = PIN3_bm ;
-//	 PORTF.OUTCLR = PIN2_bm ;
-
-
-	/* initialize stdio via USART_0 */
-	system_stdio_init();
-
-
-    /* Disable power saving for TIMER4 which is used as xtimer, PRTIM4*/
-//	PRR1 &= ~(1<<PRTIM4);
-
     /* initialize the CPU */
     cpu_init();
 
+	/* initialize stdio via USART_0 */
+	system_stdio_init();
 
 
     //TODO led init
@@ -181,8 +135,9 @@ void system_stdio_init(void)
 {
 
 	/* initialize Pins used for stdout */
-	PORTC.DIRSET =  PIN7_bm ; // output for TX
-	PORTC.DIRCLR =  PIN6_bm ; // input for RX
+	PORTC.DIRSET =  PIN7_bm ; // output for UART_TX
+	PORTC.DIRCLR =  PIN6_bm ; // input for UART_RX
+
 
 	/* initialize UART_0 for use as stdout */
     uart_stdio_init();
@@ -192,7 +147,7 @@ void system_stdio_init(void)
 
     /* Flush stdout */
     /* Make a very visible start printout */
-    puts("\n_________________________________\n");
+    puts("\n___________\r\n");
 }
 
 static int uart_putchar(char c, FILE *stream)

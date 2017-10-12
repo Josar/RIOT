@@ -37,8 +37,6 @@
 #include <util/delay.h>
 
 
-#include <stdio.h>
-
 #include "arch/thread_arch.h"
 #include "thread.h"
 #include "sched.h"
@@ -59,8 +57,8 @@ void pm_reboot(void)
 
 void pm_set_lowest(void) {
 
-	// thread_arch_stack_print();
-	printf("\npm_set_lowest\n");
+//	thread_arch_stack_print();
+//	printf("\npm_set_lowest\n");
 
 	PORTF.OUTCLR = PIN3_bm ;
 	PORTF.OUTCLR = PIN2_bm ;
@@ -74,7 +72,7 @@ void pm_set_lowest(void) {
 	PORTE.OUTSET = PIN6_bm ;
 	PORTE.OUTSET = PIN7_bm ;
 
-	_delay_ms(1000);
+	_delay_ms(100);
 
 
 	/*TODO implement power save Modes*/

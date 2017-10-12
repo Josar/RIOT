@@ -31,13 +31,6 @@ extern "C" {
 
 #include <stdint.h>
 #include <avr/io.h>
-/**
- * @brief   Clock configuration
- * @{
- */
-#define CLOCK_CORECLOCK     (32000000L)
-/** @} */
-
 
 /**
  * @brief xtimer configuration values
@@ -47,8 +40,8 @@ extern "C" {
 #define XTIMER_DEV					TIMER_DEV(0)   	// set ctx[0] as system counter
 #define XTIMER_CHAN 				(0)				// choose channel 0
 #define XTIMER_WIDTH                (16)			// 16bit timer
-#define XTIMER_HZ                   (125000)	// set Timer frequency TODO think about slowing down timer for power saving
-#define XTIMER_SHIFT                (3) // xtimer prescaler
+#define XTIMER_HZ                   (125000)		// set Timer frequency TODO think about slowing down timer for power saving
+#define XTIMER_SHIFT                (3) 			// xtimer prescaler, For a 8 MHz or 125 kHz, set XTIMER_SHIFT to 3
 #define XTIMER_BACKOFF              (40)			// TODO look into this , All timers that are less than XTIMER_BACKOFF microseconds in the future willjust spin. This is supposed to be defined per-device in e.g., periph_conf.h.
 /** @} */
 
@@ -91,6 +84,31 @@ extern "C" {
 /** @} */
 
 
+/**
+ * @name    SPI configuration
+ *
+ * The atmega256a3u has only one hardware SPI with fixed pin configuration, so all
+ * we can do here, is to enable or disable it...
+ *
+ * The fixed pins for avr-xmega-ias are:
+ *
+ * RF_/RST   - DP1
+ * RF_IRQ    - PD2
+ * RF_SLP_TR - PD3
+ *
+ * SS   - PD4
+ * MOSI - PD5
+ * MISO - PD6
+ * SCK  - PD7
+ *
+ *
+ * @{
+ */
+#define SPI_NUMOF           1           /* set to 0 to disable SPI */
+
+#define MEGA_PRR  PR.PRPD /* Power Reduction Register is PRR */
+
+/** @} */
 
 #ifdef __cplusplus
 }

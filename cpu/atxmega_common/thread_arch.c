@@ -55,7 +55,6 @@
 #error ARV_CONTEXT_SWAP_TRIGGER must be defined in board.h
 #endif
 
-
 /*
  * local function declarations  (prefixed with __)
  */
@@ -96,116 +95,113 @@ static void __enter_thread_mode(void);
  * if task_func returns sched_task_exit gets popped into the PC
  */
 char *thread_arch_stack_init(thread_task_func_t task_func, void *arg,
-                             void *stack_start, int stack_size)
-{
-    uint16_t tmp_adress;
-    uint8_t *stk;
+		void *stack_start, int stack_size) {
+	uint16_t tmp_adress;
+	uint8_t *stk;
 
-    /* AVR uses 16 Bit or two 8 Bit registers for storing  pointers*/
-    stk = (uint8_t *)((uintptr_t)stack_start + stack_size);
+	/* AVR uses 16 Bit or two 8 Bit registers for storing  pointers*/
+	stk = (uint8_t *) ((uintptr_t) stack_start + stack_size);
 
-    /* put marker on stack */
-    stk--;
-    *stk = (uint8_t) 0xAF;
-    stk--;
-    *stk = (uint8_t) 0xFE;
+	/* put marker on stack */
+	stk--;
+	*stk = (uint8_t) 0xAF;
+	stk--;
+	*stk = (uint8_t) 0xFE;
 
-    /* save sched_task_exit */
-    stk--;
-    tmp_adress = (uint16_t) sched_task_exit;
-    *stk = (uint8_t)(tmp_adress & (uint16_t) 0x00ff);
-    stk--;
-    tmp_adress >>= 8;
-    *stk = (uint8_t)(tmp_adress & (uint16_t) 0x00ff);
-
-#if FLASHEND > 0x1ffff
-    /* Devices with more than 128kb FLASH use a 17 bit PC, we set whole the top byte forcibly to 0 */
-    stk--;
-    *stk = (uint8_t) 0x00;
-#endif
-
-    /* save address to task_func in place of the program counter */
-    stk--;
-    tmp_adress = (uint16_t) task_func;
-    *stk = (uint8_t)(tmp_adress & (uint16_t) 0x00ff);
-    stk--;
-    tmp_adress >>= 8;
-    *stk = (uint8_t)(tmp_adress & (uint16_t) 0x00ff);
+	/* save sched_task_exit */
+	stk--;
+	tmp_adress = (uint16_t) sched_task_exit;
+	*stk = (uint8_t) (tmp_adress & (uint16_t) 0x00ff);
+	stk--;
+	tmp_adress >>= 8;
+	*stk = (uint8_t) (tmp_adress & (uint16_t) 0x00ff);
 
 #if FLASHEND > 0x1ffff
-    /* Devices with more than 128kb FLASH use a 17 bit PC, we set whole the top byte forcibly to 0 */
-    stk--;
-    *stk = (uint8_t) 0x00;
+	/* Devices with more than 128kb FLASH use a 17 bit PC, we set whole the top byte forcibly to 0 */
+	stk--;
+	*stk = (uint8_t) 0x00;
 #endif
 
+	/* save address to task_func in place of the program counter */
+	stk--;
+	tmp_adress = (uint16_t) task_func;
+	*stk = (uint8_t) (tmp_adress & (uint16_t) 0x00ff);
+	stk--;
+	tmp_adress >>= 8;
+	*stk = (uint8_t) (tmp_adress & (uint16_t) 0x00ff);
 
-    /* r0 */
-    stk--;
-    *stk = (uint8_t) 0x00;
+#if FLASHEND > 0x1ffff
+	/* Devices with more than 128kb FLASH use a 17 bit PC, we set whole the top byte forcibly to 0 */
+	stk--;
+	*stk = (uint8_t) 0x00;
+#endif
 
-    /* status register (with interrupts enabled) */
-    stk--;
-    *stk = (uint8_t) 0x80;
+	/* r0 */
+	stk--;
+	*stk = (uint8_t) 0x00;
+
+	/* status register (with interrupts enabled) */
+	stk--;
+	*stk = (uint8_t) 0x80;
 
 #if defined(EIND)
-    stk--;
-    *stk = (uint8_t) 0x00;
+	stk--;
+	*stk = (uint8_t) 0x00;
 #endif
 #if defined(RAMPZ)
-    stk--;
-    *stk = (uint8_t) 0x00;
+	stk--;
+	*stk = (uint8_t) 0x00;
 #endif
-#if defined(RAMPY)
-    stk--;
-    *stk = (uint8_t) 0x00;
-#endif
-#if defined(RAMPX)
-    stk--;
-    *stk = (uint8_t) 0x00;
-#endif
+//#if defined(RAMPY)
+//    stk--;
+//    *stk = (uint8_t) 0x00;
+//#endif
+//#if defined(RAMPX)
+//    stk--;
+//    *stk = (uint8_t) 0x00;
+//#endif
+//#if defined(RAMPD)
+//    stk--;
+//    *stk = (uint8_t) 0x00;
+//#endif
 
-#if defined(RAMPD)
-    stk--;
-    *stk = (uint8_t) 0x00;
-#endif
+	/* r1 - has always to be 0 */
+	stk--;
+	*stk = (uint8_t) 0x00;
+	/*
+	 * Space for registers r2 -r23
+	 *
+	 * use loop for better readability, the compiler unrolls anyways
+	 */
 
-    /* r1 - has always to be 0 */
-    stk--;
-    *stk = (uint8_t) 0x00;
-    /*
-     * Space for registers r2 -r23
-     *
-     * use loop for better readability, the compiler unrolls anyways
-     */
+	int i;
 
-    int i;
+	for (i = 2; i <= 23; i++) {
+		stk--;
+		*stk = (uint8_t) 0;
+	}
 
-    for (i = 2; i <= 23 ; i++) {
-        stk--;
-        *stk = (uint8_t) 0;
-    }
+	/*
+	 * In accordance with the AVR calling conventions *arg has to be inside
+	 * r24 and r25
+	 * */
+	stk--;
+	tmp_adress = (uint16_t) arg;
+	*stk = (uint8_t) (tmp_adress & (uint16_t) 0x00ff);
+	stk--;
+	tmp_adress >>= 8;
+	*stk = (uint8_t) (tmp_adress & (uint16_t) 0x00ff);
 
-    /*
-     * In accordance with the AVR calling conventions *arg has to be inside
-     * r24 and r25
-     * */
-    stk--;
-    tmp_adress = (uint16_t) arg;
-    *stk = (uint8_t)(tmp_adress & (uint16_t) 0x00ff);
-    stk--;
-    tmp_adress >>= 8;
-    *stk = (uint8_t)(tmp_adress & (uint16_t) 0x00ff);
+	/*
+	 * Space for registers r26-r31
+	 */
+	for (i = 26; i <= 31; i++) {
+		stk--;
+		*stk = (uint8_t) i;
+	}
 
-    /*
-     * Space for registers r26-r31
-     */
-    for (i = 26; i <= 31; i++) {
-        stk--;
-        *stk = (uint8_t) i;
-    }
-
-    stk--;
-    return (char *) stk;
+	stk--;
+	return (char *) stk;
 }
 
 /**
@@ -216,54 +212,49 @@ char *thread_arch_stack_init(thread_task_func_t task_func, void *arg,
  * getting correct values elsewhere (since it is a debugging tool and in the
  * presence of bugs the data may be corrupted).
  */
-void thread_arch_stack_print(void)
-{
-    uint8_t  found_marker = 1;
-    uint8_t *sp = (uint8_t *)sched_active_thread->sp;
-    uint16_t size = 0;
+void thread_arch_stack_print(void) {
+	uint8_t found_marker = 1;
+	uint8_t *sp = (uint8_t *) sched_active_thread->sp;
+	uint16_t size = 0;
 
     printf("Printing current stack of thread %" PRIkernel_pid "\n", thread_getpid());
     printf("\taddress:\tdata:\n");
 
-    do {
-        printf("\t0x%04x:\t\t0x%04x\n", (unsigned int)sp, (unsigned int)*sp);
-        sp++;
-        size++;
+	do {
+		printf("\t0x%04x:\t\t0x%04x\n", (unsigned int) sp, (unsigned int) *sp);
+		sp++;
+		size++;
 
-        if ((*sp == 0xFE) && (*(sp + 1) == 0xAF)) {
-            found_marker = 0;
-        }
-    }
-    while (found_marker == 1);
+		if ((*sp == 0xFE) && (*(sp + 1) == 0xAF)) {
+			found_marker = 0;
+		}
+	} while (found_marker == 1);
 
-    printf("stack size: %u bytes\n", size);
+	printf("stack size: %u bytes\n", size);
 }
 
 /* This function calculates the ISR_usage */
-int thread_arch_isr_stack_usage(void)
-{
-    /* TODO */
-    return -1;
+int thread_arch_isr_stack_usage(void) {
+	/* TODO */
+	return -1;
 }
 
-void *thread_arch_isr_stack_pointer(void)
-{
-    /* TODO */
-    return (void *)-1;
+void *thread_arch_isr_stack_pointer(void) {
+	/* TODO */
+	return (void *) -1;
 }
 
-void *thread_arch_isr_stack_start(void)
-{
-    /* TODO */
-    return (void *)-1;
+void *thread_arch_isr_stack_start(void) {
+	/* TODO */
+	return (void *) -1;
 }
 
 void thread_arch_start_threading(void) __attribute__((naked));
-void thread_arch_start_threading(void)
-{
-    sched_run();
-    AVR_CONTEXT_SWAP_INIT;
-    __enter_thread_mode();
+void thread_arch_start_threading(void) {
+	sched_run();
+	AVR_CONTEXT_SWAP_INIT
+	;
+	__enter_thread_mode();
 }
 
 /**
@@ -271,166 +262,178 @@ void thread_arch_start_threading(void)
  */
 
 void NORETURN __enter_thread_mode(void) __attribute__((naked));
-void NORETURN __enter_thread_mode(void)
-{
-    irq_enable();
-    __context_restore();
-    __asm__ volatile("ret");
+void NORETURN __enter_thread_mode(void) {
+	irq_enable();
+	__context_restore();
+	__asm__ volatile("ret");
 
-    UNREACHABLE();
+	UNREACHABLE();
 }
 
 void thread_arch_yield(void) {
-	printf("thread_arch_yield\n");
-    AVR_CONTEXT_SWAP_TRIGGER;
+	//printf("thread_arch_yield\n");
+	AVR_CONTEXT_SWAP_TRIGGER
+	;
 }
-
 
 // Use this interrupt to perform all context switches
 ISR(AVR_CONTEXT_SWAP_INTERRUPT_VECT, ISR_NAKED) {
 
-	printf("AVR_CONTEXT_SWAP_INTERRUPT_VECT\n");
+	//printf("AVR_CONTEXT_SWAP_INTERRUPT_VECT\n");
 
 	__context_save();
-    sched_run();
-    __context_restore();
-    __asm__ volatile("reti");
+	sched_run();
+	__context_restore();
+	__asm__ volatile("reti");
 }
 
+__attribute__((always_inline)) static inline void __context_save(void) {
+//	printf("__context_save\n");
+//	  uint8_t *sp = (uint8_t *)sched_active_thread->sp;
+//	 sp++;
+//	__asm__ __volatile__("nop");
+//	__asm__ __volatile__("nop");
+//	__asm__ __volatile__("nop");
 
-__attribute__((always_inline)) static inline void __context_save(void)
-{
-	printf("__context_save\n");
-    __asm__ volatile(
-        "push r0                             \n\t"
-        "in   r0, __SREG__                   \n\t"
-        "cli                                 \n\t"
-        "push r0                             \n\t"
-#if defined(RAMPD)
-        "in     r0, 0x38               \n\t"
-        "push   r0                           \n\t"
-#endif
-#if defined(RAMPX)
-        "in     r0, 0x39                \n\t"
-        "push   r0                           \n\t"
-#endif
-#if defined(RAMPY)
-        "in     r0, 0x3A                \n\t"
-        "push   r0                           \n\t"
-#endif
+//	thread_arch_stack_print();
+	__asm__ volatile(
+			"push r0                             \n\t"
+			"in   r0, __SREG__                   \n\t"
+			"cli                                 \n\t"
+			"push r0                             \n\t"
+//#if defined(RAMPD)
+//        "in     r0, 0x08               \n\t"
+//        "push   r0                           \n\t"
+//#endif
+//#if defined(RAMPX)
+//        "in     r0, 0x09                \n\t"
+//        "push   r0                           \n\t"
+//#endif
+//#if defined(RAMPY)
+//        "in     r0, 0x0A                \n\t"
+//        "push   r0                           \n\t"
+//#endif
 #if defined(RAMPZ)
-        "in     r0, 0x3B                \n\t"
-        "push   r0                           \n\t"
+			"in     r0, 0x0B                \n\t"
+			"push   r0                           \n\t"
 #endif
 #if defined(EIND)
-        "in     r0, 0x3c                     \n\t"
-        "push   r0                           \n\t"
+			"in     r0, 0x0C                     \n\t"
+			"push   r0                           \n\t"
 #endif
-        "push r1                             \n\t"
-        "clr  r1                             \n\t"
-        "push r2                             \n\t"
-        "push r3                             \n\t"
-        "push r4                             \n\t"
-        "push r5                             \n\t"
-        "push r6                             \n\t"
-        "push r7                             \n\t"
-        "push r8                             \n\t"
-        "push r9                             \n\t"
-        "push r10                            \n\t"
-        "push r11                            \n\t"
-        "push r12                            \n\t"
-        "push r13                            \n\t"
-        "push r14                            \n\t"
-        "push r15                            \n\t"
-        "push r16                            \n\t"
-        "push r17                            \n\t"
-        "push r18                            \n\t"
-        "push r19                            \n\t"
-        "push r20                            \n\t"
-        "push r21                            \n\t"
-        "push r22                            \n\t"
-        "push r23                            \n\t"
-        "push r24                            \n\t"
-        "push r25                            \n\t"
-        "push r26                            \n\t"
-        "push r27                            \n\t"
-        "push r28                            \n\t"
-        "push r29                            \n\t"
-        "push r30                            \n\t"
-        "push r31                            \n\t"
-        "lds  r26, sched_active_thread       \n\t"
-        "lds  r27, sched_active_thread + 1   \n\t"
-        "in   r0, __SP_L__                   \n\t"
-        "st   x+, r0                         \n\t"
-        "in   r0, __SP_H__                   \n\t"
-        "st   x+, r0                         \n\t"
-    );
+			"push r1                             \n\t"
+			"clr  r1                             \n\t"
+			"push r2                             \n\t"
+			"push r3                             \n\t"
+			"push r4                             \n\t"
+			"push r5                             \n\t"
+			"push r6                             \n\t"
+			"push r7                             \n\t"
+			"push r8                             \n\t"
+			"push r9                             \n\t"
+			"push r10                            \n\t"
+			"push r11                            \n\t"
+			"push r12                            \n\t"
+			"push r13                            \n\t"
+			"push r14                            \n\t"
+			"push r15                            \n\t"
+			"push r16                            \n\t"
+			"push r17                            \n\t"
+			"push r18                            \n\t"
+			"push r19                            \n\t"
+			"push r20                            \n\t"
+			"push r21                            \n\t"
+			"push r22                            \n\t"
+			"push r23                            \n\t"
+			"push r24                            \n\t"
+			"push r25                            \n\t"
+			"push r26                            \n\t"
+			"push r27                            \n\t"
+			"push r28                            \n\t"
+			"push r29                            \n\t"
+			"push r30                            \n\t"
+			"push r31                            \n\t"
+			"lds  r26, sched_active_thread       \n\t"
+			"lds  r27, sched_active_thread + 1   \n\t"
+			"in   r0, __SP_L__                   \n\t"
+			"st   x+, r0                         \n\t"
+			"in   r0, __SP_H__                   \n\t"
+			"st   x+, r0                         \n\t"
+	);
 
 }
 
-__attribute__((always_inline)) static inline void __context_restore(void)
-{
-	printf("__context_restore\n");
-    __asm__ volatile(
-        "lds  r26, sched_active_thread       \n\t"
-        "lds  r27, sched_active_thread + 1   \n\t"
-        "ld   r28, x+                        \n\t"
-        "out  __SP_L__, r28                  \n\t"
-        "ld   r29, x+                        \n\t"
-        "out  __SP_H__, r29                  \n\t"
-        "pop  r31                            \n\t"
-        "pop  r30                            \n\t"
-        "pop  r29                            \n\t"
-        "pop  r28                            \n\t"
-        "pop  r27                            \n\t"
-        "pop  r26                            \n\t"
-        "pop  r25                            \n\t"
-        "pop  r24                            \n\t"
-        "pop  r23                            \n\t"
-        "pop  r22                            \n\t"
-        "pop  r21                            \n\t"
-        "pop  r20                            \n\t"
-        "pop  r19                            \n\t"
-        "pop  r18                            \n\t"
-        "pop  r17                            \n\t"
-        "pop  r16                            \n\t"
-        "pop  r15                            \n\t"
-        "pop  r14                            \n\t"
-        "pop  r13                            \n\t"
-        "pop  r12                            \n\t"
-        "pop  r11                            \n\t"
-        "pop  r10                            \n\t"
-        "pop  r9                             \n\t"
-        "pop  r8                             \n\t"
-        "pop  r7                             \n\t"
-        "pop  r6                             \n\t"
-        "pop  r5                             \n\t"
-        "pop  r4                             \n\t"
-        "pop  r3                             \n\t"
-        "pop  r2                             \n\t"
-        "pop  r1                             \n\t"
+__attribute__((always_inline)) static inline void __context_restore(void) {
+//	printf("__context_restore\n");
+//	 uint8_t *sp = (uint8_t *)sched_active_thread->sp;
+//	 sp++;
+//
+//	__asm__ __volatile__("nop");
+//	__asm__ __volatile__("nop");
+//	__asm__ __volatile__("nop");
+
+//	thread_arch_stack_print();
+
+	__asm__ volatile(
+			"lds  r26, sched_active_thread       \n\t"
+			"lds  r27, sched_active_thread + 1   \n\t"
+			"ld   r28, x+                        \n\t"
+			"out  __SP_L__, r28                  \n\t"
+			"ld   r29, x+                        \n\t"
+			"out  __SP_H__, r29                  \n\t"
+			"pop  r31                            \n\t"
+			"pop  r30                            \n\t"
+			"pop  r29                            \n\t"
+			"pop  r28                            \n\t"
+			"pop  r27                            \n\t"
+			"pop  r26                            \n\t"
+			"pop  r25                            \n\t"
+			"pop  r24                            \n\t"
+			"pop  r23                            \n\t"
+			"pop  r22                            \n\t"
+			"pop  r21                            \n\t"
+			"pop  r20                            \n\t"
+			"pop  r19                            \n\t"
+			"pop  r18                            \n\t"
+			"pop  r17                            \n\t"
+			"pop  r16                            \n\t"
+			"pop  r15                            \n\t"
+			"pop  r14                            \n\t"
+			"pop  r13                            \n\t"
+			"pop  r12                            \n\t"
+			"pop  r11                            \n\t"
+			"pop  r10                            \n\t"
+			"pop  r9                             \n\t"
+			"pop  r8                             \n\t"
+			"pop  r7                             \n\t"
+			"pop  r6                             \n\t"
+			"pop  r5                             \n\t"
+			"pop  r4                             \n\t"
+			"pop  r3                             \n\t"
+			"pop  r2                             \n\t"
+			"pop  r1                             \n\t"
 #if defined(EIND)
-        "pop    r0                           \n\t"
-        "out    0x3c, r0                     \n\t"
+			"pop    r0                           \n\t"
+			"out    0x0C, r0                     \n\t"
 #endif
 #if defined(RAMPZ)
-        "pop    r0                           \n\t"
-        "out    0x3B, r0                \n\t"
+			"pop    r0                           \n\t"
+			"out    0x0B, r0                     \n\t"
 #endif
-#if defined(RAMPY)
-        "pop    r0                           \n\t"
-        "out    0x3A, r0                \n\t"
-#endif
-#if defined(RAMPX)
-        "pop    r0                           \n\t"
-        "out    0x39, r0                \n\t"
-#endif
-#if defined(RAMPD)
-        "pop    r0                           \n\t"
-        "out    0x38, r0                \n\t"
-#endif
-        "pop  r0                             \n\t"
-        "out  __SREG__, r0                   \n\t"
-        "pop  r0                             \n\t"
-    );
+//#if defined(RAMPY)
+//        "pop    r0                           \n\t"
+//        "out    0x0A, r0                \n\t"
+//#endif
+//#if defined(RAMPX)
+//        "pop    r0                           \n\t"
+//        "out    0x09, r0                \n\t"
+//#endif
+//#if defined(RAMPD)
+//        "pop    r0                           \n\t"
+//        "out    0x08, r0                \n\t"
+//#endif
+			"pop  r0                             \n\t"
+			"out  __SREG__, r0                   \n\t"
+			"pop  r0                             \n\t"
+	);
 }

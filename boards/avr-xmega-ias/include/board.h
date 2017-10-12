@@ -30,12 +30,19 @@ extern "C" {
 #endif
 
 /**
+ * @brief   Clock configuration
+ * @{
+ */
+#define CLOCK_CORECLOCK     (32000000L)
+/** @} */
+
+/**
 * @brief As the CPU is too slow to handle 115200 baud, we set the default
 *        baudrate to 9600 for this board
 */
 
 #define UART_STDIO_BAUDRATE (115200)
-#define UART_DOUBLE_SPEED (0)
+#define UART_DOUBLE_SPEED (1)
 
 /**
  * @brief   LED pin definitions and handlers
@@ -61,6 +68,7 @@ extern "C" {
 } while (0)
 
 #define AVR_CONTEXT_SWAP_INTERRUPT_VECT PORTA_INT0_vect
+
 #define AVR_CONTEXT_SWAP_TRIGGER do { \
 	PORTA.OUTTGL=PIN1_bm;\
 }while(0)
