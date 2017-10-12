@@ -168,17 +168,6 @@ static const ac_conf_t ac_config[] = {
 #define I2C_NUMOF		(1U)
 #define I2C_0			(0)
 
-static uint8_t mask_value = 0x00;
-static mutex_t my_mutex = MUTEX_INIT;
-static const i2c_conf_t i2c_config[] = {
-		{
-				.scl_pin = GPIO_PIN(PORT_D, 0),
-				.sda_pin = GPIO_PIN(PORT_D, 1),
-				.mask = &mask_value,
-				.used = &my_mutex
-		}
-};
-
 /**
  * @brief RTC configuartion
  */

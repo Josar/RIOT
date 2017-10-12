@@ -80,7 +80,7 @@
 #include "net/fib.h"
 #endif
 
-#ifdef MODULE_TINYMT32
+#ifdef MODULE_PRNG
 #include "random.h"
 #endif
 
@@ -88,12 +88,17 @@
 #include "net/gcoap.h"
 #endif
 
+#ifdef MODULE_GNRC_IPV6_NIB
+#include "net/gnrc/ipv6/nib.h"
+#endif
+
+
 #define ENABLE_DEBUG (0)
 #include "debug.h"
 
 void auto_init(void)
 {
-#ifdef MODULE_TINYMT32
+#ifdef MODULE_PRNG
     random_init(0);
 #endif
 #ifdef MODULE_XTIMER
@@ -157,6 +162,10 @@ void auto_init(void)
     extern void auto_init_devfs(void);
     auto_init_devfs();
 #endif
+#ifdef MODULE_GNRC_IPV6_NIB
+    DEBUG("Auto init gnrc_ipv6_nib module.\n");
+    gnrc_ipv6_nib_init();
+#endif
 
 /* initialize network devices */
 #ifdef MODULE_AUTO_INIT_GNRC_NETIF
@@ -192,9 +201,9 @@ void auto_init(void)
     auto_init_ethos();
 #endif
 
-#ifdef MODULE_GNRC_SLIP
-    extern void auto_init_slip(void);
-    auto_init_slip();
+#ifdef MODULE_SLIPDEV
+    extern void auto_init_slipdev(void);
+    auto_init_slipdev();
 #endif
 
 #ifdef MODULE_CC110X
@@ -292,6 +301,10 @@ void auto_init(void)
 #ifdef MODULE_MPL3115A2
     extern void auto_init_mpl3115a2(void);
     auto_init_mpl3115a2();
+#endif
+#ifdef MODULE_GROVE_LEDBAR
+    extern void auto_init_grove_ledbar(void);
+    auto_init_grove_ledbar();
 #endif
 #ifdef MODULE_SI70XX
     extern void auto_init_si70xx(void);

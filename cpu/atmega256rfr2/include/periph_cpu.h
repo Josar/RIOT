@@ -94,6 +94,14 @@ typedef struct{
 } i2c_conf_t;
 
 /**
+ * @name   Defines for the I2C interface
+ * @{
+ */
+#define I2C_PORT_REG            PORTD
+#define I2C_PIN_MASK            (1 << PORTD1) | (1 << PORTD0)
+/** @} */
+
+/**
  * @brief setup analog comparator setting struct
  */
 typedef struct {

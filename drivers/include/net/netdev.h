@@ -213,7 +213,8 @@ enum {
     NETDEV_TYPE_IEEE802154,
     NETDEV_TYPE_CC110X,
     NETDEV_TYPE_LORA,
-    NETDEV_TYPE_NRFMIN
+    NETDEV_TYPE_NRFMIN,
+    NETDEV_TYPE_SLIP,
 };
 
 /**
@@ -386,11 +387,12 @@ typedef struct netdev_driver {
      * @return              `< 0` on error, 0 on success
      */
     int (*set)(netdev_t *dev, netopt_t opt,
-               void *value, size_t value_len);
+               const void *value, size_t value_len);
 } netdev_driver_t;
 
 #ifdef __cplusplus
 }
 #endif
-/** @} */
+
 #endif /* NET_NETDEV_H */
+/** @} */

@@ -1,250 +1,352 @@
-#include "periph/i2c.h"
-#include "periph_conf.h"
-#define ENABLE_DEBUG 	(0U)
-#include "debug.h"
-#include <inttypes.h>
-#include <avr/io.h>
-#include <util/twi.h>
-
-
-uint8_t _twbr_values(int speed)
-{
-	return ((16*speed-CLOCK_CORECLOCK)/(-2*speed));
-}
-
-uint32_t speeds[5] = {10000, 100000, 400000, 1000000, 3400000};
-
-uint8_t __send_start(i2c_t dev)
-{
-
-	TWCR = *(i2c_config[dev].mask)|(1<<TWSTA);
-	while (!(TWCR & (1<<TWINT)));
-	return ((TWSR & 0xF8));
-}
-
-void __send_stop(i2c_t dev)
-{
-	TWCR = *(i2c_config[dev].mask)|(1<<TWSTO);
-	DEBUG("Stop Send \n");
-}
-/**
- * Sends Adress+R and reads length bytes and stores in data
+/*
+ * Copyright (C) 2017 Hamburg University of Applied Sciences, Dimitri Nahm
+ *
+ * This file is subject to the terms and conditions of the GNU Lesser
+ * General Public License v2.1. See the file LICENSE in the top level
+ * directory for more details.
  */
 
-int __read_bytes(i2c_t dev, uint8_t address, const void *data, int length)
-{
-	uint8_t *my_data = (uint8_t*) data;
-	TWDR = (address<<1)|TW_READ;
-	TWCR = *(i2c_config[dev].mask);
-	while (!(TWCR & (1<<TWINT))); //ACK/NACK should be received now
-	if ((TWSR & 0xF8) != TW_MR_SLA_ACK) {
-		DEBUG("I2C: Slave didnt ACK Adress-read %x\n",(TWSR & 0xF8));
-		i2c_release(dev);
-		return 0;
-	}
-	for(int i=0; i<length; i++){
-		if(i+1 == length) {
-			//ready to receive last byte, for the max17048 this needs to be Nacked instead of Acked
-			TWCR = *(i2c_config[dev].mask);
-		}else {
-			TWCR = *(i2c_config[dev].mask)|(1<<TWEA);
-		}
-		while (!(TWCR & (1<<TWINT)));
-		if ((TWSR & 0xF8) != TW_MR_DATA_ACK && (i+1) != length){
-			DEBUG("I2C: Error receiving Data from Slave Errorcode: %x on Byte %u", (TWSR & 0xF8), i);
-			i2c_release(dev);
-			return (i+1);
-		}else if((TWSR & 0xF8) != TW_MR_DATA_NACK && (i+1) == length) {
-			DEBUG("I2C: Error receiving Data from Slave, could not nack Errorcode: %x on Byte %u", (TWSR & 0xF8), i);
-			i2c_release(dev);
-			return (i+1);
-		}
-		my_data[i] = TWDR;
-	}
-	return length;
-}
+/**
+ * @ingroup cpu_atmega_common
+ * @ingroup drivers_periph_i2c
+ * @{
+ *
+ * @file
+ * @brief       Low-level I2C driver implementation fot atmega common
+ *
+ * @note        This implementation only implements the 7-bit addressing mode.
+ *
+ * @author      Dimitri Nahm <dimitri.nahm@haw-hamburg.de>
+ *
+ * @}
+ */
 
-int __write_bytes(i2c_t dev, uint8_t address, const void *data, int length)
-{
-		uint8_t *my_data = (uint8_t*) data;
-        TWDR = (address<<1) | TW_WRITE;
-        TWCR = *(i2c_config[dev].mask);
-        while (!(TWCR & (1<<TWINT))); //ACK/NACK should be received now
-        if ((TWSR & 0xF8) != TW_MT_SLA_ACK) {
-                DEBUG("I2C: Slave didnt ACK Adress Error:%x\n", (TWSR & 0xF8));
-                return 0;
-        }
-        for(int i = 0; i <length; i++) {
-                TWDR = my_data[i];
-                TWCR = *(i2c_config[dev].mask);
-                while (!(TWCR & (1<<TWINT)));
-                if ((TWSR & 0xF8) != TW_MT_DATA_ACK){
-                        DEBUG("I2C: Slave didnt ACK BYTE Error:%x  on Byte %x\n",(TWSR & 0xF8), i);
-                        return (i+1);
-                }
-        }
-        return length;
-}
+#include <stdint.h>
 
+#include "cpu.h"
+#include "mutex.h"
+#include "assert.h"
+#include "periph/i2c.h"
+#include "periph_conf.h"
 
+//#include <avr/pover.h>
 
+#include "debug.h"
+#define ENABLE_DEBUG      (0)
 
+/* guard file in case no I2C device is defined */
+#if I2C_NUMOF
+
+#define MT_START            0x08
+#define MT_START_REPEATED   0x10
+#define MT_ADDRESS_ACK      0x18
+#define MT_DATA_ACK         0x28
+#define MR_ADDRESS_ACK      0x40
+
+/* static function definitions */
+static int _start(uint8_t address, uint8_t rw_flag);
+static int _write(const uint8_t *data, int length);
+static void _stop(void);
+
+static mutex_t lock = MUTEX_INIT;
 
 int i2c_init_master(i2c_t dev, i2c_speed_t speed)
 {
-	DEBUG("I2C: Starting i2c master init \n");
-	if(speed >4)
-		return -2;
-	if(dev >= I2C_NUMOF)
-		return -1;
-	/* Set up gpio pins*/
-	//gpio_init(i2c_config[dev].scl_pin, )
+    /* TWI Bit Rate Register - division factor for the bit rate generator */
+    uint8_t twibrr;
+    /* TWI Prescaler Bits - default 0 */
+    uint8_t twipb = 0;
 
-	/* Setup a master mask for later */
-	*(i2c_config[dev].mask) = (1<<TWEN)|(1<<TWINT);
-	/* clear status register */
-	TWSR = 0x00;
-	/* set speed speed*/
-	TWBR = _twbr_values(speeds[speed]);
+    /* check if the line is valid */
+    if (dev >= I2C_NUMOF) {
+        return -1;
+    }
 
-	return 0;
+    /* calculate speed configuration */
+    switch (speed) {
+
+        case I2C_SPEED_LOW:
+            if (CLOCK_CORECLOCK > 20000000U || CLOCK_CORECLOCK < 1000000U) {
+                return -2;
+            }
+            twibrr = ((CLOCK_CORECLOCK / 10000) - 16) / (2 * 4);  /* CLK Prescaler 4 */
+            twipb = 1;
+            break;
+
+        case I2C_SPEED_NORMAL:
+            if (CLOCK_CORECLOCK > 50000000U || CLOCK_CORECLOCK < 2000000U) {
+                return -2;
+            }
+            twibrr = ((CLOCK_CORECLOCK / 100000) - 16) / 2;
+            break;
+
+        case I2C_SPEED_FAST:
+            if (CLOCK_CORECLOCK < 7500000U) {
+                return -2;
+            }
+            twibrr = ((CLOCK_CORECLOCK / 400000) - 16) / 2;
+            break;
+
+        case I2C_SPEED_FAST_PLUS:
+            if (CLOCK_CORECLOCK < 18000000U) {
+                return -2;
+            }
+            twibrr = ((CLOCK_CORECLOCK / 1000000) - 16) / 2;
+            break;
+
+        case I2C_SPEED_HIGH:
+            if (CLOCK_CORECLOCK < 62000000U) {
+                return -2;
+            }
+            twibrr = ((CLOCK_CORECLOCK / 3400000) - 16) / 2;
+            break;
+
+        default:
+            return -2;
+    }
+
+    /* set pull-up on SCL and SDA */
+    I2C_PORT_REG |= (I2C_PIN_MASK);
+
+    /* enable I2C clock */
+    i2c_poweron(dev);
+
+    /* disable device */
+    TWCR &= ~(1 << TWEN);
+    /* configure I2C clock */
+    TWBR = twibrr;                // Set TWI Bit Rate Register
+    TWSR &= ~(0x03);              // Reset TWI Prescaler Bits
+    TWSR |= twipb;                // Set TWI Prescaler Bits
+    /* enable device */
+    TWCR |= (1 << TWEN);
+
+    return 0;
 }
 
 int i2c_acquire(i2c_t dev)
 {
-	mutex_lock(i2c_config[dev].used);
-	return 0;
+    assert(dev < I2C_NUMOF);
+    mutex_lock(&lock);
+    return 0;
 }
 
 int i2c_release(i2c_t dev)
 {
-	mutex_unlock(i2c_config[dev].used);
-	return 0;
+    assert(dev < I2C_NUMOF);
+    mutex_unlock(&lock);
+    return 0;
 }
-
-int i2c_write_byte(i2c_t dev, uint8_t address, uint8_t data)
-{
-	return i2c_write_bytes(dev, address, &data, 1);
-}
-
-int i2c_write_bytes(i2c_t dev, uint8_t address, const void *data, int length)
-{
-	if(i2c_acquire(dev) != 0)
-		DEBUG("MUTEX ERROR");
-	if(dev >= I2C_NUMOF) {
-		i2c_release(dev);
-		return -1;
-	}
-	if (__send_start(dev) != TW_START){
-		DEBUG("I2C: error on sending Start \n");
-		i2c_release(dev);
-		return 0;
-	}
-	int bytes_written = __write_bytes(dev, address, data, length);
-	__send_stop(dev);
-   	i2c_release(dev);
-   	return bytes_written;
-}
-
-
-int i2c_write_reg(i2c_t dev, uint8_t address, uint8_t reg, uint8_t data)
-{
-	/*Write syntax is S. SAddr W. A. MAddr. A. Data0. A. Data1. A... DataN. A. P
-	 * S: Start
-	 * SAddr: Slave Adress
-	 * MAddr: Memory adress
-	 * DataN: Data Bytes
-	 * A: Ack
-	 * P: Stop
-	 */
-	uint8_t data_array[2] ={reg, data};
-	return i2c_write_bytes(dev, address, data_array, 2);
-}
-
-int i2c_write_regs(i2c_t dev, uint8_t address, uint8_t reg, const void *data, int length)
-{
-	/*Write syntax is S. SAddr W. A. MAddr. A. Data0. A. Data1. A... DataN. A. P
-	 * S: Start
-	 * SAddr: Slave Adress
-	 * MAddr: Memory adress
-	 * DataN: Data Bytes
-	 * A: Ack
-	 * P: Stop
-	 */
-	uint8_t data_array[length +1];
-	uint8_t *casted_data = (uint8_t*) data;
-	DEBUG("data_array: 0x%x%x \n", casted_data[0], casted_data[1]);
-	data_array[0] = reg;
-	for(uint8_t i=1; i<=length; i++) {
-		data_array[i]= casted_data[i-1];
-	}
-	return i2c_write_bytes(dev, address, data_array, (length+1))-1;
-}
-
 
 int i2c_read_byte(i2c_t dev, uint8_t address, void *data)
 {
-	return i2c_read_bytes(dev, address, data, 1);
+    return i2c_read_bytes(dev, address, data, 1);
 }
 
 int i2c_read_bytes(i2c_t dev, uint8_t address, void *data, int length)
 {
-	if(i2c_acquire(dev) != 0)
-			DEBUG("MUTEX ERROR");
-	if(dev >= I2C_NUMOF) {
-		i2c_release(dev);
-		return -1;
-	}
-	if (__send_start(dev) != TW_START){
-		DEBUG("I2C: Error on sending start \n");
-		i2c_release(dev);
-		return 0;
-	}
-	int bytes_read = __read_bytes(dev, address, data, length);
-	__send_stop(dev);
-	i2c_release(dev);
-	return bytes_read;
+    uint8_t *my_data = data;
+
+    assert((dev < I2C_NUMOF) && (length > 0));
+
+    /* send start condition and slave address */
+    if (_start(address, I2C_FLAG_READ) != 0) {
+        return 0;
+    }
+
+    for (int i = 0; i < length; i++) {
+        /* Send NACK for last received byte */
+        if ((length - i) == 1) {
+            TWCR = (1 << TWEN) | (1 << TWINT);
+        }
+        else {
+            TWCR = (1 << TWEA) | (1 << TWEN) | (1 << TWINT);
+        }
+        DEBUG("Wait for byte %i\n", i+1);
+        /* Wait for TWINT Flag set. This indicates that DATA has been received.*/
+        while (!(TWCR & (1 << TWINT))) {}
+        /* receive data byte */
+        my_data[i] = TWDR;
+        DEBUG("Byte %i received\n", i+1);
+    }
+
+    /* end transmission */
+    _stop();
+
+    return length;
 }
 
 int i2c_read_reg(i2c_t dev, uint8_t address, uint8_t reg, void *data)
 {
-	return i2c_read_regs(dev, address, reg, data,1);
+    return i2c_read_regs(dev, address, reg, data, 1);
 }
 
 int i2c_read_regs(i2c_t dev, uint8_t address, uint8_t reg, void *data, int length)
 {
-		if(i2c_acquire(dev) != 0)
-				DEBUG("MUTEX ERROR \n");
-		DEBUG("I2c acquired \n");
-		if(dev >= I2C_NUMOF) {
-			i2c_release(dev);
-			return -1;
-		}
-		DEBUG("Sending Start \n");
-		if (__send_start(dev) != TW_START){
-			DEBUG("I2C: error on sending Start \n");
-			i2c_release(dev);
-			return 0;
-		}
-		DEBUG("Start Send \n");
-		if(__write_bytes(dev, address, &reg, 1) != 1) {
-			DEBUG("I2C: error on writing register \n");
-			i2c_release(dev);
-			return 0;
-		}
-		//Send repeated start
-		if (__send_start(dev) != TW_REP_START) {
-			DEBUG("I2C: Error on sending repeated start Error:%x \n",(TWSR & 0xF8));
-			i2c_release(dev);
-			return 0;
-		}
-		int8_t bytes_read = __read_bytes(dev, address, data, length);
-		__send_stop(dev);
-		i2c_release(dev);
-		if(bytes_read != length)
-		{
-			DEBUG("I2C: Error not enough Bytes read \n");
-		}
-		return bytes_read;
+    assert((dev < I2C_NUMOF) && (length > 0));
+
+    /* start transmission and send slave address */
+    if (_start(address, I2C_FLAG_WRITE) != 0) {
+        return 0;
+    }
+
+    /* send register address and wait for complete transfer to be finished*/
+    if (_write(&reg, 1) != 1) {
+        _stop();
+        return 0;
+    }
+
+    /* now start a new start condition and receive data */
+    return i2c_read_bytes(dev, address, data, length);
 }
 
+int i2c_write_byte(i2c_t dev, uint8_t address, uint8_t data)
+{
+    return i2c_write_bytes(dev, address, &data, 1);
+}
+
+int i2c_write_bytes(i2c_t dev, uint8_t address, const void *data, int length)
+{
+    int bytes = 0;
+
+    assert((dev < I2C_NUMOF) && (length > 0));
+
+    /* start transmission and send slave address */
+    if (_start(address, I2C_FLAG_WRITE) != 0) {
+        return 0;
+    }
+
+    /* send out data bytes */
+    bytes = _write(data, length);
+
+    /* end transmission */
+    _stop();
+
+    return bytes;
+}
+
+int i2c_write_reg(i2c_t dev, uint8_t address, uint8_t reg, uint8_t data)
+{
+    return i2c_write_regs(dev, address, reg, &data, 1);
+}
+
+int i2c_write_regs(i2c_t dev, uint8_t address, uint8_t reg, const void *data, int length)
+{
+    int bytes = 0;
+
+    assert((dev < I2C_NUMOF) && (length > 0));
+
+    /* start transmission and send slave address */
+    if (_start(address, I2C_FLAG_WRITE) != 0) {
+        return 0;
+    }
+    /* send register address and wait for complete transfer to be finished*/
+    if (_write(&reg, 1)) {
+        /* write data to register */
+        bytes = _write(data, length);
+    }
+    /* finish transfer */
+    _stop();
+    /* return number of bytes send */
+    return bytes;
+}
+
+void i2c_poweron(i2c_t dev)
+{
+    assert(dev < I2C_NUMOF);
+    power_twi_enable();
+}
+
+void i2c_poweroff(i2c_t dev)
+{
+    assert(dev < I2C_NUMOF);
+    power_twi_disable();
+}
+
+static int _start(uint8_t address, uint8_t rw_flag)
+{
+    /* Reset I2C Interrupt Flag and transmit START condition */
+    TWCR = (1 << TWINT) | (1 << TWSTA) | (1 << TWEN);
+    DEBUG("START condition transmitted\n");
+
+    /* Wait for TWINT Flag set. This indicates that the START has been
+     * transmitted, and ACK/NACK has been received.*/
+    while (!(TWCR & (1 << TWINT))) {}
+
+    /* Check value of TWI Status Register. Mask prescaler bits.
+     * If status different from START go to ERROR */
+    if ((TWSR & 0xF8) == MT_START) {
+        DEBUG("I2C Status is: START\n");
+    }
+    else if ((TWSR & 0xF8) == MT_START_REPEATED) {
+        DEBUG("I2C Status is: START REPEATED\n");
+    }
+    else {
+        DEBUG("I2C Status Register is different from START/START_REPEATED\n");
+        _stop();
+        return -1;
+    }
+
+
+    /* Load ADDRESS and R/W Flag into TWDR Register.
+     * Clear TWINT bit in TWCR to start transmission of ADDRESS */
+    TWDR = (address << 1) | rw_flag;
+    TWCR = (1 << TWINT) | (1 << TWEN);
+    DEBUG("ADDRESS and FLAG transmitted\n");
+
+    /* Wait for TWINT Flag set. This indicates that ADDRESS has been transmitted.*/
+    while (!(TWCR & (1 << TWINT))) {}
+
+    /* Check value of TWI Status Register. Mask prescaler bits.
+     * If status different from ADDRESS ACK go to ERROR */
+    if ((TWSR & 0xF8) == MT_ADDRESS_ACK) {
+        DEBUG("ACK has been received for ADDRESS (write)\n");
+    }
+    else if ((TWSR & 0xF8) == MR_ADDRESS_ACK) {
+        DEBUG("ACK has been received for ADDRESS (read)\n");
+    }
+    else {
+        DEBUG("NOT ACK has been received for ADDRESS\n");
+        _stop();
+        return -2;
+    }
+
+    return 0;
+}
+
+static int _write(const uint8_t *data, int length)
+{
+    for (int i = 0; i < length; i++) {
+        /* Load DATA into TWDR Register.
+         * Clear TWINT bit in TWCR to start transmission of data */
+        TWDR = data[i];
+        TWCR = (1 << TWINT) | (1 << TWEN);
+        DEBUG("Byte %i transmitted\n", i+1);
+
+        /* Wait for TWINT Flag set. This indicates that DATA has been transmitted.*/
+        while (!(TWCR & (1 << TWINT))) {}
+
+        /* Check value of TWI Status Register. Mask prescaler bits. If status
+         * different from MT_DATA_ACK, return number of transmitted bytes */
+        if ((TWSR & 0xF8) != MT_DATA_ACK) {
+            DEBUG("NACK has been received for BYTE %i\n", i+1);
+            return i;
+        }
+        else {
+            DEBUG("ACK has been received for BYTE %i\n", i+1);
+        }
+    }
+
+    return length;
+}
+
+static void _stop(void)
+{
+    /* Reset I2C Interrupt Flag and transmit STOP condition */
+    TWCR = (1 << TWINT) | (1 << TWSTO) | (1 << TWEN);
+    /* Wait for STOP Flag reset. This indicates that STOP has been transmitted.*/
+    while (TWCR & (1 << TWSTO)) {}
+    DEBUG("STOP condition transmitted\n");
+    TWCR = 0;
+}
+
+#endif /* I2C_NUMOF */

@@ -11,6 +11,10 @@ PSEUDOMODULES += emb6_router
 PSEUDOMODULES += gnrc_ipv6_default
 PSEUDOMODULES += gnrc_ipv6_router
 PSEUDOMODULES += gnrc_ipv6_router_default
+PSEUDOMODULES += gnrc_ipv6_nib_6lbr
+PSEUDOMODULES += gnrc_ipv6_nib_6ln
+PSEUDOMODULES += gnrc_ipv6_nib_6lr
+PSEUDOMODULES += gnrc_ipv6_nib_router
 PSEUDOMODULES += gnrc_netdev_default
 PSEUDOMODULES += gnrc_neterr
 PSEUDOMODULES += gnrc_netapi_callbacks
@@ -53,6 +57,8 @@ PSEUDOMODULES += openthread
 PSEUDOMODULES += pktqueue
 PSEUDOMODULES += posix
 PSEUDOMODULES += printf_float
+PSEUDOMODULES += prng
+PSEUDOMODULES += prng_%
 PSEUDOMODULES += saul_adc
 PSEUDOMODULES += saul_default
 PSEUDOMODULES += saul_gpio
@@ -82,3 +88,6 @@ PSEUDOMODULES += sx1276
 
 # add all pseudo random number generator variants as pseudomodules
 PSEUDOMODULES += prng_%
+
+# STM32 periph pseudomodules
+PSEUDOMODULES += stm32_periph_%

@@ -38,26 +38,23 @@ extern "C" {
 #ifdef MODULE_AT86RFR2
 #define AT86RF2XX_WAKEUP_DELAY          (240U)
 #else
-#define AT86RF2XX_WAKEUP_DELAY          (300U)
+#define AT86RF2XX_WAKEUP_DELAY          (306U)
 #endif
 
 
 /**
- * @brief   Minimum reset pulse width, refer p.190
+ * @brief   Minimum reset pulse width, refer p.190. We use 62us so
+ *          that it is at least one tick on platforms with coarse xtimers
  */
-#define AT86RF2XX_RESET_PULSE_WIDTH     (1U)
+#define AT86RF2XX_RESET_PULSE_WIDTH     (62U)
 
 /**
- * @brief   Transition time to TRX_OFF after reset pulse in us
+ * @brief   The typical transition time to TRX_OFF after reset pulse is 26 us,
+ *          refer to figure 7-8, p. 44. We use 62 us so that it is at least one
+ *          tick on platforms that use a 16384 Hz oscillator or have slow start
+ *          up times due to parasitic capacitance on the oscillator
  */
-#ifdef MODULE_AT86RFR2
-/*refer p. 46 */
-#define AT86RF2XX_RESET_DELAY           (37U)
-#else
-/*refer figure 7-8, p. 44. */
-#define AT86RF2XX_RESET_DELAY           (26U)
-#endif
-
+#define AT86RF2XX_RESET_DELAY           (62U)
 
 /**
  * @brief   Read from a register at address `addr` from device `dev`.
@@ -175,7 +172,7 @@ void at86rf2xx_hardware_reset(at86rf2xx_t *dev);
  */
 void at86rf2xx_configure_phy(at86rf2xx_t *dev);
 
-#if defined(MODULE_AT86RF233) || defined(MODULE_AT86RF231) || defined(MODULE_AT86RF212B) || defined(MODULE_AT86RFR2 ) || defined(DOXYGEN)
+#if defined(MODULE_AT86RF233) || defined(MODULE_AT86RF231) || defined(MODULE_AT86RFR2 ) || defined(DOXYGEN)
 /**
  * @brief   Read random data from the RNG
  *
