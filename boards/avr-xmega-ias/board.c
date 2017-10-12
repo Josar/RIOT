@@ -70,6 +70,8 @@ void board_init(void)
 
 	// From errata http://www.avrfreaks.net/forum/xmega-dfll-does-it-work
 	// In order to use the automatic runtime calibration for the 2 MHz or the 32 MHz internal oscillators, the DFLL for both oscillators and both oscillators has to be enabled for one to work.
+	// TODO Test if this is also relevsant for the atxmega256a3u
+	// Quick fix just let the 2MHz clock running
 	OSC.CTRL |= OSC_RC32MEN_bm | OSC_RC32KEN_bm;  /* Enable the internal 32MHz & 32KHz oscillators */
 	while(!(OSC.STATUS & OSC_RC32KRDY_bm));       /* Wait for 32Khz oscillator to stabilize */
 	while(!(OSC.STATUS & OSC_RC32MRDY_bm));       /* Wait for 32MHz oscillator to stabilize */
