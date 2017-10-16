@@ -33,15 +33,15 @@
 #define S2X_SHIFT           (2)
 /** @} */
 
-static mutex_t lock = MUTEX_INIT;
+//static mutex_t lock = MUTEX_INIT;
 
 void spi_init(spi_t bus)
 {
-    assert(bus == 0);
-    /* power off the SPI peripheral */
-    MEGA_PRR |= (1 << PRSPI);
-    /* trigger the pin configuration */
-    spi_init_pins(bus);
+//    assert(bus == 0);
+//    /* power off the SPI peripheral */
+//    MEGA_PRR |= (1 << PRSPI);
+//    /* trigger the pin configuration */
+//    spi_init_pins(bus);
 }
 
 void spi_init_pins(spi_t bus)
@@ -57,60 +57,61 @@ void spi_init_pins(spi_t bus)
      * master correctly, though we do not use it for now (as we handle the chip
      * select externally for now)
      */
-    DDRB |= ((1 << DDB2) | (1 << DDB1) | (1 << DDB0));
+//    DDRB |= ((1 << DDB2) | (1 << DDB1) | (1 << DDB0));
 }
 
 int spi_acquire(spi_t bus, spi_cs_t cs, spi_mode_t mode, spi_clk_t clk)
 {
-    (void)cs;
-
-    /* lock the bus and power on the SPI peripheral */
-    mutex_lock(&lock);
-    MEGA_PRR &= ~(1 << PRSPI);
-
-    /* configure as master, with given mode and clock */
-    SPSR = (clk >> S2X_SHIFT);
-    SPCR = ((1 << SPE) | (1 << MSTR) | mode | (clk & CLK_MASK));
-    SPCR |= (1 << SPE);
-
-    /* clear interrupt flag by reading SPSR and data register by reading SPDR */
-    (void)SPSR;
-    (void)SPDR;
-
-    return SPI_OK;
+//    (void)cs;
+//
+//    /* lock the bus and power on the SPI peripheral */
+//    mutex_lock(&lock);
+//    MEGA_PRR &= ~(1 << PRSPI);
+//
+//    /* configure as master, with given mode and clock */
+//    SPSR = (clk >> S2X_SHIFT);
+//    SPCR = ((1 << SPE) | (1 << MSTR) | mode | (clk & CLK_MASK));
+//    SPCR |= (1 << SPE);
+//
+//    /* clear interrupt flag by reading SPSR and data register by reading SPDR */
+//    (void)SPSR;
+//    (void)SPDR;
+//
+//    return SPI_OK;
+	return 0;
 }
 
 void spi_release(spi_t bus)
 {
-    /* power off and release the bus */
-    SPCR &= ~(1 << SPE);
-    MEGA_PRR |= (1 << PRSPI);
-    mutex_unlock(&lock);
+//    /* power off and release the bus */
+//    SPCR &= ~(1 << SPE);
+//    MEGA_PRR |= (1 << PRSPI);
+//    mutex_unlock(&lock);
 }
 
 void spi_transfer_bytes(spi_t bus, spi_cs_t cs, bool cont,
                         const void *out, void *in, size_t len)
 {
-    uint8_t *out_buf = (uint8_t *)out;
-    uint8_t *in_buf = (uint8_t *)in;
-
-    assert(out_buf || in_buf);
-
-    if (cs != SPI_CS_UNDEF) {
-        gpio_clear((gpio_t)cs);
-    }
-
-    for (size_t i = 0; i < len; i++) {
-        uint8_t tmp = (out_buf) ? out_buf[i] : 0;
-        SPDR = tmp;
-        while (!(SPSR & (1 << SPIF))) {}
-        tmp = SPDR;
-        if (in_buf) {
-            in_buf[i] = tmp;
-        }
-    }
-
-    if ((!cont) && (cs != SPI_CS_UNDEF)) {
-        gpio_set((gpio_t)cs);
-    }
+//    uint8_t *out_buf = (uint8_t *)out;
+//    uint8_t *in_buf = (uint8_t *)in;
+//
+//    assert(out_buf || in_buf);
+//
+//    if (cs != SPI_CS_UNDEF) {
+//        gpio_clear((gpio_t)cs);
+//    }
+//
+//    for (size_t i = 0; i < len; i++) {
+//        uint8_t tmp = (out_buf) ? out_buf[i] : 0;
+//        SPDR = tmp;
+//        while (!(SPSR & (1 << SPIF))) {}
+//        tmp = SPDR;
+//        if (in_buf) {
+//            in_buf[i] = tmp;
+//        }
+//    }
+//
+//    if ((!cont) && (cs != SPI_CS_UNDEF)) {
+//        gpio_set((gpio_t)cs);
+//    }
 }

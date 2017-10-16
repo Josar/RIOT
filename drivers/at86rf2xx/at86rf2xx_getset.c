@@ -135,7 +135,7 @@ void at86rf2xx_set_addr_long(at86rf2xx_t *dev, uint64_t addr)
 	DEBUG("write Adress: ");
     for (int i = 0; i < 8; i++) {
         dev->netdev.long_addr[i] = (uint8_t)(addr >> (i * 8));
-        DEBUG("0x%x", (addr >> ((7 - i) * 8)));
+        DEBUG("0x%x", (uint8_t)(addr >> ((7 - i) * 8)));
         at86rf2xx_reg_write(dev, (AT86RF2XX_REG__IEEE_ADDR_0 + i),
                             (addr >> ((7 - i) * 8)));
     }
