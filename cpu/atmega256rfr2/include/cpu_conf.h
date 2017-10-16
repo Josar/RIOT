@@ -46,14 +46,13 @@ extern "C" {
 #ifndef THREAD_STACKSIZE_DEFAULT
 #define THREAD_STACKSIZE_DEFAULT   (512)
 #endif
-/** @} */
 
 #define THREAD_STACKSIZE_IDLE      (129)
 /**
  * @brief   Stack size used for the exception (ISR) stack
  * @{
  */
-#define ISR_STACKSIZE              (0)
+//#define ISR_STACKSIZE              (0)
 /** @} */
 
 #ifdef __cplusplus

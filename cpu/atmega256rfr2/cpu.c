@@ -174,24 +174,24 @@ ISR(BADISR_vect)
 		__exit_isr();
 	}
 
-	ISR(TIMER2_COMPA_vect, ISR_BLOCK)
-	{
-		__enter_isr();
-		DEBUG("TIMER2_COMPA_vect \n");
-		__exit_isr();
-	}
-	ISR(TIMER2_COMPB_vect, ISR_BLOCK)
-	{
-		__enter_isr();
-		DEBUG("TIMER2_COMPB_vect \n");
-		__exit_isr();
-	}
-	ISR(TIMER2_OVF_vect, ISR_BLOCK)
-	{
-		__enter_isr();
-		DEBUG("TIMER2_OVF_vect \n");
-		__exit_isr();
-	}
+//	ISR(TIMER2_COMPA_vect, ISR_BLOCK)
+//	{
+//		__enter_isr();
+//		DEBUG("TIMER2_COMPA_vect \n");
+//		__exit_isr();
+//	}
+//	ISR(TIMER2_COMPB_vect, ISR_BLOCK)
+//	{
+//		__enter_isr();
+//		DEBUG("TIMER2_COMPB_vect \n");
+//		__exit_isr();
+//	}
+//	ISR(TIMER2_OVF_vect, ISR_BLOCK)
+//	{
+//		__enter_isr();
+//		DEBUG("TIMER2_OVF_vect \n");
+//		__exit_isr();
+//	}
 
 	ISR(TIMER1_CAPT_vect , ISR_BLOCK)
 	{

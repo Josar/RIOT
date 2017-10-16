@@ -7,8 +7,7 @@
  */
 
 /**
- * @defgroup    drivers_bmp180 BMP180
- * @ingroup     drivers_sensors
+ * @ingroup     drivers_bmp180
  * @brief       Internal addresses, registers, constants for the BMP180 sensor.
  * @{
  *
@@ -18,8 +17,8 @@
  * @author      Alexandre Abadie <alexandre.abadie@inria.fr>
  */
 
-#ifndef BMP180_REGS_H
-#define BMP180_REGS_H
+#ifndef BMP180_INTERNALS_H
+#define BMP180_INTERNALS_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -58,5 +57,5 @@ extern "C" {
 }
 #endif
 
-#endif /* BMP180_REGS_H */
+#endif /* BMP180_INTERNALS_H */
 /** @} */

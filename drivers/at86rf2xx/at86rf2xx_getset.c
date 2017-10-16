@@ -31,7 +31,7 @@
 	#include "periph/spi.h"
 #endif
 
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG (1)
 #include "debug.h"
 
 #ifdef MODULE_AT86RF212B
@@ -117,6 +117,7 @@ void at86rf2xx_set_addr_short(at86rf2xx_t *dev, uint16_t addr)
                         dev->netdev.short_addr[1]);
     at86rf2xx_reg_write(dev, AT86RF2XX_REG__SHORT_ADDR_1,
                         dev->netdev.short_addr[0]);
+    DEBUG("Addr-short: %x %x \n", dev->netdev.short_addr[0], dev->netdev.short_addr[1]);
 }
 
 uint64_t at86rf2xx_get_addr_long(at86rf2xx_t *dev)
@@ -131,8 +132,10 @@ uint64_t at86rf2xx_get_addr_long(at86rf2xx_t *dev)
 
 void at86rf2xx_set_addr_long(at86rf2xx_t *dev, uint64_t addr)
 {
+	DEBUG("write Adress: ");
     for (int i = 0; i < 8; i++) {
         dev->netdev.long_addr[i] = (uint8_t)(addr >> (i * 8));
+        DEBUG("0x%x", (addr >> ((7 - i) * 8)));
         at86rf2xx_reg_write(dev, (AT86RF2XX_REG__IEEE_ADDR_0 + i),
                             (addr >> ((7 - i) * 8)));
     }
@@ -481,35 +484,31 @@ static inline void _set_state(at86rf2xx_t *dev, uint8_t state, uint8_t cmd)
      * in https://github.com/RIOT-OS/RIOT/pull/5244
      */
     if (state != AT86RF2XX_STATE_RX_AACK_ON) {
-        while (at86rf2xx_get_status(dev) != state);
+        while (at86rf2xx_get_status(dev) != state) {}
     }
 
     dev->state = state;
 }
 
-void at86rf2xx_set_state(at86rf2xx_t *dev, uint8_t state)
+uint8_t at86rf2xx_set_state(at86rf2xx_t *dev, uint8_t state)
 {
-    uint8_t old_state = at86rf2xx_get_status(dev);
-
-    if (state == old_state) {
-        return;
-    }
-
-    if (state == AT86RF2XX_STATE_FORCE_TRX_OFF) {
-        _set_state(dev, AT86RF2XX_STATE_TRX_OFF, state);
-        return;
-    }
+    uint8_t old_state;
 
     /* make sure there is no ongoing transmission, or state transition already
      * in progress */
-    while (old_state == AT86RF2XX_STATE_BUSY_RX_AACK ||
-           old_state == AT86RF2XX_STATE_BUSY_TX_ARET ||
-           old_state == AT86RF2XX_STATE_IN_PROGRESS) {
+    do {
         old_state = at86rf2xx_get_status(dev);
+    } while (old_state == AT86RF2XX_STATE_BUSY_RX_AACK ||
+             old_state == AT86RF2XX_STATE_BUSY_TX_ARET ||
+             old_state == AT86RF2XX_STATE_IN_PROGRESS);
+
+    if (state == AT86RF2XX_STATE_FORCE_TRX_OFF) {
+        _set_state(dev, AT86RF2XX_STATE_TRX_OFF, state);
+        return old_state;
     }
 
     if (state == old_state) {
-        return;
+        return old_state;
     }
 
     /* we need to go via PLL_ON if we are moving between RX_AACK_ON <-> TX_ARET_ON */
@@ -540,6 +539,8 @@ void at86rf2xx_set_state(at86rf2xx_t *dev, uint8_t state)
     } else {
         _set_state(dev, state, state);
     }
+
+    return old_state;
 }
 
 void at86rf2xx_reset_state_machine(at86rf2xx_t *dev)

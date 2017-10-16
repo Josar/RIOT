@@ -82,23 +82,18 @@ endif
 ifneq (,$(filter tcp,$(USEMODULE)))
     DIRS += net/transport_layer/tcp
 endif
-
 ifneq (,$(filter hamming256,$(USEMODULE)))
     DIRS += ecc/hamming256
 endif
-
 ifneq (,$(filter uhcpc,$(USEMODULE)))
     DIRS += net/application_layer/uhcp
 endif
-
 ifneq (,$(filter gnrc_uhcpc,$(USEMODULE)))
     DIRS += net/gnrc/application_layer/uhcpc
 endif
-
 ifneq (,$(filter sntp,$(USEMODULE)))
     DIRS += net/application_layer/sntp
 endif
-
 ifneq (,$(filter netopt,$(USEMODULE)))
     DIRS += net/crosslayer/netopt
 endif
@@ -106,7 +101,7 @@ ifneq (,$(filter sema,$(USEMODULE)))
     DIRS += sema
 endif
 ifneq (,$(filter gcoap,$(USEMODULE)))
-    DIRS += net/application_layer/coap
+    DIRS += net/application_layer/gcoap
 endif
 ifneq (,$(filter emcute,$(USEMODULE)))
     DIRS += net/application_layer/emcute
@@ -117,13 +112,14 @@ endif
 ifneq (,$(filter sock_dns,$(USEMODULE)))
     DIRS += net/application_layer/dns
 endif
-
 ifneq (,$(filter constfs,$(USEMODULE)))
     DIRS += fs/constfs
 endif
-
 ifneq (,$(filter devfs,$(USEMODULE)))
     DIRS += fs/devfs
+endif
+ifneq (,$(filter l2filter,$(USEMODULE)))
+    DIRS += net/link_layer/l2filter
 endif
 
 DIRS += $(dir $(wildcard $(addsuffix /Makefile, ${USEMODULE})))

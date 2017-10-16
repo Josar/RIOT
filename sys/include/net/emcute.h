@@ -82,8 +82,8 @@
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  */
 
-#ifndef MQTTSN_H
-#define MQTTSN_H
+#ifndef NET_EMCUTE_H
+#define NET_EMCUTE_H
 
 #include <stdint.h>
 #include <stddef.h>
@@ -105,6 +105,9 @@ extern "C" {
 #ifndef EMCUTE_BUFSIZE
 /**
  * @brief   Buffer size used for emCute's transmit and receive buffers
+ *
+ * @note    The buffer size MUST be less than 32768 on 16-bit and 8-bit
+ *          platforms to prevent buffer overflows.
  *
  * The overall buffer size used by emCute is this value time two (Rx + Tx).
  */
@@ -210,7 +213,7 @@ typedef struct {
  * @brief   Signature for callbacks fired when publish messages are received
  *
  * @param[in] topic     topic the received data was published on
- * @param[in] data      published data
+ * @param[in] data      published data, can be NULL
  * @param[in] len       length of @p data in bytes
  */
 typedef void(*emcute_cb_t)(const emcute_topic_t *topic, void *data, size_t len);
@@ -377,5 +380,5 @@ const char *emcute_type_str(uint8_t type);
 }
 #endif
 
-#endif /* MQTTSN_H */
+#endif /* NET_EMCUTE_H */
 /** @} */

@@ -17,6 +17,7 @@ QUIET ?= 0
 
 USEMODULE += xtimer
 FEATURES_REQUIRED += periph_timer
+FEATURES_REQUIRED += periph_rtc
 
 include $(RIOTBASE)/Makefile.include
 

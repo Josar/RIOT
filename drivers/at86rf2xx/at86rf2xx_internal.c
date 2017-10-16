@@ -218,10 +218,8 @@ void at86rf2xx_hardware_reset(at86rf2xx_t *dev)
 
 void at86rf2xx_configure_phy(at86rf2xx_t *dev)
 {
-    uint8_t state = at86rf2xx_get_status(dev);
-
     /* we must be in TRX_OFF before changing the PHY configuration */
-    at86rf2xx_set_state(dev, AT86RF2XX_STATE_TRX_OFF);
+    uint8_t prev_state = at86rf2xx_set_state(dev, AT86RF2XX_STATE_TRX_OFF);
 
 #ifdef MODULE_AT86RF212B
     /* The TX power register must be updated after changing the channel if
@@ -271,12 +269,23 @@ void at86rf2xx_configure_phy(at86rf2xx_t *dev)
 #endif
 
     /* Return to the state we had before reconfiguring */
-    at86rf2xx_set_state(dev, state);
+    at86rf2xx_set_state(dev, prev_state);
 }
 
-#if defined(MODULE_AT86RF233) || defined(MODULE_AT86RF231) || defined(MODULE_AT86RF212B )
+#if defined(MODULE_AT86RF233) || defined(MODULE_AT86RF231) || defined(MODULE_AT86RF212B ) || defined(MODULE_AT86RFR2 )
 void at86rf2xx_get_random(at86rf2xx_t *dev, uint8_t *data, const size_t len)
 {
+#if defined(MODULE_AT86RFR2 )
+    	/* Manual p. 119 RX_PDT_DIS (Register RX_SYN) is set to 0 */
+    	at86rf2xx_reg_write(dev, AT86RF2XX_REG__RX_SYN, *AT86RF2XX_REG__RX_SYN& ~(RX_PDT_DIS) );
+
+    	/* Manual p. 119 radio transceiver in Basic Operating Mode receive state*/
+		at86rf2xx_set_state(dev, AT86RF2XX_TRX_STATE__RX_ON );
+		while( at86rf2xx_get_status(dev) != AT86RF2XX_TRX_STATE__RX_ON);
+
+		xtimer_usleep(1);
+#endif
+
     for (size_t byteCount = 0; byteCount < len; ++byteCount) {
         uint8_t rnd = 0;
         for (uint8_t i = 0; i < 4; ++i) {
@@ -287,6 +296,9 @@ void at86rf2xx_get_random(at86rf2xx_t *dev, uint8_t *data, const size_t len)
             regVal = regVal >> 5;
             regVal = regVal << 2 * i;
             rnd |= regVal;
+#if defined(MODULE_AT86RFR2 )
+    		xtimer_usleep(1);
+#endif
         }
         data[byteCount] = rnd;
     }
@@ -295,8 +307,7 @@ void at86rf2xx_get_random(at86rf2xx_t *dev, uint8_t *data, const size_t len)
 
 void at86rf2xx_force_trx_off(const at86rf2xx_t *dev)
 {
-    at86rf2xx_reg_write(dev,
-                        AT86RF2XX_REG__TRX_STATE,
+    at86rf2xx_reg_write(dev, AT86RF2XX_REG__TRX_STATE,
                         AT86RF2XX_TRX_STATE__FORCE_TRX_OFF);
-    while (at86rf2xx_get_status(dev) != AT86RF2XX_STATE_TRX_OFF);
+    while (at86rf2xx_get_status(dev) != AT86RF2XX_STATE_TRX_OFF) {}
 }

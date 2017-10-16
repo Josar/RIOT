@@ -11,7 +11,6 @@ endif
 ifneq (,$(filter mrf24j40,$(USEMODULE)))
     USEMODULE_INCLUDES += $(RIOTBASE)/drivers/mrf24j40/include
 endif
-
 ifneq (,$(filter cc110x,$(USEMODULE)))
     USEMODULE_INCLUDES += $(RIOTBASE)/drivers/cc110x/include
 endif
@@ -78,8 +77,11 @@ endif
 ifneq (,$(filter jc42,$(USEMODULE)))
     USEMODULE_INCLUDES += $(RIOTBASE)/drivers/jc42/include
 endif
-ifneq (,$(filter bme280,$(USEMODULE)))
-    USEMODULE_INCLUDES += $(RIOTBASE)/drivers/bme280/include
+ifneq (,$(filter bm%280,$(USEMODULE)))
+    USEMODULE_INCLUDES += $(RIOTBASE)/drivers/bmx280/include
+endif
+ifneq (,$(filter tmp006,$(USEMODULE)))
+    USEMODULE_INCLUDES += $(RIOTBASE)/drivers/tmp006/include
 endif
 ifneq (,$(filter tsl2561,$(USEMODULE)))
     USEMODULE_INCLUDES += $(RIOTBASE)/drivers/tsl2561/include
@@ -125,4 +127,13 @@ ifneq (,$(filter dynamixel,$(USEMODULE)))
 endif
 ifneq (,$(filter lsm6dsl,$(USEMODULE)))
     USEMODULE_INCLUDES += $(RIOTBASE)/drivers/lsm6dsl/include
+endif
+ifneq (,$(filter dsp0401,$(USEMODULE)))
+    USEMODULE_INCLUDES += $(RIOTBASE)/drivers/dsp0401/include
+endif
+ifneq (,$(filter adcxx1c,$(USEMODULE)))
+    USEMODULE_INCLUDES += $(RIOTBASE)/drivers/adcxx1c/include
+endif
+ifneq (,$(filter sx127%,$(USEMODULE)))
+    USEMODULE_INCLUDES += $(RIOTBASE)/drivers/sx127x/include
 endif

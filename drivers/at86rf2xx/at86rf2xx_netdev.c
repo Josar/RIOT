@@ -241,7 +241,8 @@ static int _recv(netdev_t *netdev, void *buf, size_t len, void *info)
 
 static int _set_state(at86rf2xx_t *dev, netopt_state_t state)
 {
-    switch (state) {
+	DEBUG("[at86rf2xx] set netopt_state: %d\n", state );
+	switch (state) {
         case NETOPT_STATE_SLEEP:
             at86rf2xx_set_state(dev, AT86RF2XX_STATE_SLEEP);
             break;
@@ -412,12 +413,17 @@ static int _set(netdev_t *netdev, netopt_t opt, void *val, size_t len)
     uint8_t old_state = at86rf2xx_get_status(dev);
     int res = -ENOTSUP;
 
+    DEBUG("[at86rf2xx] set netopt_t: %d\n", opt );
+
     if (dev == NULL) {
         return -ENODEV;
     }
 
-    /* temporarily wake up if sleeping */
-    if (old_state == AT86RF2XX_STATE_SLEEP) {
+    /* temporarily wake up if sleeping and opt != NETOPT_STATE.
+     * opt != NETOPT_STATE check prevents redundant wake-up.
+     * when opt == NETOPT_STATE, at86rf2xx_set_state() will wake up the
+     * radio if needed. */
+    if ((old_state == AT86RF2XX_STATE_SLEEP) && (opt != NETOPT_STATE)) {
         at86rf2xx_assert_awake(dev);
     }
 
@@ -924,11 +930,22 @@ static void _isr(netdev_t *netdev)
 
             if (netdev->event_callback && (dev->netdev.flags & AT86RF2XX_OPT_TELL_TX_END)) {
                 switch (trac_status) {
+#ifdef MODULE_OPENTHREAD
+                    case AT86RF2XX_TRX_STATE__TRAC_SUCCESS:
+                        netdev->event_callback(netdev, NETDEV_EVENT_TX_COMPLETE);
+                        DEBUG("[at86rf2xx] TX SUCCESS\n");
+                        break;
+                    case AT86RF2XX_TRX_STATE__TRAC_SUCCESS_DATA_PENDING:
+                        netdev->event_callback(netdev, NETDEV_EVENT_TX_COMPLETE_DATA_PENDING);
+                        DEBUG("[at86rf2xx] TX SUCCESS DATA PENDING\n");
+                        break;
+#else
                     case AT86RF2XX_TRX_STATE__TRAC_SUCCESS:
                     case AT86RF2XX_TRX_STATE__TRAC_SUCCESS_DATA_PENDING:
                         netdev->event_callback(netdev, NETDEV_EVENT_TX_COMPLETE);
                         DEBUG("[at86rf2xx] TX SUCCESS\n");
                         break;
+#endif
                     case AT86RF2XX_TRX_STATE__TRAC_NO_ACK:
                         netdev->event_callback(netdev, NETDEV_EVENT_TX_NOACK);
                         DEBUG("[at86rf2xx] TX NO_ACK\n");

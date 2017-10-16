@@ -7,15 +7,22 @@
  */
 
 /**
- * @defgroup    boards_nucleo_common STM Nucleo Common
+ * @defgroup    boards_nucleo STM Nucleo boards
  * @ingroup     boards
- * @brief       Common files for STM Nucleo boards
+ * @brief       STM Nucleo boards
+ */
+
+/**
+ * @defgroup    boards_nucleo64_common STM Nucleo 64 boards common
+ * @ingroup     boards_nucleo
+ * @brief       Common files for STM Nucleo 64 boards
  * @{
  *
  * @file
  * @brief       Common pin definitions and board configuration options
  *
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
+ * @author      Sebastian Meiling <s@mlng.net>
  */
 
 #ifndef BOARD_COMMON_H
@@ -48,8 +55,11 @@ extern "C" {
 
 /**
  * @brief   User button
+ * @{
  */
-#define BTN_B1_PIN          GPIO_PIN(PORT_C, 13)
+#define BTN0_PIN            GPIO_PIN(PORT_C, 13)
+#define BTN0_MODE           GPIO_IN_PU
+/** @} */
 
 /**
  * @brief   Initialize board specific hardware, including clock, LEDs and std-IO

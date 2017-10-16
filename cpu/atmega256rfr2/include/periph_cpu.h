@@ -29,6 +29,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+/**
+ * @brief   Length of the CPU_ID in octets
+ */
+#define CPUID_LEN           (8U)
 
 /**
  * @brief   Available ports on the ATmega256rfr family
@@ -65,7 +69,6 @@ typedef struct {
 } pwm_chan_t;
 
 
-
 /**
  * @brief   PWM configuration
  */
@@ -89,6 +92,17 @@ typedef struct{
 	uint8_t *mask;
 	mutex_t *used;
 } i2c_conf_t;
+
+/**
+ * @brief setup analog comparator setting struct
+ */
+typedef struct {
+	REG8 *acsr;
+	REG8 *adcsrb;
+	gpio_t in1;
+	gpio_t in2;
+}ac_conf_t;
+
 #ifdef __cplusplus
 }
 #endif

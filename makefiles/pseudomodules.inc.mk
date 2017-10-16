@@ -1,8 +1,11 @@
 PSEUDOMODULES += auto_init_gnrc_rpl
-PSEUDOMODULES += conn
-PSEUDOMODULES += conn_ip
-PSEUDOMODULES += conn_tcp
-PSEUDOMODULES += conn_udp
+PSEUDOMODULES += can_mbox
+PSEUDOMODULES += can_pm
+PSEUDOMODULES += can_raw
+PSEUDOMODULES += cbor_ctime
+PSEUDOMODULES += cbor_float
+PSEUDOMODULES += cbor_semantic_tagging
+PSEUDOMODULES += conn_can_isotp_multi
 PSEUDOMODULES += core_%
 PSEUDOMODULES += emb6_router
 PSEUDOMODULES += gnrc_ipv6_default
@@ -12,7 +15,6 @@ PSEUDOMODULES += gnrc_netdev_default
 PSEUDOMODULES += gnrc_neterr
 PSEUDOMODULES += gnrc_netapi_callbacks
 PSEUDOMODULES += gnrc_netapi_mbox
-PSEUDOMODULES += gnrc_pktbuf
 PSEUDOMODULES += gnrc_sixlowpan_border_router_default
 PSEUDOMODULES += gnrc_sixlowpan_default
 PSEUDOMODULES += gnrc_sixlowpan_iphc_nhc
@@ -21,6 +23,8 @@ PSEUDOMODULES += gnrc_sixlowpan_router
 PSEUDOMODULES += gnrc_sixlowpan_router_default
 PSEUDOMODULES += gnrc_sock_check_reuse
 PSEUDOMODULES += gnrc_txtsnd
+PSEUDOMODULES += l2filter_blacklist
+PSEUDOMODULES += l2filter_whitelist
 PSEUDOMODULES += log
 PSEUDOMODULES += log_printfnoformat
 PSEUDOMODULES += lwip_arp
@@ -45,6 +49,7 @@ PSEUDOMODULES += netstats_ipv6
 PSEUDOMODULES += netstats_rpl
 PSEUDOMODULES += newlib
 PSEUDOMODULES += newlib_nano
+PSEUDOMODULES += openthread
 PSEUDOMODULES += pktqueue
 PSEUDOMODULES += posix
 PSEUDOMODULES += printf_float
@@ -61,6 +66,19 @@ PSEUDOMODULES += sock_udp
 PSEUDOMODULES += at86rf23%
 PSEUDOMODULES += at86rf21%
 PSEUDOMODULES += at86rfr2
+
+# include variants of the BMX280 drivers as pseudo modules
+PSEUDOMODULES += bmp280
+PSEUDOMODULES += bme280
+
+# variants of TI ADCXX1C
+PSEUDOMODULES += adc081c
+PSEUDOMODULES += adc101c
+PSEUDOMODULES += adc121c
+
+# include variants of SX127X drivers as pseudo modules
+PSEUDOMODULES += sx1272
+PSEUDOMODULES += sx1276
 
 # add all pseudo random number generator variants as pseudomodules
 PSEUDOMODULES += prng_%

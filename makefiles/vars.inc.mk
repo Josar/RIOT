@@ -1,3 +1,6 @@
+# set default values for selected global variables
+FLASH_ADDR ?= 0x0
+
 export Q                     # Used in front of Makefile lines to suppress the printing of the command if user did not opt-in to see them.
 export QQ                    # as Q, but be more quiet
 export QUIET                 # The parameter to use whether to show verbose makefile commands or not.
@@ -53,6 +56,7 @@ export WERROR                # Treat all compiler warnings as errors if set to 1
 export GITCACHE              # path to git-cache executable
 export FLASHER               # The command to call on "make flash".
 export FFLAGS                # The parameters to supply to FLASHER.
+export FLASH_ADDR          # Define an offset to flash code into ROM memory.
 export TERMPROG              # The command to call on "make term".
 export TERMFLAGS             # Additional parameters to supply to TERMPROG.
 export PORT                  # The port to connect the TERMPROG to.
@@ -68,6 +72,7 @@ export RESET_FLAGS           # The parameters to supply to RESET.
 export CCACHE_BASEDIR        # ccache basedir, allows multiple riot build
                              # directories to share a ccache directory
 
+export DLCACHE               # directory used to cache http downloads
 export DOWNLOAD_TO_FILE      # Use `$(DOWNLOAD_TO_FILE) $(DESTINATION) $(URL)` to download `$(URL)` to `$(DESTINATION)`.
 export DOWNLOAD_TO_STDOUT    # Use `$(DOWNLOAD_TO_STDOUT) $(URL)` to download `$(URL)` output `$(URL)` to stdout, e.g. to be piped into `tar xz`.
 export UNZIP_HERE            # Use `cd $(SOME_FOLDER) && $(UNZIP_HERE) $(SOME_FILE)` to extract the contents of the zip file `$(SOME_FILE)` into `$(SOME_FOLDER)`.

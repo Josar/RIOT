@@ -65,8 +65,12 @@ ifneq (,$(filter log_%,$(USEMODULE)))
     include $(RIOTBASE)/sys/log/Makefile.include
 endif
 
+ifneq (,$(filter newlib,$(USEMODULE)))
+    include $(RIOTMAKE)/libc/newlib.mk
+endif
+
 ifneq (,$(filter newlib_syscalls_default,$(USEMODULE)))
-    include $(RIOTBASE)/sys/newlib/Makefile.include
+    include $(RIOTBASE)/sys/newlib_syscalls_default/Makefile.include
 endif
 
 ifneq (,$(filter arduino,$(USEMODULE)))
@@ -77,6 +81,10 @@ ifneq (,$(filter printf_float,$(USEMODULE)))
     ifeq (1,$(USE_NANO_SPECS))
         export LINKFLAGS += -u _printf_float
     endif
+endif
+
+ifneq (,$(filter ssp,$(USEMODULE)))
+    include $(RIOTBASE)/sys/ssp/Makefile.include
 endif
 
 INCLUDES += -I$(RIOTBASE)/sys/libc/include

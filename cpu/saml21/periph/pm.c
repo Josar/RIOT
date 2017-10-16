@@ -8,6 +8,7 @@
 
 /**
  * @ingroup     cpu_saml21
+ * @ingroup     drivers_periph_pm
  * @{
  *
  * @file
@@ -49,8 +50,5 @@ void pm_set(unsigned mode)
         while (PM->SLEEPCFG.bit.SLEEPMODE != _mode) {}
     }
 
-    /* Executes a device DSB (Data Synchronization Barrier) */
-    __DSB();
-    /* Enter standby mode */
-    __WFI();
+    cortexm_sleep(0);
 }

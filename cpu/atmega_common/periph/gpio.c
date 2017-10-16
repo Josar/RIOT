@@ -9,7 +9,8 @@
  */
 
 /**
- * @ingroup     driver_periph
+ * @ingroup     cpu_atmega_common
+ * @ingroup     drivers_periph_gpio
  * @{
  *
  * @file
@@ -157,7 +158,8 @@ int gpio_init_int(gpio_t pin, gpio_mode_t mode, gpio_flank_t flank,
             }
 #if defined(EICRB)
             else {
-                EICRB |= (3 << (pin_num * 2) % 4);
+                //EICRB |= (3 << (pin_num * 2) % 4);
+            	 EICRB |= (3 << ((pin_num - 4)*2));		//not working on atmega256rfr2 pin_num is 6,, this should fix it
             }
 #endif
             break;
@@ -167,7 +169,7 @@ int gpio_init_int(gpio_t pin, gpio_mode_t mode, gpio_flank_t flank,
             }
 #if defined(EICRB)
             else {
-                EICRB |= (2 << (pin_num * 2) % 4);
+                EICRB |= (2 << ((pin_num - 4)*2));		//not working on atmega256rfr2 pin_num is 6, bit 5 in EICRB should be set, but instead bit 1 was set, this should fix it
             }
 #endif
             break;
@@ -177,7 +179,8 @@ int gpio_init_int(gpio_t pin, gpio_mode_t mode, gpio_flank_t flank,
             }
 #if defined(EICRB)
             else {
-                EICRB |= (1 << (pin_num * 2) % 4);
+               // EICRB |= (1 << (pin_num * 2) % 4);
+            	 EICRB |= (1 << ((pin_num - 4)*2));		//not working on atmega256rfr2 pin_num is 6, bit 4 in EICRB should be set, but instead bit 0 was set, this should fix it
             }
 #endif
             break;
@@ -285,17 +288,19 @@ ISR(INT5_vect, ISR_BLOCK)
 }
 #endif
 
-/* used for AVR_CONTEXT_SWAP_INTERRUPT */
-//#if defined(INT6_vect)
-//ISR(INT6_vect, ISR_BLOCK)
-//{
-//    irq_handler(6); /**< predefined interrupt pin */
-//}
-//#endif
-
+#if defined(INT6_vect)
+ISR(INT6_vect, ISR_BLOCK)
+{
+    irq_handler(6); /**< predefined interrupt pin */
+}
+#endif
+//INT7 used as contex swap
+//TODO: change to ifdef BOARD
+/*
 #if defined(INT7_vect)
 ISR(INT7_vect, ISR_BLOCK)
 {
-    irq_handler(7); /**< predefined interrupt pin */
+    irq_handler(7); ///< predefined interrupt pin
 }
 #endif
+*/

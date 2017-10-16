@@ -32,16 +32,17 @@ extern "C" {
 #endif
 
 /**
- * @name    External oscillator and clock configuration
+ * @name   External oscillator and clock configuration
  *
- * For selection of the used CORECLOCK, we have implemented two choices:
+ * There are three choices for selection of CORECLOCK:
  *
+ * - usage of the 48 MHz DFLL fed by external oscillator running at 32 kHz
  * - usage of the PLL fed by the internal 8MHz oscillator divided by 8
  * - usage of the internal 8MHz oscillator directly, divided by N if needed
  *
  *
  * The PLL option allows for the usage of a wider frequency range and a more
- * stable clock with less jitter. This is why we use this option as default.
+ * stable clock with less jitter. This is why this option is default.
  *
  * The target frequency is computed from the PLL multiplier and the PLL divisor.
  * Use the following formula to compute your values:
@@ -70,6 +71,12 @@ extern "C" {
 #define CLOCK_PLL_DIV       (1U)                /* adjust to your needs */
 /* generate the actual used core clock frequency */
 #define CLOCK_CORECLOCK     (((CLOCK_PLL_MUL + 1) * 1000000U) / CLOCK_PLL_DIV)
+#elif CLOCK_USE_XOSC32_DFLL
+    /* Settings for 32 kHz external oscillator and 48 MHz DFLL */
+#define CLOCK_CORECLOCK     (48000000U)
+#define CLOCK_XOSC32K       (32768UL)
+#define CLOCK_8MHZ          (1)
+#define GEN2_ULP32K         (1)
 #else
 /* edit this value to your needs */
 #define CLOCK_DIV           (1U)
@@ -240,6 +247,33 @@ static const spi_conf_t spi_config[] = {
 #define RTT_RUNSTDBY        (1)         /* Keep RTT running in sleep states */
 /** @} */
 
+/**
+ * @name ADC Configuration
+ * @{
+ */
+#define ADC_0_EN                           1
+#define ADC_MAX_CHANNELS                   14
+/* ADC 0 device configuration */
+#define ADC_0_DEV                          ADC
+#define ADC_0_IRQ                          ADC_IRQn
+
+/* ADC 0 Default values */
+#define ADC_0_CLK_SOURCE                   0 /* GCLK_GENERATOR_0 */
+#define ADC_0_PRESCALER                    ADC_CTRLB_PRESCALER_DIV512
+
+#define ADC_0_NEG_INPUT                    ADC_INPUTCTRL_MUXNEG_GND
+#define ADC_0_GAIN_FACTOR_DEFAULT          ADC_INPUTCTRL_GAIN_1X
+#define ADC_0_REF_DEFAULT                  ADC_REFCTRL_REFSEL_INT1V
+
+static const adc_conf_chan_t adc_channels[] = {
+    /* port, pin, muxpos */
+    {GPIO_PIN(PA, 6), ADC_INPUTCTRL_MUXPOS_PIN6},      /* EXT1, pin 3 */
+    {GPIO_PIN(PA, 7), ADC_INPUTCTRL_MUXPOS_PIN7},      /* EXT1, pin 4 */
+};
+
+#define ADC_0_CHANNELS                     (2U)
+#define ADC_NUMOF                          ADC_0_CHANNELS
+/** @} */
 #ifdef __cplusplus
 }
 #endif

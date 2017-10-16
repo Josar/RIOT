@@ -7,7 +7,8 @@
  */
 
 /**
- * @ingroup     driver_periph
+ * @ingroup     cpu_atmega_common
+ * @ingroup     drivers_periph_timer
  * @{
  *
  * @file
@@ -221,23 +222,23 @@ ISR(TIMER_1_ISRC, ISR_BLOCK)
     _isr(1, 2);
 }
 #endif /* TIMER_1 */
-
-#ifdef TIMER_2
-ISR(TIMER_2_ISRA, ISR_BLOCK)
-{
-    _isr(2, 0);
-}
-
-ISR(TIMER_2_ISRB, ISR_BLOCK)
-{
-    _isr(2, 1);
-}
-
-ISR(TIMER_2_ISRC, ISR_BLOCK)
-{
-    _isr(2, 2);
-}
-#endif /* TIMER_2 */
+//TODO: ifconfig board
+//#ifdef TIMER_2
+//ISR(TIMER_2_ISRA, ISR_BLOCK)
+//{
+//    _isr(2, 0);
+//}
+//
+//ISR(TIMER_2_ISRB, ISR_BLOCK)
+//{
+//    _isr(2, 1);
+//}
+//
+//ISR(TIMER_2_ISRC, ISR_BLOCK)
+//{
+//    _isr(2, 2);
+//}
+//#endif /* TIMER_2 */
 
 #ifdef TIMER_3
 ISR(TIMER_3_ISRA, ISR_BLOCK)

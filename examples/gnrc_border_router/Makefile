@@ -7,7 +7,8 @@ BOARD ?= samr21-xpro
 # This has to be the absolute path to the RIOT base directory:
 RIOTBASE ?= $(CURDIR)/../..
 
-BOARD_INSUFFICIENT_MEMORY := airfy-beacon calliope-mini cc2650stk maple-mini \
+BOARD_INSUFFICIENT_MEMORY := airfy-beacon b-l072z-lrwan1 \
+                             calliope-mini cc2650stk maple-mini \
                              microbit msb-430 msb-430h nrf51dongle nrf6310 \
                              nucleo32-f031 nucleo32-f042 nucleo32-f303 nucleo32-l031 \
                              nucleo-f030 nucleo-f070 nucleo-f072 nucleo-f103 nucleo-f302 \
@@ -76,12 +77,17 @@ QUIET ?= 1
 TAP ?= tap0
 IPV6_PREFIX ?= 2001:db8::/64
 
+# We override the `make term` command to use ethos
+TERMPROG ?= sudo sh $(RIOTBASE)/dist/tools/ethos/start_network.sh
+TERMFLAGS ?= $(PORT) $(TAP) $(IPV6_PREFIX)
+
+# We depend on the ethos host tools to run the border router, we build them
+# if necessary
+TERMDEPS += host-tools
+
 include $(RIOTBASE)/Makefile.include
 
 .PHONY: host-tools
-
-term: host-tools
-	$(Q)sudo sh $(RIOTBASE)/dist/tools/ethos/start_network.sh $(PORT) $(TAP) $(IPV6_PREFIX)
 
 host-tools:
 	$(Q)env -u CC -u CFLAGS make -C $(RIOTBASE)/dist/tools

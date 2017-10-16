@@ -37,7 +37,7 @@
 #ifdef DEBUG_AT86RF2XX
 #define ENABLE_DEBUG (1)
 #else
-#define ENABLE_DEBUG (0)
+#define ENABLE_DEBUG (1)
 #endif
 #include "debug.h"
 
@@ -55,7 +55,7 @@
 
 	#include "avr/interrupt.h"
 	// saved device Pointer for Interrupt callback
-	static netdev_t* static_dev;
+	static netdev_t* static_dev =0;
 	// static kernel_pid_t at86rfr2_interrupt_thread_pid;
 
 //	/*
@@ -400,7 +400,7 @@
 		__enter_isr();
 		((at86rf2xx_t*)static_dev)->irq_status1 |= AT86RF2XX_IRQ_STATUS_MASK1__TX_START_EN;
 		static_dev->event_callback(static_dev, NETDEV_EVENT_ISR);
-		LED_PORT &= ~RED;
+		LED_PORT |= RED;
 		DEBUG("TRX24_TX_START\n");
 		__exit_isr();
 	}
@@ -409,38 +409,42 @@
 //	 * enabled bit AMI0 in register IRQ_MASK1 is set.
 //	 *
 //	 */
-//	ISR(TRX24_AMI0_vect , ISR_BLOCK)
-//	{
-//		__enter_isr();
+	ISR(TRX24_AMI0_vect , ISR_BLOCK)
+	{
+		__enter_isr();
 //		msg_t m;
 //		m.content.value = TRX24_AMI0_vect_num;
 //		msg_send_int(&m, at86rfr2_interrupt_thread_pid);
-//		__exit_isr();
-//	}
-//	ISR(TRX24_AMI1_vect , ISR_BLOCK)
-//	{
-//		__enter_isr();
+		DEBUG("AMI0 \n");
+		__exit_isr();
+	}
+	ISR(TRX24_AMI1_vect , ISR_BLOCK)
+	{
+		__enter_isr();
 //		msg_t m;
 //		m.content.value = TRX24_AMI1_vect_num;
 //		msg_send_int(&m, at86rfr2_interrupt_thread_pid);
-//		__exit_isr();
-//	}
-//	ISR(TRX24_AMI2_vect , ISR_BLOCK)
-//	{
-//		__enter_isr();
+		DEBUG("AMI1 \n");
+		__exit_isr();
+	}
+	ISR(TRX24_AMI2_vect , ISR_BLOCK)
+	{
+		__enter_isr();
 //		msg_t m;
 //		m.content.value = TRX24_AMI2_vect_num;
 //		msg_send_int(&m, at86rfr2_interrupt_thread_pid);
-//		__exit_isr();
-//	}
-//	ISR(TRX24_AMI3_vect , ISR_BLOCK)
-//	{
-//		__enter_isr();
+		DEBUG("AMI2 \n");
+		__exit_isr();
+	}
+	ISR(TRX24_AMI3_vect , ISR_BLOCK)
+	{
+		__enter_isr();
 //		msg_t m;
 //		m.content.value = TRX24_AMI3_vect_num;
 //		msg_send_int(&m, at86rfr2_interrupt_thread_pid);
-//		__exit_isr();
-//	}
+		DEBUG("AMI3 \n");
+		__exit_isr();
+	}
 
 #endif
 
@@ -487,12 +491,15 @@ void at86rf2xx_reset(at86rf2xx_t *dev)
 
     /* get an 8-byte unique ID to use as hardware address */
     luid_get(addr_long.uint8, IEEE802154_LONG_ADDRESS_LEN);
+
+
     /* make sure we mark the address as non-multicast and not globally unique */
     addr_long.uint8[0] &= ~(0x01);
     addr_long.uint8[0] |=  (0x02);
     /* set short and long address */
     at86rf2xx_set_addr_long(dev, ntohll(addr_long.uint64.u64));
     at86rf2xx_set_addr_short(dev, ntohs(addr_long.uint16[0].u16));
+
 
     /* set default PAN id */
     at86rf2xx_set_pan(dev, AT86RF2XX_DEFAULT_PANID);
@@ -549,22 +556,22 @@ void at86rf2xx_reset(at86rf2xx_t *dev)
 	at86rf2xx_reg_write(dev, AT86RF2XX_REG__IRQ_MASK,
 			// AT86RF2XX_IRQ_STATUS_MASK__AWAKE
 			 AT86RF2XX_IRQ_STATUS_MASK__TX_END_EN
-			// | AT86RF2XX_IRQ_STATUS_MASK__AMI_EN
+			 | AT86RF2XX_IRQ_STATUS_MASK__AMI_EN
 			//| AT86RF2XX_IRQ_STATUS_MASK__CCA_ED_DONE_EN
 			| AT86RF2XX_IRQ_STATUS_MASK__RX_END_EN
-			//| AT86RF2XX_IRQ_STATUS_MASK__RX_START_EN
+			| AT86RF2XX_IRQ_STATUS_MASK__RX_START_EN
 			//| AT86RF2XX_IRQ_STATUS_MASK__PLL_UNLOCK_EN
 			// | AT86RF2XX_IRQ_STATUS_MASK__PLL_LOCK_EN
 						);
 
 	/* enable interrupts IRQ_MASK1*/
-	 at86rf2xx_reg_write(dev, AT86RF2XX_REG__IRQ_MASK1, 0x00);
-//			    AT86RF2XX_IRQ_STATUS_MASK1__TX_START_EN
-//			   | AT86RF2XX_IRQ_STATUS_MASK1__MAF_0_AMI_EN
-//			   | AT86RF2XX_IRQ_STATUS_MASK1__MAF_1_AMI_EN
-//			   | AT86RF2XX_IRQ_STATUS_MASK1__MAF_2_AMI_EN
-//			   | AT86RF2XX_IRQ_STATUS_MASK1__MAF_3_AMI_EN
-//						);
+	 at86rf2xx_reg_write(dev, AT86RF2XX_REG__IRQ_MASK1,
+			    AT86RF2XX_IRQ_STATUS_MASK1__TX_START_EN
+			   | AT86RF2XX_IRQ_STATUS_MASK1__MAF_0_AMI_EN
+			   | AT86RF2XX_IRQ_STATUS_MASK1__MAF_1_AMI_EN
+			   | AT86RF2XX_IRQ_STATUS_MASK1__MAF_2_AMI_EN
+			   | AT86RF2XX_IRQ_STATUS_MASK1__MAF_3_AMI_EN
+						);
 
 	/* clear frame buffer protection */
 	*AT86RF2XX_REG__TRX_CTRL_2 &= ~(1<<RX_SAFE_MODE);
@@ -609,6 +616,10 @@ size_t at86rf2xx_send(at86rf2xx_t *dev, uint8_t *data, size_t len)
     at86rf2xx_tx_prepare(dev);
     at86rf2xx_tx_load(dev, data, len, 0);
     at86rf2xx_tx_exec(dev);
+    DEBUG("at86rf2xx_send(): DATA: ");
+    for(uint8_t i = 0; i<len; i++){
+    	DEBUG("0x%x ", data[i]);
+    }
     return len;
 }
 
@@ -617,15 +628,19 @@ void at86rf2xx_tx_prepare(at86rf2xx_t *dev)
     uint8_t state;
 
     dev->pending_tx++;
+
     /* make sure ongoing transmissions are finished */
     do {
         state = at86rf2xx_get_status(dev);
     } while (state == AT86RF2XX_STATE_BUSY_RX_AACK ||
              state == AT86RF2XX_STATE_BUSY_TX_ARET);
+
     if (state != AT86RF2XX_STATE_TX_ARET_ON) {
         dev->idle_state = state;
     }
+
     at86rf2xx_set_state(dev, AT86RF2XX_STATE_TX_ARET_ON);
+
     dev->tx_frame_len = IEEE802154_FCS_LEN;
 }
 
@@ -634,6 +649,10 @@ size_t at86rf2xx_tx_load(at86rf2xx_t *dev, uint8_t *data,
 {
     dev->tx_frame_len += (uint8_t)len;
     at86rf2xx_sram_write(dev, offset + 1, data, len);
+    DEBUG("at86rf2xx_tx_load(): Offset: %d DATA: ", offset);
+    for(uint8_t i = 0; i<len; i++){
+    	DEBUG("0x%x ", data[i]);
+    }
     return offset + len;
 }
 
@@ -656,3 +675,11 @@ void at86rf2xx_tx_exec(at86rf2xx_t *dev)
         netdev->event_callback(netdev, NETDEV_EVENT_TX_STARTED);
     }
 }
+
+#if defined(MODULE_AT86RFR2)
+void at86rf2xx_get_random_num(uint8_t *data, const size_t len){
+	if( static_dev !=0 ){
+		at86rf2xx_get_random( (at86rf2xx_t *)static_dev, data, len);
+	}
+}
+#endif

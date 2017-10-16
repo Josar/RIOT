@@ -117,26 +117,6 @@ void thread_arch_stack_print(void)
     }
 }
 
-
-/* This function calculates the ISR_usage */
-int thread_arch_isr_stack_usage(void)
-{
-    /* TODO */
-    return -1;
-}
-
-void *thread_arch_isr_stack_pointer(void)
-{
-    /* TODO */
-    return (void *)-1;
-}
-
-void *thread_arch_isr_stack_start(void)
-{
-    /* TODO */
-    return (void *)-1;
-}
-
 extern void __exception_restore(void);
 void thread_arch_start_threading(void)
 {
@@ -185,7 +165,11 @@ struct linkctx* exctx_find(reg_t id, struct gpctx *gp)
 }
 
 /* unaligned access helper */
-static inline uint32_t __attribute__((optimize("-O3")))
+static inline uint32_t
+#ifndef __clang__
+/* Clang does not support attribute optimize */
+__attribute__((optimize("-O3")))
+#endif
 mem_rw(const void *vaddr)
 {
     uint32_t v;

@@ -24,6 +24,7 @@
 #endif
 
 #include "periph/timer.h"
+#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -103,7 +104,7 @@ static inline uint32_t _xtimer_now(void)
         latched_high_cnt = _xtimer_high_cnt;
         now = _xtimer_lltimer_now();
     } while (_xtimer_high_cnt != latched_high_cnt);
-
+   // printf("high-cnt %lx now %lu \n", _xtimer_high_cnt, now);
     return latched_high_cnt | now;
 #else
     return _xtimer_lltimer_now();

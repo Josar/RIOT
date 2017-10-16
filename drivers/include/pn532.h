@@ -18,8 +18,8 @@
  * @author      Víctor Ariño <victor.arino@triagnosys.com>
  */
 
-#ifndef NFC_READER_INCLUDE_PN532_H
-#define NFC_READER_INCLUDE_PN532_H
+#ifndef PN532_H
+#define PN532_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -160,7 +160,7 @@ typedef enum {
  * @param[in]  dev          target device
  *
  */
-void pn532_reset(pn532_t *dev);
+void pn532_reset(const pn532_t *dev);
 
 /**
  * @brief Initialize the module and peripherals
@@ -383,5 +383,5 @@ void pn532_release_passive(pn532_t *dev, unsigned target_id);
 }
 #endif
 
-#endif /* NFC_READER_INCLUDE_PN532_H */
+#endif /* PN532_H */
 /** @} */

@@ -1,7 +1,7 @@
 # include Makefile.local if it exists
 -include Makefile.local
 
-all:
+all: link
 
 # set undefined variables
 RIOTBASE       ?= $(dir $(lastword $(MAKEFILE_LIST)))
@@ -16,6 +16,8 @@ APPDIR         ?= $(CURDIR)
 BINDIRBASE     ?= $(APPDIR)/bin
 BINDIR         ?= $(BINDIRBASE)/$(BOARD)
 PKGDIRBASE     ?= $(BINDIRBASE)/pkg/$(BOARD)
+DLCACHE        ?= $(RIOTBASE)/dist/tools/dlcache/dlcache.sh
+DLCACHE_DIR    ?= $(RIOTBASE)/.dlcache
 
 # to extend size information print out
 SIZEFLAGS      ?=
@@ -36,6 +38,7 @@ __DIRECTORY_VARIABLES := \
   CCACHE_BASEDIR \
   GITCACHE \
   PKGDIRBASE \
+  DLCACHE_DIR \
   #
 
 # Make all paths absolute.
@@ -51,6 +54,7 @@ override APPDIR         := $(abspath $(APPDIR))
 override BINDIRBASE     := $(abspath $(BINDIRBASE))
 override BINDIR         := $(abspath $(BINDIR))
 override PKGDIRBASE     := $(abspath $(PKGDIRBASE))
+override DLCACHE_DIR    := $(abspath $(DLCACHE_DIR))
 
 # Ensure that all directories are set and don't contain spaces.
 ifneq (, $(filter-out 1, $(foreach v,${__DIRECTORY_VARIABLES},$(words ${${v}}))))
@@ -281,7 +285,7 @@ endif
 BASELIBS += $(BINDIR)/${APPLICATION}.a
 BASELIBS += $(APPDEPS)
 
-.PHONY: all clean flash term doc debug debug-server reset objdump help info-modules
+.PHONY: all link clean flash term doc debug debug-server reset objdump help info-modules
 .PHONY: ..in-docker-container
 
 ELFFILE ?= $(BINDIR)/$(APPLICATION).elf
@@ -295,17 +299,19 @@ LINKFLAGPREFIX ?= -Wl,
 
 DIRS += $(EXTERNAL_MODULE_DIRS)
 
+_LINK = $(if $(CPPMIX),$(CXX),$(LINK)) $(UNDEF) $(LINKFLAGPREFIX)--start-group $(BASELIBS) -lm $(LINKFLAGPREFIX)--end-group  $(LINKFLAGPREFIX)-Map=$(BINDIR)/$(APPLICATION).map $(LINKFLAGPREFIX)--cref $(LINKFLAGS)
+
 ifeq ($(BUILD_IN_DOCKER),1)
-all: ..in-docker-container
+link: ..in-docker-container
 else
 ## make script for your application. Build RIOT-base here!
-all: ..compiler-check ..build-message $(RIOTBUILD_CONFIG_HEADER_C) $(USEPKG:%=${BINDIR}/%.a) $(APPDEPS)
+link: ..compiler-check ..build-message $(RIOTBUILD_CONFIG_HEADER_C) $(USEPKG:%=${BINDIR}/%.a) $(APPDEPS)
 	$(Q)DIRS="$(DIRS)" "$(MAKE)" -C $(APPDIR) -f $(RIOTMAKE)/application.inc.mk
 ifeq (,$(RIOTNOLINK))
 ifeq ($(BUILDOSXNATIVE),1)
 	$(Q)$(if $(CPPMIX),$(CXX),$(LINK)) $(UNDEF) -o $(ELFFILE) $$(find $(BASELIBS) -size +8c) $(LINKFLAGS) $(LINKFLAGPREFIX)-no_pie
 else
-	$(Q)$(if $(CPPMIX),$(CXX),$(LINK)) $(UNDEF) -o $(ELFFILE) $(LINKFLAGPREFIX)--start-group $(BASELIBS) -lm $(LINKFLAGPREFIX)--end-group  $(LINKFLAGPREFIX)-Map=$(BINDIR)/$(APPLICATION).map $(LINKFLAGPREFIX)--cref $(LINKFLAGS)
+	$(Q)$(_LINK) -o $(ELFFILE)
 endif
 	$(Q)$(SIZE) $(SIZEFLAGS) $(ELFFILE)
 	$(Q)$(OBJCOPY) $(OFLAGS) $(ELFFILE) $(HEXFILE)
@@ -366,7 +372,7 @@ distclean:
 	-@for i in $(USEPKG) ; do "$(MAKE)" -C $(RIOTPKG)/$$i distclean ; done
 	-@rm -rf $(BINDIRBASE)
 
-flash: all
+flash: all $(FLASHDEPS)
 	@command -v $(FLASHER) >/dev/null 2>&1 || \
 		{ $(COLOR_ECHO) \
 		'${COLOR_RED}Flash program $(FLASHER) not found. Aborting.${COLOR_RESET}'; \
@@ -374,7 +380,10 @@ flash: all
 	$(PREFLASHER)
 	$(FLASHER) $(FFLAGS)
 
-term: $(filter flash, $(MAKECMDGOALS))
+preflash: all
+	$(PREFLASHER) $(PREFFLAGS)
+
+term: $(filter flash, $(MAKECMDGOALS)) $(TERMDEPS)
 	@command -v $(TERMPROG) >/dev/null 2>&1 || \
 		{ $(COLOR_ECHO) \
 		'${COLOR_RED}Terminal program $(TERMPROG) not found. Aborting.${COLOR_RESET}'; \
@@ -436,6 +445,10 @@ include $(RIOTMAKE)/features.inc.mk
 
 # Export variables used throughout the whole make system:
 include $(RIOTMAKE)/vars.inc.mk
+
+# Include build targets for selected tools after the default RIOT targets have
+# been defined (-> so the `all` will be always the first target)
+include $(RIOTMAKE)/tools/targets.inc.mk
 
 # Warn if the selected board and drivers don't provide all needed features:
 ifneq (, $(filter all, $(if $(MAKECMDGOALS), $(MAKECMDGOALS), all)))
@@ -563,3 +576,6 @@ endif
 CFLAGS := $(patsubst -D%,,$(CFLAGS))
 CFLAGS := $(patsubst -U%,,$(CFLAGS))
 CFLAGS += -include '$(RIOTBUILD_CONFIG_HEADER_C)'
+
+# include multislot support
+include $(RIOTMAKE)/multislot.mk

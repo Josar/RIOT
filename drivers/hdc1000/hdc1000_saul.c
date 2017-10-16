@@ -23,11 +23,11 @@
 #include "saul.h"
 #include "hdc1000.h"
 
-static int read_temp(void *dev, phydat_t *res)
+static int read_temp(const void *dev, phydat_t *res)
 {
-    hdc1000_t *d = (hdc1000_t *)dev;
-
-    hdc1000_read(d, &(res->val[0]), NULL);
+    if (hdc1000_read((const hdc1000_t *)dev, &(res->val[0]), NULL) != HDC1000_OK) {
+        return -ECANCELED;
+    }
     memset(&(res->val[1]), 0, 2 * sizeof(int16_t));
     res->unit = UNIT_TEMP_C;
     res->scale = -2;
@@ -35,11 +35,11 @@ static int read_temp(void *dev, phydat_t *res)
     return 1;
 }
 
-static int read_hum(void *dev, phydat_t *res)
+static int read_hum(const void *dev, phydat_t *res)
 {
-    hdc1000_t *d = (hdc1000_t *)dev;
-
-    hdc1000_read(d, NULL, &(res->val[0]));
+    if (hdc1000_read((const hdc1000_t *)dev, NULL, &(res->val[0])) != HDC1000_OK) {
+        return -ECANCELED;
+    }
     memset(&(res->val[1]), 0, 2 * sizeof(int16_t));
     res->unit = UNIT_PERCENT;
     res->scale = -2;

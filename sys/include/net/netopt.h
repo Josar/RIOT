@@ -22,8 +22,8 @@
  * @author      Kaspar Schleiser <kaspar@schleiser.de>
  */
 
-#ifndef NETOPT_H
-#define NETOPT_H
+#ifndef NET_NETOPT_H
+#define NET_NETOPT_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -240,10 +240,110 @@ typedef enum {
      */
     NETOPT_RF_TESTMODE,
 
+    /**
+     * @brief   add an address to a link layer filter list
+     *
+     * 'Getting' this option from a device will return a pointer of type
+     * @ref l2filter_t to the first entry of a filter list.
+     * When 'Setting' this option a pointer to an link layer address as well as
+     * the length of the address are expected as parameters.
+     */
+    NETOPT_L2FILTER,
+
+    /**
+     * @brief   remove an address from a link layer filter list
+     *
+     * 'Getting' this value always returns -ENOTSUP.
+     * When 'Setting' this option a pointer to an link layer address as well as
+     * the length of the address are expected as parameters. 'Setting' this
+     * option will lead to the given address being removed from the filer list.
+     */
+    NETOPT_L2FILTER_RM,
+
+    /**
+     * @brief   Energy level during the last performed CCA or RX frame
+     *
+     * Get the last ED level available as an int8_t. The source of the
+     * measurement is unspecified and may come from the latest CCA
+     * measurement (CCA mode 1), or from the last received frame.
+     */
+    NETOPT_LAST_ED_LEVEL,
+
+    /**
+     * @brief   Get/Set preamble length as uint16_t in host byte order.
+     */
+    NETOPT_PREAMBLE_LENGTH,
+
+    /**
+     * @brief   Enable/disable integrity check (e.g CRC).
+     */
+    NETOPT_INTEGRITY_CHECK,
+
+    /**
+     * @brief   Enable/disable channel hopping.
+     */
+    NETOPT_CHANNEL_HOP,
+
+    /**
+     * @brief   Get/Set channel hopping period as uint8_t.
+     */
+    NETOPT_CHANNEL_HOP_PERIOD,
+
+    /**
+      * @brief   Enable/disable single packet reception.
+      *
+      * If enabled, RX is turned off upon reception of a packet
+      */
+    NETOPT_SINGLE_RECEIVE,
+
+    /**
+     * @brief   Get/Set the reception timeout of a packet.
+     *
+     * Values are retrieved/passed as uint32_t in host byte order.
+     */
+    NETOPT_RX_TIMEOUT,
+
+    /**
+     * @brief   Get/Set the transmission timeout of a packet.
+     *
+     * Values are retrieved/passed as uint32_t in host byte order.
+     */
+    NETOPT_TX_TIMEOUT,
+
+    /**
+     * @brief   Get/Set the radio modem type as uint8_t.
+     */
+    NETOPT_DEVICE_MODE,
+
+    /**
+     * @brief   Get/Set the radio modulation bandwidth as uint8_t.
+     */
+    NETOPT_BANDWIDTH,
+
+    /**
+     * @brief   Get/Set the radio spreading factor as uint8_t.
+     */
+    NETOPT_SPREADING_FACTOR,
+
+    /**
+     * @brief   Get/Set the radio coding rate as uint8_t.
+     */
+    NETOPT_CODING_RATE,
+
+    /**
+     * @brief   Enable/disable fixed header mode.
+     */
+    NETOPT_FIXED_HEADER,
+
+    /**
+     * @brief   Enable/disable IQ inverted.
+     */
+    NETOPT_IQ_INVERT,
+
     /* add more options if needed */
 
     /**
-     * @brief   maximum number of options defined here
+     * @brief   maximum number of options defined here.
      *
      * @note    Interfaces are not meant to respond to that.
      */
@@ -277,6 +377,8 @@ typedef enum {
                                  *   transmitting a packet */
     NETOPT_STATE_RESET,         /**< triggers a hardware reset. The resulting
                                  *   state of the network device is @ref NETOPT_STATE_IDLE */
+    NETOPT_STATE_STANDBY,       /**< standby mode. The devices is awake but
+                                 *   not listening to packets. */
     /* add other states if needed */
 } netopt_state_t;
 
@@ -303,5 +405,5 @@ const char *netopt2str(netopt_t opt);
 }
 #endif
 
-#endif /* NETOPT_H */
+#endif /* NET_NETOPT_H */
 /** @} */

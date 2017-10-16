@@ -23,23 +23,17 @@
 #include "saul.h"
 #include "lps331ap.h"
 
-static int read(void *dev, phydat_t *res)
+static int read(const void *dev, phydat_t *res)
 {
-    lps331ap_t *d = (lps331ap_t *)dev;
-    res->val[0] = (int16_t)lps331ap_read_pres(d);
+    res->val[0] = (int16_t)lps331ap_read_pres((const lps331ap_t *)dev);
     memset(&(res->val[1]), 0, 2 * sizeof(int16_t));
     res->unit = UNIT_BAR;
     res->scale = -3;
     return 1;
 }
 
-static int write(void *dev, phydat_t *state)
-{
-    return -ENOTSUP;
-}
-
 const saul_driver_t lps331ap_saul_driver = {
     .read = read,
-    .write = write,
+    .write = saul_notsup,
     .type = SAUL_SENSE_PRESS,
 };

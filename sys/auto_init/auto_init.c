@@ -72,6 +72,10 @@
 #include "lwip.h"
 #endif
 
+#ifdef MODULE_OPENTHREAD
+#include "ot.h"
+#endif
+
 #ifdef MODULE_FIB
 #include "net/fib.h"
 #endif
@@ -139,6 +143,10 @@ void auto_init(void)
 #ifdef MODULE_LWIP
     DEBUG("Bootstraping lwIP.\n");
     lwip_bootstrap();
+#endif
+#ifdef MODULE_OPENTHREAD
+    extern void openthread_bootstrap(void);
+    openthread_bootstrap();
 #endif
 #ifdef MODULE_GCOAP
     DEBUG("Auto init gcoap module.\n");
@@ -281,6 +289,10 @@ void auto_init(void)
     extern void auto_init_mma8x5x(void);
     auto_init_mma8x5x();
 #endif
+#ifdef MODULE_MPL3115A2
+    extern void auto_init_mpl3115a2(void);
+    auto_init_mpl3115a2();
+#endif
 #ifdef MODULE_SI70XX
     extern void auto_init_si70xx(void);
     auto_init_si70xx();
@@ -289,9 +301,9 @@ void auto_init(void)
     extern void auto_init_bmp180(void);
     auto_init_bmp180();
 #endif
-#ifdef MODULE_BME280
-    extern void auto_init_bme280(void);
-    auto_init_bme280();
+#if defined(MODULE_BME280) || defined(MODULE_BMP280)
+    extern void auto_init_bmx280(void);
+    auto_init_bmx280();
 #endif
 #ifdef MODULE_JC42
     extern void auto_init_jc42(void);
@@ -308,6 +320,10 @@ void auto_init(void)
 #ifdef MODULE_DHT
     extern void auto_init_dht(void);
     auto_init_dht();
+#endif
+#ifdef MODULE_TMP006
+    extern void auto_init_tmp006(void);
+    auto_init_tmp006();
 #endif
 #ifdef MODULE_TCS37727
     extern void auto_init_tcs37727(void);
@@ -328,6 +344,10 @@ void auto_init(void)
 #ifdef MODULE_LSM6DSL
     extern void auto_init_lsm6dsl(void);
     auto_init_lsm6dsl();
+#endif
+#ifdef MODULE_ADCXX1C
+    extern void auto_init_adcxx1c(void);
+    auto_init_adcxx1c();
 #endif
 
 #endif /* MODULE_AUTO_INIT_SAUL */
@@ -351,4 +371,12 @@ void auto_init(void)
 #endif
 
 #endif /* MODULE_AUTO_INIT_STORAGE */
+
+#ifdef MODULE_AUTO_INIT_CAN
+    DEBUG("auto_init CAN\n");
+
+    extern void auto_init_candev(void);
+    auto_init_candev();
+
+#endif /* MODULE_AUTO_INIT_CAN */
 }

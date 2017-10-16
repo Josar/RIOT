@@ -53,6 +53,15 @@ static void _periph_timer_callback(void *arg, int chan);
 
 static inline int _this_high_period(uint32_t target);
 
+xtimer_t* get_xtimer_head(void)
+{
+	return timer_list_head;
+}
+xtimer_t* get_xtimer_head_long(void)
+{
+	return long_list_head;
+}
+
 static inline int _is_set(xtimer_t *timer)
 {
     return (timer->target || timer->long_target);
@@ -452,7 +461,7 @@ static void _timer_callback(void)
 
         /* make sure the timer counter also arrived
          * in the next timer period */
-        while (_xtimer_lltimer_now() == _xtimer_lltimer_mask(0xFFFFFFFF));
+        while (_xtimer_lltimer_now() == _xtimer_lltimer_mask(0xFFFFFFFF)) {}
     }
     else {
         /* we ended up in _timer_callback and there is
@@ -466,7 +475,9 @@ overflow:
     /* check if next timers are close to expiring */
     while (timer_list_head && (_time_left(_xtimer_lltimer_mask(timer_list_head->target), reference) < XTIMER_ISR_BACKOFF)) {
         /* make sure we don't fire too early */
-        while (_time_left(_xtimer_lltimer_mask(timer_list_head->target), reference));
+        while (_time_left(_xtimer_lltimer_mask(timer_list_head->target), reference)) {}
+
+        DEBUG("Timer shoot manually \n");
 
         /* pick first timer in list */
         xtimer_t *timer = timer_list_head;
@@ -495,6 +506,7 @@ overflow:
     }
 
     if (timer_list_head) {
+    	DEBUG("Schedule next timer \n");
         /* schedule callback on next timer target time */
         next_target = timer_list_head->target - XTIMER_OVERHEAD;
 
@@ -506,6 +518,7 @@ overflow:
     else {
         /* there's no timer planned for this timer period */
         /* schedule callback on next overflow */
+    	DEBUG("Schedule callback on overflow \n");
         next_target = _xtimer_lltimer_mask(0xFFFFFFFF);
         uint32_t now = _xtimer_lltimer_now();
 
@@ -513,13 +526,15 @@ overflow:
         if (now < reference) {
             _next_period();
             reference = 0;
+            DEBUG("Overflow \n");
             goto overflow;
         }
         else {
             /* check if the end of this period is very soon */
             if (_xtimer_lltimer_mask(now + XTIMER_ISR_BACKOFF) < now) {
+            	DEBUG("Spin until next periode \n");
                 /* spin until next period, then advance */
-                while (_xtimer_lltimer_now() >= now);
+                while (_xtimer_lltimer_now() >= now) {}
                 _next_period();
                 reference = 0;
                 goto overflow;

@@ -21,10 +21,10 @@
 
 #define LOG_LEVEL LOG_DEBUG
 #include "log.h"
-#include "log.h"
 #include "board.h"
 #include "net/gnrc/netdev.h"
 #include "net/gnrc/netdev/ieee802154.h"
+#include "net/gnrc/lwmac/lwmac.h"
 #include "net/gnrc.h"
 
 #include "at86rf2xx.h"
@@ -66,11 +66,19 @@ void auto_init_at86rf2xx(void)
             LOG_ERROR("[auto_init_netif] error initializing at86rf2xx radio #%u\n", i);
         }
         else {
+#ifdef MODULE_GNRC_LWMAC
+            gnrc_lwmac_init(_at86rf2xx_stacks[i],
+                            AT86RF2XX_MAC_STACKSIZE,
+                            AT86RF2XX_MAC_PRIO,
+                            "at86rf2xx-lwmac",
+                            &gnrc_adpt[i]);
+#else
             gnrc_netdev_init(_at86rf2xx_stacks[i],
                              AT86RF2XX_MAC_STACKSIZE,
                              AT86RF2XX_MAC_PRIO,
                              "at86rf2xx",
                              &gnrc_adpt[i]);
+#endif
         }
     }
 }
