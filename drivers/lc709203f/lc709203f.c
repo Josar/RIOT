@@ -45,6 +45,7 @@ int8_t gauge_init(i2c_t dev, gpio_t alarm_pin, gauge_cb_t cb, void *arg)
 	conf.alarm_pin = alarm_pin;
 	conf.cb = cb;
 	conf.arg = arg;
+    printf("GPIO_FALLING: %x \n", GPIO_FALLING);
 	gpio_init_int(alarm_pin, GPIO_IN, GPIO_FALLING,cb, arg);
 	return i2c_init_master(dev, I2C_SPEED_FAST);
 }

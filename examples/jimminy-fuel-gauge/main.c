@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 RWTH Aachen, Josua Arndt
+ * Copyright (C) 2016 RWTH Aachen, Steffen Robertz
  *
  * This file is subject to the terms and conditions of the GNU Lesser
  * General Public License v2.1. See the file LICENSE in the top level
@@ -40,7 +40,8 @@ int main(void)
     stepdown_init(3000);
     gauge_init(I2C_0, GPIO_PIN(PORT_E, 6), _gauge_cb, NULL);
     gauge_set_alarm_low_rsoc(I2C_0, 0);
-    gauge_set_alarm_low_rsoc(I2C_0, 70);
+    gauge_set_alarm_low_rsoc(I2C_0, 95);
+    printf("EICRB: %x \n", EICRB);
     printf("Alarm Low RSOC: %u \n", gauge_get_alarm_low_rsoc(I2C_0));
 while(1){
    printf("Voltage in mV: %u \n", gauge_get_voltage(I2C_0));

@@ -159,42 +159,20 @@ int gpio_init_int(gpio_t pin, gpio_mode_t mode, gpio_flank_t flank,
     EIMSK |= (1 << pin_num);
 
     /* configure the flank */
-    switch (flank) {
-        case GPIO_RISING:
-            if (pin_num < 4) {
-                EICRA |= (3 << pin_num * 2);
-            }
-#if defined(EICRB)
-            else {
-                //EICRB |= (3 << (pin_num * 2) % 4);
-            	 EICRB |= (3 << ((pin_num - 4)*2));		//not working on atmega256rfr2 pin_num is 6,, this should fix it
-            }
-#endif
-            break;
-        case GPIO_FALLING:
-            if (pin_num < 4) {
-                EICRA |= (2 << pin_num * 2);
-            }
-#if defined(EICRB)
-            else {
-                EICRB |= (2 << ((pin_num - 4)*2));		//not working on atmega256rfr2 pin_num is 6, bit 5 in EICRB should be set, but instead bit 1 was set, this should fix it
-            }
-#endif
-            break;
-        case GPIO_BOTH:
-            if (pin_num < 4) {
-                EICRA |= (1 << pin_num * 2);
-            }
-#if defined(EICRB)
-            else {
-               // EICRB |= (1 << (pin_num * 2) % 4);
-            	 EICRB |= (1 << ((pin_num - 4)*2));		//not working on atmega256rfr2 pin_num is 6, bit 4 in EICRB should be set, but instead bit 0 was set, this should fix it
-            }
-#endif
-            break;
-        default:
-            return -1;
-    };
+    if (flank > GPIO_RISING) {
+           return -1;
+     }
+
+     if (pin_num < 4) {
+            EICRA |= (flank << (pin_num * 2));
+     }
+     else {
+			#if defined(CPU_ATMEGA256RFR2)
+    	 	 	 EICRB |= (flank << (pin_num-4) *2);
+			#else
+    	 	 	 EICRB |= (flank << (pin_num * 2) % 4);
+			#endif
+     }
 
     /* set callback */
     config[pin_num].cb = cb;
@@ -320,5 +298,5 @@ ISR(INT7_vect, ISR_BLOCK)
 {
     irq_handler(7); ///< predefined interrupt pin
 }
-#endif
-*/
+#endif */
+
