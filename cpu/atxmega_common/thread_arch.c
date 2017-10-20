@@ -27,10 +27,6 @@
 #include "cpu.h"
 #include "board.h"
 
-#define F_CPU   32000000UL
-#define __DELAY_BACKWARD_COMPATIBLE__
-#include <util/delay.h>
-
 /**
  * @brief AVR_CONTEXT_SWAP_INIT intialize the context swap trigger
  * Called when threading is first started.

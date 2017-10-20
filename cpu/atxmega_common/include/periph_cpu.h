@@ -27,6 +27,12 @@ extern "C" {
 
 /* only to satisfy system wide includes */
 
+#define spi_t SPI_t
+#define spi_mode_t SPI_MODE_t
+#define spi_clk_t SPI_PRESCALER_t
+#define spi_intlvl_t    SPI_INTLVL_t
+
+
 #ifdef __cplusplus
 }
 #endif

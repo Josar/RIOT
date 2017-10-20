@@ -20,5 +20,6 @@ USEMODULE += xtimer
 FEATURES_REQUIRED += periph_timer
 FEATURES_REQUIRED += periph_uart
 
+FEATURES_REQUIRED += periph_spi
 
 include $(RIOTBASE)/Makefile.include

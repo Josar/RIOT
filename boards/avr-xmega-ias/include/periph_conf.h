@@ -92,7 +92,7 @@ extern "C" {
  *
  * The fixed pins for avr-xmega-ias are:
  *
- * RF_/RST   - DP1
+ * RF_/RST   - PD1
  * RF_IRQ    - PD2
  * RF_SLP_TR - PD3
  *
@@ -105,10 +105,18 @@ extern "C" {
  * @{
  */
 /* set to 0 to disable SPI */
-//#define SPI_NUMOF           1
+#define SPI_NUMOF           1
 
-/* Power Reduction Register is PRR */
-//#define MEGA_PRR  PR.PRPD
+/* Values for connected transceiver */
+
+
+#define AT86RF2XX_PARAM_SPI 1 // is fixed to SPID in the moment
+#define AT86RF2XX_PARAM_SPI_CLK PIN7
+#define AT86RF2XX_PARAM_CS PIN4
+#define AT86RF2XX_PARAM_INT PIN2
+#define AT86RF2XX_PARAM_SLEEP PIN3
+#define AT86RF2XX_PARAM_RESET PIN1
+
 
 
 // initialize SPI

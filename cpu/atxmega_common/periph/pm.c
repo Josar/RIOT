@@ -32,11 +32,6 @@
 
 #include "arch/thread_arch.h"
 
-#define F_CPU   32000000UL
-#define __DELAY_BACKWARD_COMPATIBLE__
-#include <util/delay.h>
-
-
 #include "arch/thread_arch.h"
 #include "thread.h"
 #include "sched.h"
@@ -61,16 +56,16 @@ void pm_set_lowest(void) {
 //	printf("\npm_set_lowest\n");
 
 	PORTF.OUTCLR = PIN3_bm ;
-	PORTF.OUTCLR = PIN2_bm ;
-	PORTE.OUTCLR = PIN7_bm ;
-	PORTE.OUTCLR = PIN6_bm ;
+//	PORTF.OUTCLR = PIN2_bm ;
+//	PORTE.OUTCLR = PIN7_bm ;
+//	PORTE.OUTCLR = PIN6_bm ;
 
 	_delay_ms(100);
 
-	PORTF.OUTSET = PIN2_bm ;
 	PORTF.OUTSET = PIN3_bm ;
-	PORTE.OUTSET = PIN6_bm ;
-	PORTE.OUTSET = PIN7_bm ;
+//	PORTF.OUTSET = PIN2_bm ;
+//	PORTE.OUTSET = PIN6_bm ;
+//	PORTE.OUTSET = PIN7_bm ;
 
 	_delay_ms(100);
 

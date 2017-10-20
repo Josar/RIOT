@@ -28,11 +28,6 @@
 #define ENABLE_DEBUG (1)
 #include "debug.h"
 
-/* Remove when unused*/
-#define F_CPU   32000000UL
-#define __DELAY_BACKWARD_COMPATIBLE__
-#include <util/delay.h>
-
 /**
  * @brief Initialize the CPU, set IRQ priorities
  */

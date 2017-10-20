@@ -31,10 +31,6 @@
 #include "cpu.h"
 #include "uart_stdio.h"
 
-#define F_CPU   32000000UL
-#define __DELAY_BACKWARD_COMPATIBLE__
-#include <util/delay.h>
-
 void system_stdio_init(void);
 static int uart_putchar(char c, FILE *stream);
 static int uart_getchar(FILE *stream);
@@ -97,6 +93,9 @@ void board_init(void)
 
      /* wait for calibratin to finisch */
 //      _delay_ms( time_to_wait );
+
+
+     /*Set Perifery clock*/
 
 	/* config LEDs*/
 	PORTF.DIRSET =  PIN3_bm|PIN2_bm ; // Set pins 2, 3 on port F to be output.

@@ -27,12 +27,9 @@
 
 #include "arch/thread_arch.h"
 
-#define F_CPU   32000000UL
-#define __DELAY_BACKWARD_COMPATIBLE__
-#include <util/delay.h>
-
 #include "mutex.h"
 
+#include "periph/spi.h"
 
 /* set interval to 1 second 1 000 000*/
 #define INTERVAL (1U * US_PER_SEC)
@@ -69,6 +66,13 @@ int main(void)
 	printf("Now %" PRIu32 "\n", xtimer_usec_from_ticks(xtimer_now()));
 
 	xtimer_ticks32_t last_wakeup = xtimer_now();
+
+	spi_init(0);
+	spi_init_pins(0);
+	spi_init_cs(0, 0);
+	spi_acquire(0, 0, )
+
+
 
 	while(1) {
 		xtimer_periodic_wakeup(&last_wakeup, INTERVAL);

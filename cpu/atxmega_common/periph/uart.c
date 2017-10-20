@@ -53,12 +53,6 @@
 #define BAUD_TOL 2
 #endif
 
-#if defined(UART_STDIO_BAUDRATE)
-/* BAUD and F_CPU are required by setbaud.h to calculated BRR */
-#define BAUD UART_STDIO_BAUDRATE
-#define F_CPU CLOCK_CORECLOCK
-#include <util/setbaud.h>
-#endif
 
 /**
  * @brief   Configured device map

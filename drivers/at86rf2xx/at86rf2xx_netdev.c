@@ -28,12 +28,15 @@
 #include "net/eui64.h"
 #include "net/ieee802154.h"
 #include "net/netdev.h"
+
 #include "net/netdev/ieee802154.h"
 
 #include "at86rf2xx.h"
 #include "at86rf2xx_netdev.h"
 #include "at86rf2xx_internal.h"
 #include "at86rf2xx_registers.h"
+
+
 
 
 #ifdef DEBUG_AT86RF2XX_NETDEV
