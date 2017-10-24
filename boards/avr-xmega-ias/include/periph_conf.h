@@ -111,11 +111,14 @@ extern "C" {
 
 
 #define AT86RF2XX_PARAM_SPI 1 // is fixed to SPID in the moment
-#define AT86RF2XX_PARAM_SPI_CLK PIN7
-#define AT86RF2XX_PARAM_CS PIN4
-#define AT86RF2XX_PARAM_INT PIN2
-#define AT86RF2XX_PARAM_SLEEP PIN3
-#define AT86RF2XX_PARAM_RESET PIN1
+#define AT86RF2XX_PARAM_SPI_CLK (SPI_CLK_4MHZ)
+#define AT86RF2XX_PARAM_SPI_CLK_PIN (PIN7_bm)
+#define AT86RF2XX_PARAM_MISO PIN6_bm
+#define AT86RF2XX_PARAM_MOSI PIN5_bm
+#define AT86RF2XX_PARAM_CS PIN4_bm
+#define AT86RF2XX_PARAM_SLEEP PIN3_bm
+#define AT86RF2XX_PARAM_INT PIN2_bm
+#define AT86RF2XX_PARAM_RESET PIN1_bm
 
 
 
@@ -125,13 +128,14 @@ extern "C" {
  * @{
  */
 
-//#define AT86RF2XX_PARAMS_BOARD    {.spi = SPID,
-//									 .spi_clk = SPI_CLK_4MHZ,
-//									 .cs_pin = PORTD4,
-//									 .int_pin = PORTD2,
-//									 .sleep_pin = PORTD3,
-//									 .reset_pin = PORTD1}
+#define AT86RF2XX_PARAMS_BOARD    {.spi = {SPI_DEV(0)}, \
+                                   .spi_clk = SPI_CLK_4MHZ, \
+                                   .cs_pin = PIN4_bm, \
+                                   .int_pin = PIN2_bm, \
+                                   .sleep_pin = PIN3_bm, \
+                                   .reset_pin = PIN1_bm }
 /**@}*/
+
 
 /** @} */
 

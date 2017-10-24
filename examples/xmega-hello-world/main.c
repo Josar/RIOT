@@ -52,6 +52,8 @@
  */
 int main(void)
 {
+   uint8_t reg=0;
+
     puts("Hello World!");
 
     printf("You are running RIOT on a(n) %s board.\n", RIOT_BOARD);
@@ -63,15 +65,26 @@ int main(void)
 	PORTE.OUTCLR = PIN6_bm ;
 
 
-	printf("Now %" PRIu32 "\n", xtimer_usec_from_ticks(xtimer_now()));
+	printf( "Now %" PRIu32 "\n", xtimer_usec_from_ticks(xtimer_now()) );
 
 	xtimer_ticks32_t last_wakeup = xtimer_now();
 
-	spi_init(0);
-	spi_init_pins(0);
-	spi_init_cs(0, 0);
-	spi_acquire(0, 0, )
 
+
+
+	spi_init( SPID );
+
+	spi_init_cs( SPID, 0);
+	spi_acquire( SPID, 0, SPI_MODE_0_gc,  SPI_PRESCALER_DIV64_gc );
+
+    reg = spi_transfer_reg(SPID, AT86RF2XX_PARAM_CS, 0x80 |0x1C ,0);
+    printf("Part_Num AT86RF231 0x03 = 0x%02x \n\r", reg);
+
+    reg = spi_transfer_reg(SPID, AT86RF2XX_PARAM_CS, 0x80 |0x1D ,0);
+    printf("Version_Num 0x02 = 0x%02x \n\r", reg);
+
+    reg = spi_transfer_reg(SPID, AT86RF2XX_PARAM_CS, 0x80 |0x1E ,0);
+    printf("Man_ID_0 0x1F = 0x%02x \n\r", reg);
 
 
 	while(1) {

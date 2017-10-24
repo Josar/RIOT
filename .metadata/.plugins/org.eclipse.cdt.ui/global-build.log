@@ -1,0 +1,17 @@
+13:06:13 **** Incremental Build of configuration Default for project Riot_Windows ****
+make BOARD=jiminy-mega256rfr2 flash all 
+CAUTION: No flash tool for your host system found!
+[1;32mBuilding application "hello-world" for "jiminy-mega256rfr2" with MCU "atmega256rfr2".[0m
+
+'/cygdrive/e/RIOT_20171020/RIOT/dist/tools/genconfigheader/genconfigheader.sh' '/cygdrive/e/RIOT_20171020/RIOT/examples/hello-world/bin/jiminy-mega256rfr2/riotbuild/riotbuild.h' -DDEVELHELP -Werror -mrelax -Wl,--relax -Wl,-V -mmcu=atmega256rfr2  -ffunction-sections -fdata-sections -fno-builtin -fshort-enums -ggdb -g3 -Os  -DCOREIF_NG=1 -mmcu=atmega256rfr2  -ffunction-sections -fdata-sections -fno-builtin -fshort-enums -ggdb -g3 -Os -DBOARD_JIMINY_MEGA256RFR2=\"jiminy-mega256rfr2\" -DRIOT_BOARD=BOARD_JIMINY_MEGA256RFR2 -DCPU_ATMEGA256RFR2=\"atmega256rfr2\" -DRIOT_CPU=CPU_ATMEGA256RFR2 -DMCU_ATMEGA256RFR2=\"atmega256rfr2\" -DRIOT_MCU=MCU_ATMEGA256RFR2 -std=c99 -fno-delete-null-pointer-checks -fdiagnostics-color -Wstrict-prototypes -Wold-style-definition -Werror=strict-prototypes -Werror=old-style-definition -fno-common -Wall -DMODULE_ATMEGA_COMMON -DMODULE_AUTO_INIT -DMODULE_BOARD -DMODULE_CORE -DMODULE_CORE_MSG -DMODULE_CPU -DMODULE_ISRPIPE -DMODULE_PERIPH -DMODULE_PERIPH_COMMON -DMODULE_SYS -DMODULE_TSRB -DMODULE_UART_STDIO -DRIOT_VERSION=\"'UNKNOWN (builddir: /cygdrive/e/RIOT_20171020/RIOT)'\"
+Keeping old /cygdrive/e/RIOT_20171020/RIOT/examples/hello-world/bin/jiminy-mega256rfr2/riotbuild/riotbuild.h
+DIRS=" " "/usr/bin/make" -C /cygdrive/e/RIOT_20171020/RIOT/examples/hello-world -f /cygdrive/e/RIOT_20171020/RIOT/makefiles/application.inc.mk
+make[1]: Entering directory '/cygdrive/e/RIOT_20171020/RIOT/examples/hello-world'
+avr-gcc \
+	-DRIOT_FILE_RELATIVE=\"examples/hello-world/main.c\" \
+	-DRIOT_FILE_NOPATH=\"main.c\" \
+	-Werror -mrelax -Wl,--relax -Wl,-V -mmcu=atmega256rfr2 -ffunction-sections -fdata-sections -fno-builtin -fshort-enums -ggdb -g3 -Os -mmcu=atmega256rfr2 -ffunction-sections -fdata-sections -fno-builtin -fshort-enums -ggdb -g3 -Os -std=c99 -fno-delete-null-pointer-checks -fdiagnostics-color -Wstrict-prototypes -Wold-style-definition -Werror=strict-prototypes -Werror=old-style-definition -fno-common -Wall -include '/cygdrive/e/RIOT_20171020/RIOT/examples/hello-world/bin/jiminy-mega256rfr2/riotbuild/riotbuild.h'  -I/cygdrive/e/RIOT_20171020/RIOT/core/include -I/cygdrive/e/RIOT_20171020/RIOT/drivers/include -I/cygdrive/e/RIOT_20171020/RIOT/sys/include -I/cygdrive/e/RIOT_20171020/RIOT/cpu/atmega256rfr2/include -I/cygdrive/e/RIOT_20171020/RIOT/boards/jiminy-mega256rfr2/include -I/cygdrive/e/RIOT_20171020/RIOT/cpu/atmega_common/include -isystem/cygdrive/e/RIOT_20171020/RIOT/cpu/atmega_common/avr-libc-extra -I/cygdrive/e/RIOT_20171020/RIOT/sys/libc/include  -MD -MP -c -o /cygdrive/e/RIOT_20171020/RIOT/examples/hello-world/bin/jiminy-mega256rfr2/hello-world/main.o /cygdrive/e/RIOT_20171020/RIOT/examples/hello-world/main.c
+avr-gcc.exe: error: /cygdrive/e/RIOT_20171020/RIOT/examples/hello-world/main.c: No such file or directory
+make[1]: *** [/cygdrive/e/RIOT_20171020/RIOT/Makefile.base:81: /cygdrive/e/RIOT_20171020/RIOT/examples/hello-world/bin/jiminy-mega256rfr2/hello-world/main.o] Error 1
+make[1]: Leaving directory '/cygdrive/e/RIOT_20171020/RIOT/examples/hello-world'
+make: *** [/cygdrive/e/RIOT_20171020/RIOT/examples/hello-world/../../Makefile.include:306: link] Error 2

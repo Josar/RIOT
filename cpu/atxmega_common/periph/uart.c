@@ -133,13 +133,15 @@ int uart_init(uart_t uart, uint32_t baudrate, uart_rx_cb_t rx_cb, void *arg)
 
     _set_baut(uart, baudrate);
 
+    // 32MHZ
     // set uasart to 9600BAUD
 //     dev[uart]->BAUDCTRLA = (3317 & 0xff) << USART_BSEL_gp;
 //     dev[uart]->BAUDCTRLB = ((-4) << USART_BSCALE_gp) | ((3317 >> 8) << USART_BSEL_gp);
 
-     // set uasart to 115200BAUD
+//     // set uasart to 115200BAUD
      dev[uart]->BAUDCTRLA = ( 2158 & 0xff)<< USART_BSEL_gp;
      dev[uart]->BAUDCTRLB = ((-7) << USART_BSCALE_gp) | ( ( 2158 >> 8) << USART_BSEL_gp );
+
 
 #if defined(UART_DOUBLE_SPEED)
          dev[uart]->CTRLB |= USART_CLK2X_bm ;

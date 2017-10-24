@@ -20,12 +20,15 @@
  * @}
  */
 
+
 #include "cpu.h"
 #include "periph_cpu.h"
 
 #include "mutex.h"
 #include "assert.h"
 #include "periph/spi.h"
+
+
 
 /**
  * @brief   Extract BR0, BR1 and SPI2X bits from speed value
@@ -39,9 +42,10 @@ static mutex_t lock = MUTEX_INIT;
 
 void led_blink(void){
 
-    PORTE.OUTSET = PIN6_bm ;
+    PORTE.OUTSET= PIN6_bm ;
     _delay_ms(100);
     PORTE.OUTCLR = PIN6_bm ;
+    _delay_ms(100);
 }
 
 
@@ -50,9 +54,8 @@ void spi_init(spi_t bus)
 
     led_blink();
 
-    assert(bus == 0);
    /* power off the SPI peripheral */
-   PR.PRPD = PR_SPI_bm;
+//   PR.PRPD = PR_SPI_bm;
    /* trigger the pin configuration */
    spi_init_pins(bus);
 }
@@ -75,18 +78,32 @@ void spi_init_pins(spi_t bus)
      * select externally for now)
      */
 
-    PORTD.DIRSET = PIN4;
-    PORTD.OUTSET = PIN4;
-    PORTD.DIRCLR = PIN5;
-    PORTD.DIRSET = PIN6;
-    PORTD.DIRSET = PIN7;
+    PORTD.DIRSET = AT86RF2XX_PARAM_RESET ; // Reset Pin as output
+    PORTD.OUTCLR = AT86RF2XX_PARAM_RESET ; // low, reset
+
+    PORTD.DIRCLR = AT86RF2XX_PARAM_INT ; // interrupt as input
+
+    PORTD.DIRSET = AT86RF2XX_PARAM_SLEEP ; // SLT Pin as output
+    PORTD.OUTCLR = AT86RF2XX_PARAM_SLEEP ; // low
+
+
+    PORTD.OUTSET = AT86RF2XX_PARAM_CS; // high
+
+    PORTD.DIRSET = AT86RF2XX_PARAM_CS; // output
+    PORTD.DIRSET = AT86RF2XX_PARAM_MOSI; // output
+    PORTD.DIRSET = AT86RF2XX_PARAM_SPI_CLK_PIN; // output
+
+    PORTD.DIRCLR = AT86RF2XX_PARAM_MISO; //input
+
+
+    PORTD.OUTSET = AT86RF2XX_PARAM_RESET ; // high, disable reset
 }
 
 int spi_init_cs(spi_t bus, spi_cs_t cs){
 
     led_blink();
 
-    PORTD.OUTSET = PIN4;
+    PORTD.OUTSET = AT86RF2XX_PARAM_CS;
 
     return 0;
 }
@@ -104,14 +121,14 @@ int spi_acquire(spi_t bus, spi_cs_t cs, spi_mode_t mode, spi_clk_t clk)
     PR.PRPD &= ~PR_SPI_bm;
 
     /* configure active, as master, with given mode and clock */
-    SPID.CTRL = SPI_MASTER_bm |mode|SPI_PRESCALER_DIV16_gc;
+    SPID.CTRL = SPI_ENABLE_bm| SPI_MASTER_bm |SPI_CLK2X_bm | SPI_PRESCALER0_bm;
 
     /* clear interrupt flag by reading STATUS register by reading DATA */
     (void)SPID.STATUS;
     (void)SPID.DATA;
 
     /* Enable Module*/
-    SPID.CTRL =  SPI_ENABLE_bm;
+    //SPID.CTRL |=  SPI_ENABLE_bm;
 
     return SPI_OK;
 	return 0;
@@ -126,7 +143,7 @@ void spi_release(spi_t bus)
     SPID.CTRL &= ~ SPI_ENABLE_bm;
 
     /* power off */
-    PR.PRPD = PR_SPI_bm;
+    PR.PRPD |= PR_SPI_bm;
 
     mutex_unlock(&lock);
 }
@@ -143,7 +160,7 @@ void spi_transfer_bytes(spi_t bus, spi_cs_t cs, bool cont,
 
     if (cs != SPI_CS_UNDEF) {
         // gpio_clear((gpio_t)cs);
-        PORTD.OUTCLR = PIN4;
+        PORTD.OUTCLR = AT86RF2XX_PARAM_CS;
     }
 
     for (size_t i = 0; i < len; i++) {
@@ -162,7 +179,7 @@ void spi_transfer_bytes(spi_t bus, spi_cs_t cs, bool cont,
 
     if ((!cont) && (cs != SPI_CS_UNDEF)) {
         //gpio_set((gpio_t)cs);
-        PORTD.OUTSET = PIN4;
+        PORTD.OUTSET = AT86RF2XX_PARAM_CS;
     }
 }
 
@@ -173,17 +190,17 @@ uint8_t spi_transfer_byte(spi_t bus, spi_cs_t cs, bool cont, uint8_t out)
 
         if (cs != SPI_CS_UNDEF) {
            // gpio_clear((gpio_t)cs);
-           PORTD.OUTCLR = PIN4;
+           PORTD.OUTCLR = AT86RF2XX_PARAM_CS;
        }
 
        SPID.DATA = out;
 
-       while(!(SPID.STATUS & SPI_IF_bm )){}
+       while( !(SPID.STATUS & SPI_IF_bm )){}
 
 
        if ((!cont) && (cs != SPI_CS_UNDEF)) {
            //gpio_set((gpio_t)cs);
-           PORTD.OUTSET = PIN4;
+           PORTD.OUTSET = AT86RF2XX_PARAM_CS;
        }
 
        return SPID.DATA ;
@@ -191,19 +208,20 @@ uint8_t spi_transfer_byte(spi_t bus, spi_cs_t cs, bool cont, uint8_t out)
 
 uint8_t spi_transfer_reg(spi_t bus, spi_cs_t cs, uint8_t reg, uint8_t out)
 {
-
     assert(reg);
 
     led_blink();
 
     if (cs != SPI_CS_UNDEF) {
         // gpio_clear((gpio_t)cs);
-        PORTD.OUTCLR = PIN4;
+        PORTD.OUTCLR = AT86RF2XX_PARAM_CS;
     }
 
     SPID.DATA = reg;
 
     while(!(SPID.STATUS & SPI_IF_bm )){}
+
+    (void) SPID.DATA; // clear SPI_IF_bm flag
 
     SPID.DATA = (out) ? out: 0;
 
@@ -211,7 +229,7 @@ uint8_t spi_transfer_reg(spi_t bus, spi_cs_t cs, uint8_t reg, uint8_t out)
 
     if (cs != SPI_CS_UNDEF) {
         //gpio_set((gpio_t)cs);
-        PORTD.OUTSET = PIN4;
+        PORTD.OUTSET = AT86RF2XX_PARAM_CS;
     }
 
     return SPID.DATA ;
@@ -229,7 +247,7 @@ void spi_transfer_regs(spi_t bus, spi_cs_t cs, uint8_t reg,
 
         if (cs != SPI_CS_UNDEF) {
             // gpio_clear((gpio_t)cs);
-            PORTD.OUTCLR = PIN4;
+            PORTD.OUTCLR = AT86RF2XX_PARAM_CS;
         }
 
         SPID.DATA = reg;
@@ -252,7 +270,7 @@ void spi_transfer_regs(spi_t bus, spi_cs_t cs, uint8_t reg,
 
         if (cs != SPI_CS_UNDEF) {
             //gpio_set((gpio_t)cs);
-            PORTD.OUTSET = PIN4;
+            PORTD.OUTSET = AT86RF2XX_PARAM_CS;
         }
 }
 
