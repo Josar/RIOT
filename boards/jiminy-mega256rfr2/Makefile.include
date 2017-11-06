@@ -1,10 +1,11 @@
 # define the cpu used by the arduino mega2560 board
 export CPU = atmega256rfr2
-export CPU_MODEL = atmega256rfr2
+export CPU_MODEL =atmega256rfr2
 
 export TERMPROG = $(RIOTBASE)/dist/tools/pyterm/pyterm
 export TERMFLAGS = -b 9600 -p $(PORT)
 
+export SIZEFLAGS = --format=avr --mcu=$(CPU_MODEL)
 #define the flash-tool and default port depending on the host operating system
 OS = $(shell uname)
 ifeq ($(OS),Linux)
@@ -23,7 +24,6 @@ else ifeq ($(OS),MINGW32_NT-6.2)
 	FLASHER = avrdude
 	export FLASHER_PATH ="C:/avrdude/avrdude.conf"
 	export FFLAGS += -p atmega256rfr2 -c $(PROGRAMMER) $(PROGRAMMER_FLAGS) -D -U flash:w:bin/$(BOARD)/$(PROJECT)$(APPLICATION).hex:i -C $(FLASHER_PATH)
-	
 else
   $(info CAUTION: No flash tool for your host system found!)
   # TODO: fix for building under windows
