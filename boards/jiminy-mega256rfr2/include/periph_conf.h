@@ -203,6 +203,16 @@ static const i2c_conf_t i2c_config[] = {
 #define MEGA_PRR            PRR0        /* Power Reduction Register is PRR0 */
 /** @} */
 
+
+#define TPS6274X_CONFIG {\
+	.vsel1_pin = GPIO_PIN(PORT_D, 6),\
+	.vsel2_pin = GPIO_PIN(PORT_D, 7),\
+	.vsel3_pin = GPIO_PIN(PORT_G, 0),\
+	.vsel4_pin = GPIO_PIN(PORT_G,2),\
+	.ctrl_pin = GPIO_PIN(PORT_G, 5)\
+};
+
+
 #ifdef __cplusplus
 }
 #endif
