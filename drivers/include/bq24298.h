@@ -26,6 +26,11 @@
 #include "inttypes.h"
 
 
+#include <avr/eeprom.h>
+/* EEPROM values */
+extern uint8_t EEMEM TPS6274x_input_source_control;
+extern uint8_t EEMEM TPS6274x_charge_current_control;
+
 typedef enum{
 	CHRARGE_FAULT_INPUT_FAULT = 1,
 	CHARGE_FAULT_THERMAL_SHUTDOWN =  2,

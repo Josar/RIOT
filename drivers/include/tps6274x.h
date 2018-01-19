@@ -24,7 +24,6 @@
 #include "periph/gpio.h"
 #include "inttypes.h"
 
-
 /**
  * @brief init converter
  *
