@@ -57,16 +57,23 @@ int main(void)
     uint8_t sourceControl = eeprom_read_byte( &TPS6274x_input_source_control );
     uint8_t currentControl = eeprom_read_byte( &TPS6274x_charge_current_control );
 
-    printf("TPS6274x_input_source_control register: %u\n", sourceControl);
-    printf("TPS6274x_charge_current_control register: %u\n", currentControl);
+    printf("EEPROM values TPS6274x_input_source_control register: %u\n", sourceControl);
+    printf("EEPROM values TPS6274x_charge_current_control register: %u\n", currentControl);
 
     /* avoid programming when no values where configured.*/
     if ( (sourceControl!=0xFF) && (currentControl!=0xFF) ){
     i2c_acquire(I2C_0);
     i2c_write_regs(I2C_0, 0x6b, 0x00 , &sourceControl,  1);
     i2c_write_regs(I2C_0, 0x6b, 0x02 , &currentControl, 1);
+
+
+    i2c_read_reg(I2C_0, 0x6b, 0x00, &sourceControl);
+    i2c_read_reg(I2C_0, 0x6b, 0x02, &currentControl);
     i2c_release(I2C_0);
     /* END set values to charger IC */
+
+    printf("Read back values TPS6274x_input_source_control register: %u\n", sourceControl);
+    printf("Read back values TPS6274x_charge_current_control register: %u\n", currentControl);
     }
 
     shell_run(shell_commands, line_buf, SHELL_DEFAULT_BUFSIZE);
