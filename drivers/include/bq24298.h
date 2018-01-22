@@ -24,12 +24,7 @@
 #include "periph/gpio.h"
 #include "periph/i2c.h"
 #include "inttypes.h"
-
-
-#include <avr/eeprom.h>
-/* EEPROM values */
-extern __attribute__((section(".eeprom"))) uint8_t TPS6274x_input_source_control;
-extern __attribute__((section(".eeprom"))) uint8_t TPS6274x_charge_current_control;
+#include "bq2498_settings.h"
 
 typedef enum{
 	CHRARGE_FAULT_INPUT_FAULT = 1,

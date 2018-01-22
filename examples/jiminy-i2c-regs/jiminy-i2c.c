@@ -9,6 +9,7 @@
 
 #include "bq24298.h"
 
+
 int i2c_write_reg_own(int argc, char **argv)
 {
 	if (argc < 5) {
@@ -25,14 +26,9 @@ int i2c_write_reg_own(int argc, char **argv)
     i2c_write_regs(I2C_0, atoi(argv[1]), atoi(argv[2]), data, atoi(argv[4]));
     i2c_release(I2C_0);
 
-    /* save input source control  register */
-    if( (atoi(argv[1])== 0x6b) & (atoi(argv[2])==0x00) ){
-    	printf("save TPS6274x_input_source_control register: %u\n", data[0]);
-    	eeprom_write_byte( &TPS6274x_input_source_control, data[0] );
-    }else /*save charge current control register */
-    	if( (atoi(argv[1])== 0x6b) & (atoi(argv[2])==0x02) ){
-    		printf("save TPS6274x_charge_current_control register: %u\n", data[0]);
-    	eeprom_write_byte( &TPS6274x_charge_current_control, data[0] );
+    /* save TPS6274x register setting to eeprom*/
+    if( ( atoi(argv[1])== 0x6b) & (atoi(argv[2])<8) ){
+    	eeprom_write_byte( &EEPROM_BQ2496[atoi(argv[2])] , data[0] );
     }
 
 	return 0;
