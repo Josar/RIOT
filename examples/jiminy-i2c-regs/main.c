@@ -28,8 +28,9 @@
 
 #include <avr/eeprom.h>
 /* EEPROM values */
-uint8_t EEMEM TPS6274x_input_source_control;
-uint8_t EEMEM TPS6274x_charge_current_control;
+/* make sure to set proper values faulty values make the brick the board*/
+__attribute__((section(".eeprom"))) uint8_t TPS6274x_input_source_control = 55;
+__attribute__((section(".eeprom"))) uint8_t TPS6274x_charge_current_control = 96;
 
 extern int i2c_write_reg_own(int argc, char **argv);
 extern int i2c_read_reg_own(int argc, char **argv);
@@ -59,11 +60,14 @@ int main(void)
     printf("TPS6274x_input_source_control register: %u\n", sourceControl);
     printf("TPS6274x_charge_current_control register: %u\n", currentControl);
 
+    /* avoid programming when no values where configured.*/
+    if ( (sourceControl!=0xFF) && (currentControl!=0xFF) ){
     i2c_acquire(I2C_0);
     i2c_write_regs(I2C_0, 0x6b, 0x00 , &sourceControl,  1);
     i2c_write_regs(I2C_0, 0x6b, 0x02 , &currentControl, 1);
     i2c_release(I2C_0);
     /* END set values to charger IC */
+    }
 
     shell_run(shell_commands, line_buf, SHELL_DEFAULT_BUFSIZE);
 

@@ -28,8 +28,8 @@
 
 #include <avr/eeprom.h>
 /* EEPROM values */
-extern uint8_t EEMEM TPS6274x_input_source_control;
-extern uint8_t EEMEM TPS6274x_charge_current_control;
+extern __attribute__((section(".eeprom"))) uint8_t TPS6274x_input_source_control;
+extern __attribute__((section(".eeprom"))) uint8_t TPS6274x_charge_current_control;
 
 typedef enum{
 	CHRARGE_FAULT_INPUT_FAULT = 1,
