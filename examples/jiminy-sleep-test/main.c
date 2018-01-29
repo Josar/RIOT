@@ -36,7 +36,7 @@ void testcase(void){
     xtimer_usleep(200000);
     //Transmitt
     at86rf2xx_send(&dev, data, sizeof(data));
-    xtimer_uleep(200000)
+    xtimer_usleep(200000);
     at86rf2xx_set_state(&dev, AT86RF2XX_STATE_SLEEP);
     PRR1 |= PRTRX24;
     //idle
