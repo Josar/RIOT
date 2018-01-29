@@ -33,7 +33,7 @@
 
 #include <stdlib.h>
 
-#define ENABLE_DEBUG 		(0)
+#define ENABLE_DEBUG 		(1)
 #include "debug.h"
 
 
@@ -184,4 +184,9 @@ ISR(TIMER2_COMPA_vect){
 	TIMSK2 &=~(1<<OCIE2A);
 }
 #endif
+#else
+void pm_set_lowest(void) {
+    set_sleep_mode(SLEEP_MODE_IDLE);
+    sleep_mode();
+}
 #endif
