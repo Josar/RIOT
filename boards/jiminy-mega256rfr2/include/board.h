@@ -35,8 +35,9 @@ extern "C" {
 */
 /**
  * CPU is fast enough to send 115200 baud but receiving is not working
+ * My linux does not support 250k so we use 38400Baud
  */
-#define UART_STDIO_BAUDRATE (250000U)
+#define UART_STDIO_BAUDRATE (38400U)
 
 /**
  * @brief   LED pin definitions and handlers
