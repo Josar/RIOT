@@ -238,7 +238,6 @@ void adxl345_set_bandwidth_rate(const adxl345_t *dev, uint8_t bw_rate);
  */
 void adxl345_set_fifo_mode(const adxl345_t *dev, uint8_t mode,
                            uint8_t output, uint8_t value);
-
 #ifdef __cplusplus
 }
 #endif
