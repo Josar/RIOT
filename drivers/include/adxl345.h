@@ -36,6 +36,7 @@ enum {
     ADXL345_ADDR_53 = 0x53, /**< I2C device address if Alt addr pin is low */
 };
 
+   
 /**
  * @brief   List ADXL345 power mode
  */
@@ -82,18 +83,18 @@ enum {
  * @brief   List fifo mode
  */
 enum {
-    BYPASS  = 0,          /**< FIFO bypass mode */
-    FIFO    = 1,          /**< FIFO mode */
-    STREAM  = 2,          /**< FIFO stream mode */
-    TRIGGER = 3           /**< FIFO trigger mode */
+    ADXL345_BYPASS  = 0,          /**< FIFO bypass mode */
+    ADXL345_FIFO    = 1,          /**< FIFO mode */
+    ADXL345_STREAM  = 2,          /**< FIFO stream mode */
+    ADXL345_TRIGGER = 3           /**< FIFO trigger mode */
 };
 
 /**
  * @brief   Output Interrupt selection
  */
 enum {
-    INT1,  /**< Output interrupt on INT1 pin */
-    INT2   /**< Output interrupt on INT2 pin */
+    ADXL345_INT1,  /**< Output interrupt on INT1 pin */
+    ADXL345_INT2   /**< Output interrupt on INT2 pin */
 };
 
 /**
