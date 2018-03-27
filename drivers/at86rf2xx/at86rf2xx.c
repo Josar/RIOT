@@ -298,13 +298,41 @@ size_t at86rf2xx_send(at86rf2xx_t *dev, const uint8_t *data, size_t len)
 
 void at86rf2xx_tx_prepare(at86rf2xx_t *dev)
 {
-    uint8_t state;
+    uint8_t previousState = 0;
 
     dev->pending_tx++;
-    state = at86rf2xx_set_state(dev, AT86RF2XX_STATE_TX_ARET_ON);
-    if (state != AT86RF2XX_STATE_TX_ARET_ON) {
-        dev->idle_state = state;
+    previousState = at86rf2xx_set_state(dev, AT86RF2XX_STATE_TX_ARET_ON);
+    if (previousState != AT86RF2XX_STATE_TX_ARET_ON) {
+        dev->idle_state = previousState;
     }
+
+#ifdef MODULE_AT86RFR2
+    /* This should not be possible as _set_state() should ensure proper state.
+     * Sometimes the state is still RX_AACK_ON instead of TX_ARET_ON and Data
+     * written to the Buffer will will be corrupted or not be send in this case.
+     * Running radvd will continue polling, but state won't snap into TX_ARET_ON.
+     * This leads to racing poll. Make sure that state is TX_ARET_ON before
+     * writing data to trx_buffer.
+     *
+     * This happens when continuously pinging the device.
+     *
+     * I am not sure if this also happens when debug is on as then the interrupts
+     * also print out massages.Just change DEBUG to printf instead.
+     *
+     * Additionally upper layer seems to unregister packet listener and incoming
+     * Packets are lost, as they are not process anymore.
+     * */
+    /*
+     * Maybe reading data and build ping response is faster then Auto ACK
+     */
+    uint8_t state = at86rf2xx_get_status(dev);
+    while( state != AT86RF2XX_STATE_TX_ARET_ON ){
+        DEBUG("at86rf2xx_tx_prepare: error state is not 0x19 instead: 0x%02x\n", state);
+        at86rf2xx_set_state(dev, AT86RF2XX_STATE_TX_ARET_ON);
+        state = at86rf2xx_get_status(dev);
+    }
+#endif
+
     dev->tx_frame_len = IEEE802154_FCS_LEN;
 }
 
