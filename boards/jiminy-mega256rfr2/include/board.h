@@ -35,8 +35,10 @@ extern "C" {
  * is to use double speed.
  *
  * For 8MHz F_CPU following Baudrate have good error rates
- *  76923
- *  38400
+ *  76800
+ *  38400 fetching data from interrupt to slow for long data
+ *  19200
+ *   9600
  *
  * Matches this with BAUD in Board/Makefile.include
  *

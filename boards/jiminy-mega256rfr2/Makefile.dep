@@ -1,0 +1,5 @@
+# export board specific dependencies to the global includes-listing
+
+ifneq (, $(filter gnrc_netdev_default netdev_default, $(USEMODULE)))
+USEMODULE += at86rfr2
+endif
