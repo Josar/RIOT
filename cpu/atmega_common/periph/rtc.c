@@ -43,6 +43,8 @@
 extern "C" {
 #endif
 
+static inline void __asynch_wait(uint8_t num_cycles);
+
 typedef struct {
     time_t time;          /* seconds since the epoch */
     time_t alarm;         /* alarm_cb when time == alarm */
@@ -92,14 +94,7 @@ int rtc_set_alarm(struct tm *time, rtc_alarm_cb_t cb, void *arg)
 
     /* Wait until not busy anymore (should be immediate) */
     DEBUG("RTC sleeps until safe to write OCR2B\n");
-    while( ASSR & (1 << OCR2BUB) ) {
-#ifdef MODULE_XTIMER
-        /* Sleep for 1 RTC cycle */
-        xtimer_usleep(35 * US_PER_MS);
-#else
-        thread_yield();
-#endif
-    }
+    __asynch_wait(1);
 
     /* Set alarm time */
     rtc_state.alarm = mktime(time);
@@ -109,14 +104,7 @@ int rtc_set_alarm(struct tm *time, rtc_alarm_cb_t cb, void *arg)
 
     /* Wait until alarm value takes effect */
     DEBUG("RTC sleeps until safe power-save\n");
-    while( ASSR & (1 << OCR2BUB) ) {
-#ifdef MODULE_XTIMER
-        /* Sleep for 2 RTC cycles */
-        xtimer_usleep(70 * US_PER_MS);
-#else
-        thread_yield();
-#endif
-    }
+    __asynch_wait(2);
 
     /* Enable alarm only if it will trigger in < 8 seconds */
     if ((rtc_state.time & 0xFFFFFFF8) == (rtc_state.alarm & 0xFFFFFFF8)) {
@@ -161,6 +149,19 @@ void atmega_rtc_incr(void)
     /* Enable alarm only if it will trigger in < 8 seconds */
     if ((rtc_state.time & 0xFFFFFFF8) == (rtc_state.alarm & 0xFFFFFFF8)) {
         TIMSK2 |= (1 << OCIE2B);
+    }
+}
+
+void __asynch_wait(uint8_t num_cycles) {
+    /* Wait until all busy flags clear */
+    while( ASSR & ((1 << TCN2UB) | (1 << OCR2AUB) | (1 << OCR2BUB)
+                 | (1 << TCR2AUB) | (1 << TCR2BUB)) ) {
+#ifdef MODULE_XTIMER
+        /* Sleep for num_cycles RTC cycles */
+        xtimer_usleep(num_cycles * 35 * US_PER_MS);
+#else
+        thread_yield();
+#endif
     }
 }
 
