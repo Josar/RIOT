@@ -33,6 +33,7 @@
 #include "at86rf2xx_registers.h"
 #include "at86rf2xx_internal.h"
 #include "at86rf2xx_netdev.h"
+
 #define ENABLE_DEBUG (0)
 #include "debug.h"
 
@@ -40,106 +41,6 @@
 #define ENABLE_HEX_DUMP_TX  (0)
 #if ENABLE_HEX_DUMP_TX
 #include "od.h"
-#endif
-
-#ifdef MODULE_AT86RFR2
-
-#include "avr/interrupt.h"
-
-/* Device Pointer for Interrupt callback */
-static netdev_t *static_dev = 0;
-/* Counting Retries */
-int8_t retries = 0;
-
-/**
- * \brief ISR for transceiver's receive end interrupt
- *
- *  Is triggered when valid data is received. FCS check passed.
- *  Save IRQ status and inform upper layer of data reception.
- */
-ISR(TRX24_RX_END_vect, ISR_BLOCK){
-    __enter_isr();
-#if defined(RXTX_LEDS)
-    LED0_TOGGLE;
-#endif
-    DEBUG("TRX24_RX_END\n");
-    ((at86rf2xx_t *)static_dev)->irq_status |= AT86RF2XX_IRQ_STATUS_MASK__RX_END;
-    /* Upper layer could also be called after TRX24_TX_END instead */
-    static_dev->event_callback(static_dev, NETDEV_EVENT_ISR);
-#if defined(RXTX_LEDS)
-    LED0_TOGGLE;
-#endif
-    __exit_isr();
-}
-
-/**
- * \brief  Transceiver Frame Address Match, indicates incoming frame
- *
- *  Is triggered when Frame with valid Address is received.
- *  Can be sused to wake up MCU from sleep, etc.
- */
-ISR(TRX24_XAH_AMI_vect, ISR_BLOCK){
-    __enter_isr();
-    DEBUG("TRX24_XAH_AMI\n");
-    ((at86rf2xx_t *)static_dev)->irq_status |= AT86RF2XX_IRQ_STATUS_MASK__AMI;
-    __exit_isr();
-}
-
-/**
- * \brief ISR for transceiver's transmit end interrupt
- *
- *  Is triggered when data or when acknowledge frames where send.
- */
-ISR(TRX24_TX_END_vect, ISR_BLOCK){
-    at86rf2xx_t *dev = (at86rf2xx_t *) static_dev;
-
-    __enter_isr();
-    dev->irq_status |= AT86RF2XX_IRQ_STATUS_MASK__TX_END;
-
-    /* Only radios with the XAH_CTRL_2 register support frame retry reporting
-     * but with TX_START and TX_END retries can also be count */
-    ((at86rf2xx_t *)static_dev)->tx_retries = retries;
-    retries = -1;
-    uint8_t state = *AT86RF2XX_REG__TRX_STATE & AT86RF2XX_TRX_STATE_MASK__TRAC;
-
-    DEBUG("TRX24_TX_END\n");
-    /* only inform upper layer when a transmission was done,
-     * not for sending acknowledge frames if we received data */
-    if (state != AT86RF2XX_STATE_RX_AACK_ON ) {
-        /* set device back in receiving state */
-        /* TODO
-         * I seems that the upper layer don't set the receiver back to receive.
-         * I consider this a preliminary solution
-         * until i know where and how it should be done.
-         * */
-        at86rf2xx_set_state(dev, AT86RF2XX_STATE_RX_AACK_ON);
-        /* Call Upper layer to for statistics*/
-        static_dev->event_callback(static_dev, NETDEV_EVENT_ISR);
-    }
-    __exit_isr();
-}
-
-/**
- * \brief ISR for transceiver's TX_START interrupt
- *
- * Indicates the frame start of a transmitted acknowledge frame in procedure RX_AACK.
- * In procedure TX_ARET the TRX24_TX_START interrupt is issued separately for every
- * frame transmission and frame retransmission.
- */
-ISR(TRX24_TX_START_vect){
-    __enter_isr();
-#if defined(RXTX_LEDS)
-    LED0_TOGGLE;
-#endif
-    retries++;
-    DEBUG("TRX24_TX_START\n");
-    ((at86rf2xx_t *)static_dev)->irq_status1 |= AT86RF2XX_IRQ_STATUS_MASK1__TX_START;
-    static_dev->event_callback(static_dev, NETDEV_EVENT_ISR);
-#if defined(RXTX_LEDS)
-    LED0_TOGGLE;
-#endif
-    __exit_isr();
-}
 #endif
 
 void at86rf2xx_setup(at86rf2xx_t *dev, const at86rf2xx_params_t *params)
@@ -156,11 +57,13 @@ void at86rf2xx_setup(at86rf2xx_t *dev, const at86rf2xx_params_t *params)
 
 #ifdef MODULE_AT86RFR2
     /* Store device pointer for interrupts */
-    static_dev = (netdev_t *)dev;
+    at86rfr2_dev = (netdev_t *)dev;
 
     /* set all interrupts off */
     at86rf2xx_reg_write(dev, AT86RF2XX_REG__IRQ_MASK, 0x00);
     at86rf2xx_reg_write(dev, AT86RF2XX_REG__IRQ_MASK1, 0x00);
+
+    enable_rxtx_led();
 #endif
 }
 
@@ -298,41 +201,13 @@ size_t at86rf2xx_send(at86rf2xx_t *dev, const uint8_t *data, size_t len)
 
 void at86rf2xx_tx_prepare(at86rf2xx_t *dev)
 {
-    uint8_t previousState = 0;
+    uint8_t state;
 
     dev->pending_tx++;
-    previousState = at86rf2xx_set_state(dev, AT86RF2XX_STATE_TX_ARET_ON);
-    if (previousState != AT86RF2XX_STATE_TX_ARET_ON) {
-        dev->idle_state = previousState;
+    state = at86rf2xx_set_state(dev, AT86RF2XX_STATE_TX_ARET_ON);
+    if (state != AT86RF2XX_STATE_TX_ARET_ON) {
+        dev->idle_state = state;
     }
-
-#ifdef MODULE_AT86RFR2
-    /* This should not be possible as _set_state() should ensure proper state.
-     * Sometimes the state is still RX_AACK_ON instead of TX_ARET_ON and Data
-     * written to the Buffer will will be corrupted or not be send in this case.
-     * Running radvd will continue polling, but state won't snap into TX_ARET_ON.
-     * This leads to racing poll. Make sure that state is TX_ARET_ON before
-     * writing data to trx_buffer.
-     *
-     * This happens when continuously pinging the device.
-     *
-     * I am not sure if this also happens when debug is on as then the interrupts
-     * also print out massages.Just change DEBUG to printf instead.
-     *
-     * Additionally upper layer seems to unregister packet listener and incoming
-     * Packets are lost, as they are not process anymore.
-     * */
-    /*
-     * Maybe reading data and build ping response is faster then Auto ACK
-     */
-    uint8_t state = at86rf2xx_get_status(dev);
-    while( state != AT86RF2XX_STATE_TX_ARET_ON ){
-        DEBUG("at86rf2xx_tx_prepare: error state is not 0x19 instead: 0x%02x\n", state);
-        at86rf2xx_set_state(dev, AT86RF2XX_STATE_TX_ARET_ON);
-        state = at86rf2xx_get_status(dev);
-    }
-#endif
-
     dev->tx_frame_len = IEEE802154_FCS_LEN;
 }
 

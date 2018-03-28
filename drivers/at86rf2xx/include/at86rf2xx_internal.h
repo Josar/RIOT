@@ -75,6 +75,18 @@ extern "C" {
  */
 #define AT86RF2XX_RESET_DELAY           (62U)
 
+#ifdef MODULE_AT86RFR2
+/**
+ * netdev_t to at86rfr2_dev for Interrupt handling
+ */
+extern netdev_t *at86rfr2_dev;
+
+/**
+ * \brief Enabling the receive and transmit led and debug pins.
+ */
+void enable_rxtx_led(void);
+#endif
+
 /**
  * @brief   Read from a register at address `addr` from device `dev`.
  *
