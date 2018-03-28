@@ -47,6 +47,8 @@ extern "C" {
 extern void atmega_rtc_incr(void);
 #endif
 
+static inline void __asynch_wait(uint8_t num_cycles);
+
 typedef struct {
     uint8_t ext_cnt[3];      /* Counter to make 8-bit timer 32-bit */
     uint8_t ext_comp[3];     /* Extend compare to 32-bits */
@@ -101,15 +103,7 @@ void rtt_init(void) {
 
     /* Wait until not busy anymore */
     DEBUG("RTT waits until ASSR not busy\n");
-    while( ASSR & ((1 << TCN2UB) | (1 << OCR2AUB) | (1 << OCR2BUB)
-                 | (1 << TCR2AUB) | (1 << TCR2BUB)) ) {
-#ifdef MODULE_XTIMER
-        /* Sleep for 2 RTC cycles */
-        xtimer_usleep(70 * US_PER_MS);
-#else
-        thread_yield();
-#endif
-    }
+    __asynch_wait(2);
 
     /* Clear interrupt flags */
     TIFR2 &= ~( (1 << OCF2B)  | (1 << OCF2A) | (1 << TOV2) );
@@ -151,14 +145,7 @@ uint32_t rtt_get_counter(void) {
     /* Make sure it is safe to read TCNT2, in case we just woke up */
     DEBUG("RTT sleeps until safe to read TCNT2\n");
     TCCR2A = TCCR2A;
-    while( ASSR & (1 << TCR2AUB) ) {
-#ifdef MODULE_XTIMER
-        /* Sleep for 2 RTC cycles */
-        xtimer_usleep(70 * US_PER_MS);
-#else
-        thread_yield();
-#endif
-    }
+    __asynch_wait(2);
 
     return (((uint32_t)rtt_state.ext_cnt[2] << 24)
           | ((uint32_t)rtt_state.ext_cnt[1] << 16)
@@ -169,14 +156,7 @@ uint32_t rtt_get_counter(void) {
 void rtt_set_counter(uint32_t counter) {
     /* Wait until not busy anymore (should be immediate) */
     DEBUG("RTT sleeps until safe to write TCNT2\n");
-    while( ASSR & (1 << TCN2UB) ) {
-#ifdef MODULE_XTIMER
-        /* Sleep for 1 RTC cycle */
-        xtimer_usleep(35 * US_PER_MS);
-#else
-        thread_yield();
-#endif
-    }
+    __asynch_wait(1);
 
     rtt_state.ext_cnt[2] = (uint8_t)(counter >> 24);
     rtt_state.ext_cnt[1] = (uint8_t)(counter >> 16);
@@ -185,14 +165,7 @@ void rtt_set_counter(uint32_t counter) {
 
     /* Wait until it is safe to re-enter power-save */
     DEBUG("RTT sleeps until safe power-save\n");
-    while( ASSR & (1 << TCN2UB) ) {
-#ifdef MODULE_XTIMER
-        /* Sleep for 2 RTC cycles */
-        xtimer_usleep(70 * US_PER_MS);
-#else
-        thread_yield();
-#endif
-    }
+    __asynch_wait(2);
 }
 
 void rtt_set_alarm(uint32_t alarm, rtt_cb_t cb, void *arg) {
@@ -205,14 +178,7 @@ void rtt_set_alarm(uint32_t alarm, rtt_cb_t cb, void *arg) {
 
     /* Wait until not busy anymore (should be immediate) */
     DEBUG("RTT sleeps until safe to write OCR2A\n");
-    while( ASSR & (1 << OCR2AUB) ) {
-#ifdef MODULE_XTIMER
-        /* Sleep for 1 RTC cycle */
-        xtimer_usleep(35 * US_PER_MS);
-#else
-        thread_yield();
-#endif
-    }
+    __asynch_wait(1);
 
     /* Set the alarm value */
     rtt_state.ext_comp[2] = (uint8_t)(alarm >> 24);
@@ -222,14 +188,7 @@ void rtt_set_alarm(uint32_t alarm, rtt_cb_t cb, void *arg) {
 
     /* Wait until alarm value takes effect */
     DEBUG("RTT sleeps until safe power-save\n");
-    while( ASSR & (1 << OCR2AUB) ) {
-#ifdef MODULE_XTIMER
-        /* Sleep for 2 RTC cycles */
-        xtimer_usleep(70 * US_PER_MS);
-#else
-        thread_yield();
-#endif
-    }
+    __asynch_wait(2);
 
     /* Enable alarm interrupt only if it will trigger before overflow */
     if ( rtt_state.ext_comp[2] == rtt_state.ext_cnt[2]
@@ -260,6 +219,19 @@ void rtt_poweron(void) {
 
 void rtt_poweroff(void) {
     power_timer2_disable();
+}
+
+void __asynch_wait(uint8_t num_cycles) {
+    /* Wait until all busy flags clear */
+    while( ASSR & ((1 << TCN2UB) | (1 << OCR2AUB) | (1 << OCR2BUB)
+                 | (1 << TCR2AUB) | (1 << TCR2BUB)) ) {
+#ifdef MODULE_XTIMER
+        /* Sleep for num_cycles RTC cycles */
+        xtimer_usleep(num_cycles * 35 * US_PER_MS);
+#else
+        thread_yield();
+#endif
+    }
 }
 
 ISR(TIMER2_OVF_vect) {
