@@ -303,9 +303,7 @@ ISR(TIMER2_OVF_vect) {
     /* Wait until it is safe to re-enter power-save */
     TCCR2A = TCCR2A;
     while( ASSR & (1 << TCR2AUB) ) {
-        if (sched_context_switch_request) {
-            thread_yield();
-        }
+        thread_yield();
     }
     __exit_isr();
 }
@@ -323,9 +321,7 @@ ISR(TIMER2_COMPA_vect) {
     /* Wait until it is safe to re-enter power-save */
     TCCR2A = TCCR2A;
     while( ASSR & (1 << TCR2AUB) ) {
-        if (sched_context_switch_request) {
-            thread_yield();
-        }
+        thread_yield();
     }
     __exit_isr();
 }
