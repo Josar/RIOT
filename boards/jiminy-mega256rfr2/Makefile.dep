@@ -1,1 +1,2 @@
+# export board specific dependencies to the global includes-listing
 USEMODULE += boards_common_atmega
