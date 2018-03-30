@@ -43,15 +43,15 @@
 extern "C" {
 #endif
 
-#if RTC_NUMOF
+#if MODULE_PERIPH_RTC
 extern void atmega_rtc_incr(void);
 #endif
 
 static inline void __asynch_wait(uint8_t num_cycles);
 
 typedef struct {
-    uint8_t ext_cnt[3];      /* Counter to make 8-bit timer 32-bit */
-    uint8_t ext_comp[3];     /* Extend compare to 32-bits */
+    uint16_t ext_cnt;        /* Counter to make 8-bit timer 24-bit */
+    uint16_t ext_comp;       /* Extend compare to 24-bits */
     rtt_cb_t alarm_cb;       /* callback called from RTT alarm */
     void *alarm_arg;         /* argument passed to the callback */
     rtt_cb_t overflow_cb;    /* callback called when RTT overflows */
@@ -84,16 +84,10 @@ void rtt_init(void) {
 
     /* Set counter to 0 */
     TCNT2 = 0;
-    rtt_state.ext_cnt[2] = 0;
-    rtt_state.ext_cnt[1] = 0;
-    rtt_state.ext_cnt[0] = 0;
 
     /* Reset compare values */
     OCR2A = 0;
     OCR2B = 0;
-    rtt_state.ext_comp[2] = 0;
-    rtt_state.ext_comp[1] = 0;
-    rtt_state.ext_comp[0] = 0;
 
     /* Reset timer control */
     TCCR2A = 0;
@@ -110,9 +104,7 @@ void rtt_init(void) {
 
     /* Initialize callbacks */
     rtt_state.alarm_cb = NULL;
-    rtt_state.alarm_arg = NULL;
     rtt_state.overflow_cb = NULL;
-    rtt_state.overflow_arg = NULL;
 
     /* Enable 8-bit overflow interrupt */
     TIMSK2 |= (1 << TOIE2);
@@ -123,20 +115,14 @@ void rtt_init(void) {
 }
 
 void rtt_set_overflow_cb(rtt_cb_t cb, void *arg) {
-    /* Disable overflow interrupt */
-    TIMSK2 &= ~(1 << TOIE2);
-
-    rtt_state.overflow_cb = cb;
+    /* Interrupt safe order of assignment */
+    rtt_state.overflow_cb = NULL;
     rtt_state.overflow_arg = arg;
-
-    /* Enable overflow interrupt */
-    TIMSK2 |= (1 << TOIE2);
+    rtt_state.overflow_cb = cb;
 }
 
 void rtt_clear_overflow_cb(void) {
-    /* Disable overflow interrupt */
-    TIMSK2 &= ~(1 << TOIE2);
-
+    /* Interrupt safe order of assignment */
     rtt_state.overflow_cb = NULL;
     rtt_state.overflow_arg = NULL;
 }
@@ -147,10 +133,7 @@ uint32_t rtt_get_counter(void) {
     TCCR2A = TCCR2A;
     __asynch_wait(2);
 
-    return (((uint32_t)rtt_state.ext_cnt[2] << 24)
-          | ((uint32_t)rtt_state.ext_cnt[1] << 16)
-          | ((uint32_t)rtt_state.ext_cnt[0] << 8)
-          |  (uint32_t)TCNT2);
+    return (((uint32_t)rtt_state.ext_cnt << 8) | (uint32_t)TCNT2);
 }
 
 void rtt_set_counter(uint32_t counter) {
@@ -158,9 +141,7 @@ void rtt_set_counter(uint32_t counter) {
     DEBUG("RTT sleeps until safe to write TCNT2\n");
     __asynch_wait(1);
 
-    rtt_state.ext_cnt[2] = (uint8_t)(counter >> 24);
-    rtt_state.ext_cnt[1] = (uint8_t)(counter >> 16);
-    rtt_state.ext_cnt[0] = (uint8_t)(counter >> 8);
+    rtt_state.ext_cnt = (uint16_t)(counter >> 8);
     TCNT2 = (uint8_t)counter;
 
     /* Wait until it is safe to re-enter power-save */
@@ -171,44 +152,39 @@ void rtt_set_counter(uint32_t counter) {
 void rtt_set_alarm(uint32_t alarm, rtt_cb_t cb, void *arg) {
     /* Disable alarm interrupt */
     TIMSK2 &= ~(1 << OCIE2A);
-
-    /* Set callback */
-    rtt_state.alarm_cb = cb;
-    rtt_state.alarm_arg = arg;
+    rtt_state.alarm_cb = NULL;
 
     /* Wait until not busy anymore (should be immediate) */
     DEBUG("RTT sleeps until safe to write OCR2A\n");
     __asynch_wait(1);
 
     /* Set the alarm value */
-    rtt_state.ext_comp[2] = (uint8_t)(alarm >> 24);
-    rtt_state.ext_comp[1] = (uint8_t)(alarm >> 16);
-    rtt_state.ext_comp[0] = (uint8_t)(alarm >> 8);
+    rtt_state.ext_comp = (uint16_t)(alarm >> 8);
     OCR2A = (uint8_t)alarm;
 
     /* Wait until alarm value takes effect */
     DEBUG("RTT sleeps until safe power-save\n");
     __asynch_wait(2);
 
+    /* Interrupt safe order of assignment */
+    rtt_state.alarm_arg = arg;
+    rtt_state.alarm_cb = cb;
+
     /* Enable alarm interrupt only if it will trigger before overflow */
-    if ( rtt_state.ext_comp[2] == rtt_state.ext_cnt[2]
-      && rtt_state.ext_comp[1] == rtt_state.ext_cnt[1]
-      && rtt_state.ext_comp[0] == rtt_state.ext_cnt[0] ) {
+    if (rtt_state.ext_comp <= rtt_state.ext_cnt) {
         TIMSK2 |= (1 << OCIE2A);
     }
 }
 
 uint32_t rtt_get_alarm(void) {
-    return (((uint32_t)rtt_state.ext_comp[2] << 24)
-          | ((uint32_t)rtt_state.ext_comp[1] << 16)
-          | ((uint32_t)rtt_state.ext_comp[0] << 8)
-          |  (uint32_t)OCR2A);
+    return (((uint32_t)rtt_state.ext_comp << 8) | (uint32_t)OCR2A);
 }
 
 void rtt_clear_alarm(void) {
     /* Disable alarm interrupt */
     TIMSK2 &= ~(1 << OCIE2A);
 
+    /* Interrupt safe order of assignment */
     rtt_state.alarm_cb = NULL;
     rtt_state.alarm_arg = NULL;
 }
@@ -229,6 +205,9 @@ void __asynch_wait(uint8_t num_cycles) {
         /* Sleep for num_cycles RTC cycles */
         xtimer_usleep(num_cycles * 35 * US_PER_MS);
 #else
+        /* Suppress unused parameter warning */
+        (void)num_cycles;
+
         thread_yield();
 #endif
     }
@@ -237,39 +216,25 @@ void __asynch_wait(uint8_t num_cycles) {
 ISR(TIMER2_OVF_vect) {
     __enter_isr();
     /* Enable RTT alarm if overflowed enough times */
-    if ((rtt_state.ext_comp[2] == rtt_state.ext_cnt[2])
-     && (rtt_state.ext_comp[1] == rtt_state.ext_cnt[1])
-     && (rtt_state.ext_comp[0] == rtt_state.ext_cnt[0])) {
+    if (rtt_state.ext_comp == rtt_state.ext_cnt) {
         TIMSK2 |= (1 << OCIE2A);
     }
 
-#if RTC_NUMOF
+#if MODULE_PERIPH_RTC
     /* Increment RTC by 8 seconds */
     atmega_rtc_incr();
 #endif
 
-    /* Virtual 32-bit timer overflow */
-    if (rtt_state.ext_cnt[0] == 0xff) {
-        rtt_state.ext_cnt[0] = 0;
+    /* Virtual 24-bit timer overflow */
+    if (rtt_state.ext_cnt == 0xFFFF) {
+        rtt_state.ext_cnt = 0;
 
-        if (rtt_state.ext_cnt[1] == 0xff) {
-            rtt_state.ext_cnt[1] = 0;
-
-            if (rtt_state.ext_cnt[2] == 0xff) {
-                rtt_state.ext_cnt[2] = 0;
-
-                /* Execute callback */
-                if (rtt_state.overflow_cb != NULL) {
-                    rtt_state.overflow_cb(rtt_state.overflow_arg);
-                }
-            } else {
-                rtt_state.ext_cnt[2]++;
-            }
-        } else {
-            rtt_state.ext_cnt[1]++;
+        /* Execute callback */
+        if (rtt_state.overflow_cb != NULL) {
+            rtt_state.overflow_cb(rtt_state.overflow_arg);
         }
     } else {
-        rtt_state.ext_cnt[0]++;
+        rtt_state.ext_cnt++;
     }
 
     /* Wait until it is safe to re-enter power-save */
