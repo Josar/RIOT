@@ -56,11 +56,8 @@ static volatile rtc_state_t rtc_state;
 
 void rtc_init(void)
 {
-    /* Initialize rtc_state*/
-    rtc_state.time = 0;
-    rtc_state.alarm = 0;
+    /* Initialize callback */
     rtc_state.alarm_cb = NULL;
-    rtc_state.alarm_arg = NULL;
 
     /* RTC depends on RTT */
     rtt_init();
@@ -69,7 +66,7 @@ void rtc_init(void)
 int rtc_set_time(struct tm *time)
 {
     /* Convert to seconds since the epoch */
-    rtc_state.time = mktime(time);
+    rtc_state.time = mk_gmtime(time);
 
     return 0;
 }
@@ -87,17 +84,14 @@ int rtc_set_alarm(struct tm *time, rtc_alarm_cb_t cb, void *arg)
 {
     /* Disable alarm interrupt */
     TIMSK2 &= ~(1 << OCIE2B);
-
-    /* Set callback */
-    rtc_state.alarm_cb = cb;
-    rtc_state.alarm_arg = arg;
+    rtc_state.alarm_cb = NULL;
 
     /* Wait until not busy anymore (should be immediate) */
     DEBUG("RTC sleeps until safe to write OCR2B\n");
     __asynch_wait(1);
 
     /* Set alarm time */
-    rtc_state.alarm = mktime(time);
+    rtc_state.alarm = mk_gmtime(time);
 
     /* Prepare the counter for sub 8-second precision */
     OCR2B = ((uint8_t)rtc_state.alarm & 0x07) << 5;
@@ -106,9 +100,18 @@ int rtc_set_alarm(struct tm *time, rtc_alarm_cb_t cb, void *arg)
     DEBUG("RTC sleeps until safe power-save\n");
     __asynch_wait(2);
 
+    /* Interrupt safe order of assignment */
+    rtc_state.alarm_arg = arg;
+    rtc_state.alarm_cb = cb;
+
     /* Enable alarm only if it will trigger in < 8 seconds */
-    if ((rtc_state.time & 0xFFFFFFF8) == (rtc_state.alarm & 0xFFFFFFF8)) {
-        TIMSK2 |= (1 << OCIE2B);
+    if ((rtc_state.alarm & 0xFFFFFFF8) <= (rtc_state.time & 0xFFFFFFF8)) {
+        if (rtc_state.alarm <= rtc_state.time) {
+            /* Prevent alarm offset if time is too soon */
+            rtc_state.alarm_cb(rtc_state.alarm_arg);
+        } else {
+            TIMSK2 |= (1 << OCIE2B);
+        }
     }
 
     return 0;
@@ -128,6 +131,7 @@ void rtc_clear_alarm(void)
     /* Disable alarm interrupt */
     TIMSK2 &= ~(1 << OCIE2B);
 
+    /* Interrupt safe order of assignment */
     rtc_state.alarm_cb = NULL;
     rtc_state.alarm_arg = NULL;
 }
@@ -147,8 +151,13 @@ void atmega_rtc_incr(void)
     rtc_state.time += 8;
 
     /* Enable alarm only if it will trigger in < 8 seconds */
-    if ((rtc_state.time & 0xFFFFFFF8) == (rtc_state.alarm & 0xFFFFFFF8)) {
-        TIMSK2 |= (1 << OCIE2B);
+    if ((rtc_state.alarm & 0xFFFFFFF8) == (rtc_state.time & 0xFFFFFFF8)) {
+        if (rtc_state.alarm <= rtc_state.time) {
+            /* Prevent alarm offset if time is too soon */
+            rtc_state.alarm_cb(rtc_state.alarm_arg);
+        } else {
+            TIMSK2 |= (1 << OCIE2B);
+        }
     }
 }
 
@@ -160,6 +169,9 @@ void __asynch_wait(uint8_t num_cycles) {
         /* Sleep for num_cycles RTC cycles */
         xtimer_usleep(num_cycles * 35 * US_PER_MS);
 #else
+        /* Suppress unused parameter warning */
+        (void)num_cycles;
+
         thread_yield();
 #endif
     }
@@ -177,9 +189,7 @@ ISR(TIMER2_COMPB_vect) {
     /* Wait until it is safe to re-enter power-save */
     TCCR2A = TCCR2A;
     while( ASSR & (1 << TCR2AUB) ) {
-        if (sched_context_switch_request) {
-            thread_yield();
-        }
+        thread_yield();
     }
     __exit_isr();
 }
