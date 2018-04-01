@@ -18,6 +18,13 @@
  * @author      Robert Hartung <hartung@ibr.cs.tu-bs.de>
  * @author      Matthew Blue <matthew.blue.neuro@gmail.com>
  *
+ * In order to safely sleep when using the RTT:
+ * 1. Disable interrupts
+ * 2. Write to one of the asynch registers (e.g. TCCR2A)
+ * 3. Wait for ASSR register's busy flags to clear
+ * 4. Re-enable interrupts
+ * 5. Sleep before interrupt re-enable takes effect
+ *
  * @}
  */
 
@@ -92,7 +99,7 @@ void rtt_init(void) {
     /* Reset timer control */
     TCCR2A = 0;
 
-    /* 32768Hz / 1024 -> 32 ticks per second! */
+    /* 32768Hz / 1024 = 32 ticks per second */
     TCCR2B = (1 << CS22) | (1 << CS21) | (1 <<  CS20);
 
     /* Wait until not busy anymore */
@@ -100,16 +107,11 @@ void rtt_init(void) {
     __asynch_wait(2);
 
     /* Clear interrupt flags */
-    TIFR2 &= ~( (1 << OCF2B)  | (1 << OCF2A) | (1 << TOV2) );
-
-    /* Initialize callbacks */
-    rtt_state.alarm_cb = NULL;
-    rtt_state.overflow_cb = NULL;
+    /* Oddly, this is done by writing ones; see datasheet */
+    TIFR2 = (1 << OCF2B) | (1 << OCF2A) | (1 << TOV2);
 
     /* Enable 8-bit overflow interrupt */
     TIMSK2 |= (1 << TOIE2);
-
-    irq_enable();
 
     DEBUG("RTT initialized\n");
 }
@@ -130,7 +132,7 @@ void rtt_clear_overflow_cb(void) {
 uint32_t rtt_get_counter(void) {
     /* Make sure it is safe to read TCNT2, in case we just woke up */
     DEBUG("RTT sleeps until safe to read TCNT2\n");
-    TCCR2A = TCCR2A;
+    TCCR2A = 0;
     __asynch_wait(2);
 
     return (((uint32_t)rtt_state.ext_cnt << 8) | (uint32_t)TCNT2);
@@ -143,10 +145,6 @@ void rtt_set_counter(uint32_t counter) {
 
     rtt_state.ext_cnt = (uint16_t)(counter >> 8);
     TCNT2 = (uint8_t)counter;
-
-    /* Wait until it is safe to re-enter power-save */
-    DEBUG("RTT sleeps until safe power-save\n");
-    __asynch_wait(2);
 }
 
 void rtt_set_alarm(uint32_t alarm, rtt_cb_t cb, void *arg) {
@@ -161,10 +159,6 @@ void rtt_set_alarm(uint32_t alarm, rtt_cb_t cb, void *arg) {
     /* Set the alarm value */
     rtt_state.ext_comp = (uint16_t)(alarm >> 8);
     OCR2A = (uint8_t)alarm;
-
-    /* Wait until alarm value takes effect */
-    DEBUG("RTT sleeps until safe power-save\n");
-    __asynch_wait(2);
 
     /* Interrupt safe order of assignment */
     rtt_state.alarm_arg = arg;
@@ -237,9 +231,7 @@ ISR(TIMER2_OVF_vect) {
         rtt_state.ext_cnt++;
     }
 
-    /* Wait until it is safe to re-enter power-save */
-    TCCR2A = TCCR2A;
-    while( ASSR & (1 << TCR2AUB) ) {
+    if (sched_context_switch_request) {
         thread_yield();
     }
     __exit_isr();
@@ -255,9 +247,7 @@ ISR(TIMER2_COMPA_vect) {
         rtt_state.alarm_cb(rtt_state.alarm_arg);
     }
 
-    /* Wait until it is safe to re-enter power-save */
-    TCCR2A = TCCR2A;
-    while( ASSR & (1 << TCR2AUB) ) {
+    if (sched_context_switch_request) {
         thread_yield();
     }
     __exit_isr();
