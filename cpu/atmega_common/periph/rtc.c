@@ -17,6 +17,13 @@
  *
  * @author      Matthew Blue <matthew.blue.neuro@gmail.com>
  *
+ * In order to safely sleep when using the RTT:
+ * 1. Disable interrupts
+ * 2. Write to one of the asynch registers (e.g. TCCR2A)
+ * 3. Wait for ASSR register's busy flags to clear
+ * 4. Re-enable interrupts
+ * 5. Sleep before interrupt re-enable takes effect
+ *
  * @}
  */
 
@@ -46,36 +53,58 @@ extern "C" {
 static inline void __asynch_wait(uint8_t num_cycles);
 
 typedef struct {
-    time_t time;          /* seconds since the epoch */
-    time_t alarm;         /* alarm_cb when time == alarm */
-    rtt_cb_t alarm_cb;    /* callback called from RTC alarm */
-    void *alarm_arg;      /* argument passed to the callback */
+    time_t time;                /* seconds since the epoch */
+    time_t alarm;               /* alarm_cb when time == alarm */
+    rtc_alarm_cb_t alarm_cb;    /* callback called from RTC alarm */
+    void *alarm_arg;            /* argument passed to the callback */
 } rtc_state_t;
 
 static volatile rtc_state_t rtc_state;
 
 void rtc_init(void)
 {
-    /* Initialize callback */
-    rtc_state.alarm_cb = NULL;
-
     /* RTC depends on RTT */
     rtt_init();
 }
 
 int rtc_set_time(struct tm *time)
 {
+    uint8_t offset;
+
+    /* Make sure it is safe to read TCNT2, in case we just woke up */
+    DEBUG("RTT sleeps until safe to read TCNT2\n");
+    TCCR2A = 0;
+    __asynch_wait(2);
+
+    offset = TCNT2;
+
+    /* Convert to seconds (highest 3 bits) */
+    offset = (offset & 0xE0) >> 5;
+
     /* Convert to seconds since the epoch */
-    rtc_state.time = mk_gmtime(time);
+    rtc_state.time = mk_gmtime(time) - offset;
 
     return 0;
 }
 
 int rtc_get_time(struct tm *time)
 {
+    time_t time_secs;
+
+    /* Make sure it is safe to read TCNT2, in case we just woke up */
+    DEBUG("RTT sleeps until safe to read TCNT2\n");
+    TCCR2A = 0;
+    __asynch_wait(2);
+
+    time_secs = (time_t)TCNT2;
+
+    /* Convert to seconds (highest 3 bits of TCNT2) */
+    time_secs = (time_secs & 0x000000E0) >> 5;
+
+    time_secs += rtc_state.time;
+
     /* Convert from seconds since the epoch */
-    /* Note: Cast tells the compiler to discard volatile */
-    gmtime_r((time_t*)&rtc_state.time, time);
+    gmtime_r(&time_secs, time);
 
     return 0;
 }
@@ -95,10 +124,6 @@ int rtc_set_alarm(struct tm *time, rtc_alarm_cb_t cb, void *arg)
 
     /* Prepare the counter for sub 8-second precision */
     OCR2B = ((uint8_t)rtc_state.alarm & 0x07) << 5;
-
-    /* Wait until alarm value takes effect */
-    DEBUG("RTC sleeps until safe power-save\n");
-    __asynch_wait(2);
 
     /* Interrupt safe order of assignment */
     rtc_state.alarm_arg = arg;
@@ -186,9 +211,7 @@ ISR(TIMER2_COMPB_vect) {
         rtc_state.alarm_cb(rtc_state.alarm_arg);
     }
 
-    /* Wait until it is safe to re-enter power-save */
-    TCCR2A = TCCR2A;
-    while( ASSR & (1 << TCR2AUB) ) {
+    if (sched_context_switch_request) {
         thread_yield();
     }
     __exit_isr();
