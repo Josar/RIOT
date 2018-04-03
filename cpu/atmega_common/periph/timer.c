@@ -31,6 +31,22 @@
 
 #define ENABLE_DEBUG    (0)
 #include "debug.h"
+#include "periph/gpio.h"
+
+/*
+ * With 8MHz CPU Clock this gives a 0.25us Output Pulse
+ * PORTF |= (1<<PORTF6);
+ * PORTF &= ~(1<<PORTF6);
+ *
+ * Debuging pins can be used to determine how long a isr takes by probing
+ */
+
+#define DEBUG_TIMER_PIN (1)
+#if DEBUG_TIMER_PIN
+#define DEBUG_TIMER_PORT_DDR (DDRF)
+#define DEBUG_TIMER_PORT     (PORTF)
+#define DEBUG_TIMER_PIN1     (0x03)  /*(1<<PORTF2)*/
+#endif
 
 /**
  * @brief   All timers have three channels
@@ -124,6 +140,27 @@ int timer_init(tim_t tim, unsigned long freq, timer_cb_t cb, void *arg)
     ctx[tim].dev->CRB = (pre + 1);
     DEBUG("timer.c: prescaler set at %d\n", pre + 1);
 
+    /* Timer is now configured as
+     * TCCR1A
+     * Compare Output Mode: Normal port operation, OCnA/OCnB/OCnC disconnected.
+     * Waveform Generation Mode: Normal mode of operation
+     *
+     * TCCR1B
+     * Input Capture 1 Noise Canceler: off
+     * Waveform Generation Mode : Normal mode of operation
+     * Clock Select: see CRB setting above
+     *
+     * TCCR1C
+     * Force Output Compare for Channel A/B/C: off
+     */
+
+#ifdef DEBUG_TIMER_PIN
+    /* Port Pin as Output */
+    DEBUG_TIMER_PORT_DDR |= DEBUG_TIMER_PIN1;
+    /* Pin Low */
+    DEBUG_TIMER_PORT &= ~DEBUG_TIMER_PIN1;
+#endif
+
     return 0;
 }
 
@@ -185,7 +222,17 @@ static inline void _isr(tim_t tim, int chan)
 #ifdef TIMER_0
 ISR(TIMER_0_ISRA, ISR_BLOCK)
 {
+    /* overflow 60 us in callback */
+    /* xtimer 237 us in callback */
+#ifdef DEBUG_TIMER_PIN
+    DEBUG_TIMER_PORT |= DEBUG_TIMER_PIN1;
+#endif
+
     _isr(0, 0);
+
+#ifdef DEBUG_TIMER_PIN
+    DEBUG_TIMER_PORT &= ~DEBUG_TIMER_PIN1;
+#endif
 }
 
 ISR(TIMER_0_ISRB, ISR_BLOCK)
@@ -197,6 +244,29 @@ ISR(TIMER_0_ISRB, ISR_BLOCK)
 ISR(TIMER_0_ISRC, ISR_BLOCK)
 {
     _isr(0, 2);
+}
+#endif /* TIMER_0_ISRC */
+#ifdef TIMER_0_OVF
+ISR(TIMER_0_OVF, ISR_BLOCK)
+{
+    /* The whole overflow process takes 23.45 us to complete */
+    /* With 8MHz CPU Clock this is 0.25us puls high */
+    //PORTF |= (1<<PORTF7);
+    // PORTF &= ~(1<<PORTF7);
+    __enter_isr();
+
+    if(ovr_ctx[0].cb != NULL){
+        /* Execute callback */
+        ovr_ctx[0].cb(ctx[0].arg, 0);
+
+        if (sched_context_switch_request) {
+            thread_yield();
+        }
+    }
+    __exit_isr();
+    /* With 8MHz CPU Clock this is 0.25us puls high */
+    // PORTF |= (1<<PORTF7);
+    //PORTF &= ~(1<<PORTF7);
 }
 #endif /* TIMER_0_ISRC */
 #endif /* TIMER_0 */
