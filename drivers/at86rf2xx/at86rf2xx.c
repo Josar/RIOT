@@ -43,6 +43,7 @@
 #include "od.h"
 #endif
 
+
 void at86rf2xx_setup(at86rf2xx_t *dev, const at86rf2xx_params_t *params)
 {
     netdev_t *netdev = (netdev_t *)dev;
@@ -64,6 +65,15 @@ void at86rf2xx_setup(at86rf2xx_t *dev, const at86rf2xx_params_t *params)
     at86rf2xx_reg_write(dev, AT86RF2XX_REG__IRQ_MASK1, 0x00);
 
     enable_rxtx_led();
+#endif
+#ifdef DEBUG_ATRFR2_PINS
+    /*initialize Debug Pins */
+    /* Port Pin as Output */
+    DEBUG_ATRFR2_PORT_DDR |=  ( DEBUG_ATRFR2_PIN_TX_START
+                              | DEBUG_ATRFR2_PIN_TX_END|DEBUG_ATRFR2_PIN_RX_END);
+    /* Pin Low */
+    DEBUG_ATRFR2_PORT     &= ~( DEBUG_ATRFR2_PIN_TX_START
+                              |DEBUG_ATRFR2_PIN_TX_END|DEBUG_ATRFR2_PIN_RX_END);
 #endif
 }
 
