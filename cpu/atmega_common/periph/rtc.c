@@ -63,8 +63,11 @@ static volatile rtc_state_t rtc_state;
 
 void rtc_init(void)
 {
-    /* RTC depends on RTT */
-    rtt_init();
+    /* Only initialize RTT once */
+    if ( !(ASSR & (1 << AS2)) ) {
+        /* RTC depends on RTT */
+        rtt_init();
+    }
 }
 
 int rtc_set_time(struct tm *time)
