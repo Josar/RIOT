@@ -60,7 +60,7 @@ static volatile rtc_state_t rtc_state;
 void rtc_init(void)
 {
     /* Only initialize RTT once */
-    if ( !(ASSR & (1 << AS2)) ) {
+    if (!(ASSR & (1 << AS2))) {
         /* RTC depends on RTT */
         rtt_init();
     }
@@ -133,7 +133,8 @@ int rtc_set_alarm(struct tm *time, rtc_alarm_cb_t cb, void *arg)
         if (rtc_state.alarm <= rtc_state.time) {
             /* Prevent alarm offset if time is too soon */
             rtc_state.alarm_cb(rtc_state.alarm_arg);
-        } else {
+        }
+        else {
             TIMSK2 |= (1 << OCIE2B);
         }
     }
@@ -145,7 +146,7 @@ int rtc_get_alarm(struct tm *time)
 {
     /* Convert from seconds since the epoch */
     /* Note: Cast tells the compiler to discard volatile */
-    gmtime_r((time_t*)&rtc_state.alarm, time);
+    gmtime_r((time_t *)&rtc_state.alarm, time);
 
     return 0;
 }
@@ -179,17 +180,19 @@ void atmega_rtc_incr(void)
         if (rtc_state.alarm <= rtc_state.time) {
             /* Prevent alarm offset if time is too soon */
             rtc_state.alarm_cb(rtc_state.alarm_arg);
-        } else {
+        }
+        else {
             TIMSK2 |= (1 << OCIE2B);
         }
     }
 }
 
-void _asynch_wait(void) {
+void _asynch_wait(void)
+{
     /* Wait until all busy flags clear. According to the datasheet,
      * this can take up to 2 positive edges of TOSC1 (32kHz). */
-    while( ASSR & ((1 << TCN2UB) | (1 << OCR2AUB) | (1 << OCR2BUB)
-                 | (1 << TCR2AUB) | (1 << TCR2BUB)) );
+    while (ASSR & ((1 << TCN2UB) | (1 << OCR2AUB) | (1 << OCR2BUB)
+                   | (1 << TCR2AUB) | (1 << TCR2BUB))) ;
 }
 
 ISR(TIMER2_COMPB_vect) {
