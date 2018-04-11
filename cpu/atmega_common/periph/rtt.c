@@ -36,10 +36,6 @@
 #include "periph_conf.h"
 #include "thread.h"
 
-#ifdef MODULE_XTIMER
-#include "xtimer.h"
-#endif
-
 #define ENABLE_DEBUG    (0)
 #include "debug.h"
 
@@ -54,7 +50,7 @@ extern "C" {
 extern void atmega_rtc_incr(void);
 #endif
 
-static inline void __asynch_wait(void);
+static inline void _asynch_wait(void);
 
 typedef struct {
     uint16_t ext_cnt;        /* Counter to make 8-bit timer 24-bit */
@@ -104,7 +100,7 @@ void rtt_init(void) {
 
     /* Wait until not busy anymore */
     DEBUG("RTT waits until ASSR not busy\n");
-    __asynch_wait();
+    _asynch_wait();
 
     /* Clear interrupt flags */
     /* Oddly, this is done by writing ones; see datasheet */
@@ -133,7 +129,7 @@ uint32_t rtt_get_counter(void) {
     /* Make sure it is safe to read TCNT2, in case we just woke up */
     DEBUG("RTT sleeps until safe to read TCNT2\n");
     TCCR2A = 0;
-    __asynch_wait();
+    _asynch_wait();
 
     return (((uint32_t)rtt_state.ext_cnt << 8) | (uint32_t)TCNT2);
 }
@@ -141,7 +137,7 @@ uint32_t rtt_get_counter(void) {
 void rtt_set_counter(uint32_t counter) {
     /* Wait until not busy anymore (should be immediate) */
     DEBUG("RTT sleeps until safe to write TCNT2\n");
-    __asynch_wait();
+    _asynch_wait();
 
     rtt_state.ext_cnt = (uint16_t)(counter >> 8);
     TCNT2 = (uint8_t)counter;
@@ -154,7 +150,7 @@ void rtt_set_alarm(uint32_t alarm, rtt_cb_t cb, void *arg) {
 
     /* Wait until not busy anymore (should be immediate) */
     DEBUG("RTT sleeps until safe to write OCR2A\n");
-    __asynch_wait();
+    _asynch_wait();
 
     /* Set the alarm value */
     rtt_state.ext_comp = (uint16_t)(alarm >> 8);
@@ -191,7 +187,7 @@ void rtt_poweroff(void) {
     power_timer2_disable();
 }
 
-void __asynch_wait(void) {
+void _asynch_wait(void) {
     /* Wait until all busy flags clear. According to the datasheet,
      * this can take up to 2 positive edges of TOSC1 (32kHz). */
     while( ASSR & ((1 << TCN2UB) | (1 << OCR2AUB) | (1 << OCR2BUB)
