@@ -50,7 +50,7 @@
 extern "C" {
 #endif
 
-static inline void __asynch_wait(uint8_t num_cycles);
+static inline void __asynch_wait(void);
 
 typedef struct {
     time_t time;                /* seconds since the epoch */
@@ -77,7 +77,7 @@ int rtc_set_time(struct tm *time)
     /* Make sure it is safe to read TCNT2, in case we just woke up */
     DEBUG("RTT sleeps until safe to read TCNT2\n");
     TCCR2A = 0;
-    __asynch_wait(2);
+    __asynch_wait();
 
     offset = TCNT2;
 
@@ -97,7 +97,7 @@ int rtc_get_time(struct tm *time)
     /* Make sure it is safe to read TCNT2, in case we just woke up */
     DEBUG("RTT sleeps until safe to read TCNT2\n");
     TCCR2A = 0;
-    __asynch_wait(2);
+    __asynch_wait();
 
     time_secs = (time_t)TCNT2;
 
@@ -120,7 +120,7 @@ int rtc_set_alarm(struct tm *time, rtc_alarm_cb_t cb, void *arg)
 
     /* Wait until not busy anymore (should be immediate) */
     DEBUG("RTC sleeps until safe to write OCR2B\n");
-    __asynch_wait(1);
+    __asynch_wait();
 
     /* Set alarm time */
     rtc_state.alarm = mk_gmtime(time);
@@ -189,20 +189,11 @@ void atmega_rtc_incr(void)
     }
 }
 
-void __asynch_wait(uint8_t num_cycles) {
-    /* Wait until all busy flags clear */
+void __asynch_wait(void) {
+    /* Wait until all busy flags clear. According to the datasheet,
+     * this can take up to 2 positive edges of TOSC1 (32kHz). */
     while( ASSR & ((1 << TCN2UB) | (1 << OCR2AUB) | (1 << OCR2BUB)
-                 | (1 << TCR2AUB) | (1 << TCR2BUB)) ) {
-#ifdef MODULE_XTIMER
-        /* Sleep for num_cycles RTC cycles */
-        xtimer_usleep(num_cycles * 35 * US_PER_MS);
-#else
-        /* Suppress unused parameter warning */
-        (void)num_cycles;
-
-        thread_yield();
-#endif
-    }
+                 | (1 << TCR2AUB) | (1 << TCR2BUB)) );
 }
 
 ISR(TIMER2_COMPB_vect) {
