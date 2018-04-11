@@ -36,10 +36,6 @@
 #include "periph_conf.h"
 #include "thread.h"
 
-#ifdef MODULE_XTIMER
-#include "xtimer.h"
-#endif
-
 #define ENABLE_DEBUG (0)
 #include "debug.h"
 
@@ -50,7 +46,7 @@
 extern "C" {
 #endif
 
-static inline void __asynch_wait(void);
+static inline void _asynch_wait(void);
 
 typedef struct {
     time_t time;                /* seconds since the epoch */
@@ -77,7 +73,7 @@ int rtc_set_time(struct tm *time)
     /* Make sure it is safe to read TCNT2, in case we just woke up */
     DEBUG("RTT sleeps until safe to read TCNT2\n");
     TCCR2A = 0;
-    __asynch_wait();
+    _asynch_wait();
 
     offset = TCNT2;
 
@@ -97,7 +93,7 @@ int rtc_get_time(struct tm *time)
     /* Make sure it is safe to read TCNT2, in case we just woke up */
     DEBUG("RTT sleeps until safe to read TCNT2\n");
     TCCR2A = 0;
-    __asynch_wait();
+    _asynch_wait();
 
     time_secs = (time_t)TCNT2;
 
@@ -120,7 +116,7 @@ int rtc_set_alarm(struct tm *time, rtc_alarm_cb_t cb, void *arg)
 
     /* Wait until not busy anymore (should be immediate) */
     DEBUG("RTC sleeps until safe to write OCR2B\n");
-    __asynch_wait();
+    _asynch_wait();
 
     /* Set alarm time */
     rtc_state.alarm = mk_gmtime(time);
@@ -189,7 +185,7 @@ void atmega_rtc_incr(void)
     }
 }
 
-void __asynch_wait(void) {
+void _asynch_wait(void) {
     /* Wait until all busy flags clear. According to the datasheet,
      * this can take up to 2 positive edges of TOSC1 (32kHz). */
     while( ASSR & ((1 << TCN2UB) | (1 << OCR2AUB) | (1 << OCR2BUB)
