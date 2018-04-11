@@ -53,17 +53,18 @@ extern void atmega_rtc_incr(void);
 static inline void _asynch_wait(void);
 
 typedef struct {
-    uint16_t ext_cnt;        /* Counter to make 8-bit timer 24-bit */
-    uint16_t ext_comp;       /* Extend compare to 24-bits */
-    rtt_cb_t alarm_cb;       /* callback called from RTT alarm */
-    void *alarm_arg;         /* argument passed to the callback */
-    rtt_cb_t overflow_cb;    /* callback called when RTT overflows */
-    void *overflow_arg;      /* argument passed to the callback */
+    uint16_t ext_cnt;           /* Counter to make 8-bit timer 24-bit */
+    uint16_t ext_comp;          /* Extend compare to 24-bits */
+    rtt_cb_t alarm_cb;          /* callback called from RTT alarm */
+    void *alarm_arg;            /* argument passed to the callback */
+    rtt_cb_t overflow_cb;       /* callback called when RTT overflows */
+    void *overflow_arg;         /* argument passed to the callback */
 } rtt_state_t;
 
 static volatile rtt_state_t rtt_state;
 
-void rtt_init(void) {
+void rtt_init(void)
+{
     DEBUG("Initializing RTT\n");
 
     rtt_poweron();
@@ -77,7 +78,7 @@ void rtt_init(void) {
      * 4. To switch to asynchronous: Wait for TCN2UB, OCR2xUB, TCR2xUB.
      * 5. Clear the Timer/Counter2 Interrupt Flags.
      * 6. Enable interrupts, if needed
-    */
+     */
 
     /* Disable all timer 2 interrupts */
     TIMSK2 = 0;
@@ -112,20 +113,23 @@ void rtt_init(void) {
     DEBUG("RTT initialized\n");
 }
 
-void rtt_set_overflow_cb(rtt_cb_t cb, void *arg) {
+void rtt_set_overflow_cb(rtt_cb_t cb, void *arg)
+{
     /* Interrupt safe order of assignment */
     rtt_state.overflow_cb = NULL;
     rtt_state.overflow_arg = arg;
     rtt_state.overflow_cb = cb;
 }
 
-void rtt_clear_overflow_cb(void) {
+void rtt_clear_overflow_cb(void)
+{
     /* Interrupt safe order of assignment */
     rtt_state.overflow_cb = NULL;
     rtt_state.overflow_arg = NULL;
 }
 
-uint32_t rtt_get_counter(void) {
+uint32_t rtt_get_counter(void)
+{
     /* Make sure it is safe to read TCNT2, in case we just woke up */
     DEBUG("RTT sleeps until safe to read TCNT2\n");
     TCCR2A = 0;
@@ -134,7 +138,8 @@ uint32_t rtt_get_counter(void) {
     return (((uint32_t)rtt_state.ext_cnt << 8) | (uint32_t)TCNT2);
 }
 
-void rtt_set_counter(uint32_t counter) {
+void rtt_set_counter(uint32_t counter)
+{
     /* Wait until not busy anymore (should be immediate) */
     DEBUG("RTT sleeps until safe to write TCNT2\n");
     _asynch_wait();
@@ -143,7 +148,8 @@ void rtt_set_counter(uint32_t counter) {
     TCNT2 = (uint8_t)counter;
 }
 
-void rtt_set_alarm(uint32_t alarm, rtt_cb_t cb, void *arg) {
+void rtt_set_alarm(uint32_t alarm, rtt_cb_t cb, void *arg)
+{
     /* Disable alarm interrupt */
     TIMSK2 &= ~(1 << OCIE2A);
     rtt_state.alarm_cb = NULL;
@@ -166,11 +172,13 @@ void rtt_set_alarm(uint32_t alarm, rtt_cb_t cb, void *arg) {
     }
 }
 
-uint32_t rtt_get_alarm(void) {
+uint32_t rtt_get_alarm(void)
+{
     return (((uint32_t)rtt_state.ext_comp << 8) | (uint32_t)OCR2A);
 }
 
-void rtt_clear_alarm(void) {
+void rtt_clear_alarm(void)
+{
     /* Disable alarm interrupt */
     TIMSK2 &= ~(1 << OCIE2A);
 
@@ -179,19 +187,22 @@ void rtt_clear_alarm(void) {
     rtt_state.alarm_arg = NULL;
 }
 
-void rtt_poweron(void) {
+void rtt_poweron(void)
+{
     power_timer2_enable();
 }
 
-void rtt_poweroff(void) {
+void rtt_poweroff(void)
+{
     power_timer2_disable();
 }
 
-void _asynch_wait(void) {
+void _asynch_wait(void)
+{
     /* Wait until all busy flags clear. According to the datasheet,
      * this can take up to 2 positive edges of TOSC1 (32kHz). */
-    while( ASSR & ((1 << TCN2UB) | (1 << OCR2AUB) | (1 << OCR2BUB)
-                 | (1 << TCR2AUB) | (1 << TCR2BUB)) );
+    while (ASSR & ((1 << TCN2UB) | (1 << OCR2AUB) | (1 << OCR2BUB)
+                   | (1 << TCR2AUB) | (1 << TCR2BUB))) ;
 }
 
 ISR(TIMER2_OVF_vect) {
@@ -214,7 +225,8 @@ ISR(TIMER2_OVF_vect) {
         if (rtt_state.overflow_cb != NULL) {
             rtt_state.overflow_cb(rtt_state.overflow_arg);
         }
-    } else {
+    }
+    else {
         rtt_state.ext_cnt++;
     }
 
