@@ -23,25 +23,50 @@
 #include "xtimer.h"
 
 int main(void){
+    
+    #define SYMBOL_CMP1 0xFE
+    //OSCCAL = 0x90;
+    
     //switch to 16MHz clock, no flash or eeprom functioning
     CLKPR = 1<<CLKPCE;
     CLKPR = 0x0f;
     
+    while(1); 
     //Adjust clock
     TRXPR &= ~(1<<SLPTR);
     SCCR1 = 0;
     SCCR1 = ((1<<SCCKDIV2) | (1<<SCCKDIV1) | (1<<SCBTSM));
-    SCCR0 &= ~((1<<SCCKSEL)|(1<<SCTSE));
-    SCCR0 |=(1<<SCEN);
-    printf("SCCR0:%02x SCCR1:%02x\n", SCCR0, SCCR1);
-    printf("TRXSTATUS: %02x\n", TRX_STATUS);
-    while(1) {
-    //printf("SCCNTLL: %u\n", SCCNTLL);
-        printf("SCCNT: %lu\n", SCCNTLL | (uint16_t)SCCNTLH<<8 | (uint32_t) SCCNTHL<<16 | (uint32_t) SCCNTHH<<24);
-    }
+    SCCR0 = 0;
+    SCCNTLH = 0;
+    SCCNTHL = 0;
+    SCCNTHH = 0;
+    SCCNTLL = 0;
+    SCOCR1HH = 0;
+    SCOCR1HL = 0;
+    SCOCR1LH = 0;
+    SCOCR1LL = SYMBOL_CMP1;
+    SCIRQM = (1<<IRQMCP1); 
 
+    //Set up compare clock
+    TCCR5A = 0;
+    TCNT5 = 0xffff;
+    TIMSK5 = 0;    
+    
+    TCCR5B = 1<<CS11; //3 Cycles
+    SCCR0 |=(1<<SCEN); //7 Cycles
+    while(1);
     //switch back to 8MHz
     CLKPR = 1<<CLKPCE;
     CLKPR = 0;
 }
 
+
+ISR(SCNT_CMP1_vect){
+    //44 cycles to get here => TCNT5 already increased by 5.5
+    printf("Timer5_count = %u\n", (TCNT5-6)*2); //saving takes 4 cyles => 0.5 increased TCNT5
+    SCCNTLH = 0;
+    SCCNTHL = 0;
+    SCCNTHH = 0;
+    SCCNTLL = 0;
+    TCNT5 = 0;
+}
