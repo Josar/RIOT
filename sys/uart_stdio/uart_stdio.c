@@ -86,7 +86,7 @@ static ssize_t uart_stdio_vfs_write(vfs_file_t *filp, const void *src, size_t nb
 void uart_stdio_init(void)
 {
 #ifndef USE_ETHOS_FOR_STDIO
-    uart_init(UART_STDIO_DEV, UART_STDIO_BAUDRATE, (uart_rx_cb_t) isrpipe_write_one, &uart_stdio_isrpipe);
+    uart_init(UART_STDIO_DEV, UART_STDIO_BAUDRATE, (void*) isrpipe_write_one, &uart_stdio_isrpipe);
 #else
     uart_init(ETHOS_UART, ETHOS_BAUDRATE, (uart_rx_cb_t) isrpipe_write_one, &uart_stdio_isrpipe);
 #endif

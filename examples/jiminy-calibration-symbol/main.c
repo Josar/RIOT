@@ -24,14 +24,12 @@
 
 int main(void){
     
-    #define SYMBOL_CMP1 0xFE
-    //OSCCAL = 0x90;
-    
+    #define SYMBOL_CMP1 0x80
+   
     //switch to 16MHz clock, no flash or eeprom functioning
     CLKPR = 1<<CLKPCE;
     CLKPR = 0x0f;
-    
-    while(1); 
+    printf("OSCCAL: %02x\n", OSCCAL); 
     //Adjust clock
     TRXPR &= ~(1<<SLPTR);
     SCCR1 = 0;
@@ -54,7 +52,9 @@ int main(void){
     
     TCCR5B = 1<<CS11; //3 Cycles
     SCCR0 |=(1<<SCEN); //7 Cycles
-    while(1);
+    while(1){
+        //printf("%02x\n", OSCCAL);
+    }
     //switch back to 8MHz
     CLKPR = 1<<CLKPCE;
     CLKPR = 0;
@@ -63,7 +63,24 @@ int main(void){
 
 ISR(SCNT_CMP1_vect){
     //44 cycles to get here => TCNT5 already increased by 5.5
-    printf("Timer5_count = %u\n", (TCNT5-6)*2); //saving takes 4 cyles => 0.5 increased TCNT5
+    uint8_t test = (TCNT5-6)*2;
+    static uint8_t cnt=0;
+    if(test<SYMBOL_CMP1){
+        OSCCAL++;
+        cnt = 0;
+    }else if(test == SYMBOL_CMP1){
+        //calibrated
+        if(++cnt==5){
+            printf("Calibrated to %02x\n", OSCCAL);
+            cnt = 0;
+        }
+    }else{
+        //too fast
+        OSCCAL--;
+        cnt = 0;
+    }
+    printf("%02x\n", test);
+     //printf("%u;\n", (TCNT5-6)*2); //saving takes 4 cyles => 0.5 increased TCNT5
     SCCNTLH = 0;
     SCCNTHL = 0;
     SCCNTHH = 0;
