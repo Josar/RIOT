@@ -193,6 +193,11 @@ int _xtimer_set_absolute(xtimer_t *timer, uint32_t target)
 
     timer->target = target;
     timer->long_target = _long_cnt;
+
+    /* Ensure timer is fired in right hardware timer period. */
+    target = target - XTIMER_OVERHEAD;
+
+    /* 32 bit target overflow */
     if (target < now) {
         timer->long_target++;
     }
@@ -212,7 +217,7 @@ int _xtimer_set_absolute(xtimer_t *timer, uint32_t target)
 
             if (timer_list_head == timer) {
                 DEBUG("timer_set_absolute(): timer is new list head. updating lltimer.\n");
-                _lltimer_set(target - XTIMER_OVERHEAD);
+                _lltimer_set(target);
             }
         }
     }
@@ -502,7 +507,7 @@ overflow:
         next_target = timer_list_head->target - XTIMER_OVERHEAD;
 
         /* make sure we're not setting a time in the past */
-        if (next_target < (_xtimer_lltimer_now() + XTIMER_ISR_BACKOFF)) {
+        if (next_target < ( _xtimer_now() + XTIMER_ISR_BACKOFF)) {
             goto overflow;
         }
     }
