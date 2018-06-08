@@ -180,12 +180,27 @@ int _xtimer_set_absolute(xtimer_t *timer, uint32_t target)
     uint32_t now = _xtimer_now();
     int res = 0;
 
-    DEBUG("timer_set_absolute(): now=%" PRIu32 " target=%" PRIu32 "\n", now, target);
-
     timer->next = NULL;
-    if ((target >= now) && ((target - XTIMER_BACKOFF) < now)) {
+
+    /* Ensure that offset is bigger than 'XTIMER_BACKOFF',
+     * 'target - now' will allways be the offset no matter if target < or > now.
+     *
+     * This expects that target was not set to close to now and overrun now, so
+     * from setting target up until the call of '_xtimer_now()' above now has not
+     * become equal and than bigger target.
+     * This is crucial when using low CPU frequencies so reaching the '_xtimer_now()'
+     * call needs multiple xtimer ticks.
+     *
+     * '_xtimer_set()' and `_xtimer_periodic_wakeup()` ensure this by allready
+     * backing of for small values. */
+    uint32_t offset = (target - now);
+
+    DEBUG("timer_set_absolute(): now=%" PRIu32 " target=%" PRIu32 " offset=%" PRIu32 "\n",
+          now, target, offset);
+
+    if (offset <= XTIMER_BACKOFF) {
         /* backoff */
-        xtimer_spin_until(target + XTIMER_BACKOFF);
+        xtimer_spin_until(target);
         _shoot(timer);
         return 0;
     }
@@ -198,10 +213,15 @@ int _xtimer_set_absolute(xtimer_t *timer, uint32_t target)
     timer->target = target;
     timer->long_target = _long_cnt;
 
-    /* Ensure timer is fired in right hardware timer period. */
+    /* Ensure timer is fired in right timer period.
+     * Backoff condition above ensures that 'target - XTIMER_OVERHEAD` is later
+     * than 'now', also for values when now will overflow and the value of target
+     * is smaller then now.
+     * If `target < XTIMER_OVERHEAD` the new target will be at the end of this
+     * 32bit period, instead at the beginning of the next.*/
     target = target - XTIMER_OVERHEAD;
 
-    /* 32 bit target overflow */
+    /* 32 bit target overflow, target is in next 32bit period */
     if (target < now) {
         timer->long_target++;
     }
