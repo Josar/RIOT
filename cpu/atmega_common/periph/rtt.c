@@ -36,7 +36,7 @@
 #include "periph_conf.h"
 #include "thread.h"
 
-#define ENABLE_DEBUG    (0)
+#define ENABLE_DEBUG    (1)
 #include "debug.h"
 
 /* guard file in case no RTT device is defined */
@@ -131,7 +131,7 @@ void rtt_clear_overflow_cb(void)
 uint32_t rtt_get_counter(void)
 {
     /* Make sure it is safe to read TCNT2, in case we just woke up */
-    DEBUG("RTT sleeps until safe to read TCNT2\n");
+    //DEBUG("RTT sleeps until safe to read TCNT2\n");
     TCCR2A = 0;
     _asynch_wait();
 
@@ -141,7 +141,7 @@ uint32_t rtt_get_counter(void)
 void rtt_set_counter(uint32_t counter)
 {
     /* Wait until not busy anymore (should be immediate) */
-    DEBUG("RTT sleeps until safe to write TCNT2\n");
+    //DEBUG("RTT sleeps until safe to write TCNT2\n");
     _asynch_wait();
 
     rtt_state.ext_cnt = (uint16_t)(counter >> 8);
@@ -154,13 +154,17 @@ void rtt_set_alarm(uint32_t alarm, rtt_cb_t cb, void *arg)
     TIMSK2 &= ~(1 << OCIE2A);
     rtt_state.alarm_cb = NULL;
 
+    DEBUG("RTT now: %" PRIu32 " sleeps to %" PRIu32  "\n", rtt_get_counter(), alarm);
+
     /* Wait until not busy anymore (should be immediate) */
-    DEBUG("RTT sleeps until safe to write OCR2A\n");
+    //DEBUG("RTT sleeps until safe to write OCR2A\n");
     _asynch_wait();
 
     /* Set the alarm value */
     rtt_state.ext_comp = (uint16_t)(alarm >> 8);
     OCR2A = (uint8_t)alarm;
+
+    DEBUG("RTT llalarm: %" PRIu8 "\n", OCR2A);
 
     /* Interrupt safe order of assignment */
     rtt_state.alarm_arg = arg;
@@ -207,6 +211,7 @@ void _asynch_wait(void)
 
 ISR(TIMER2_OVF_vect) {
     __enter_isr();
+
     /* Enable RTT alarm if overflowed enough times */
     if (rtt_state.ext_comp == rtt_state.ext_cnt) {
         TIMSK2 |= (1 << OCIE2A);
@@ -230,6 +235,8 @@ ISR(TIMER2_OVF_vect) {
         rtt_state.ext_cnt++;
     }
 
+    DEBUG("RTT lloverlow now: %" PRIu32 "\n", rtt_get_counter());
+
     if (sched_context_switch_request) {
         thread_yield();
     }
@@ -240,6 +247,8 @@ ISR(TIMER2_COMPA_vect) {
     __enter_isr();
     /* Disable alarm until overflowed enough times */
     TIMSK2 &= ~(1 << OCIE2A);
+
+    DEBUG("RTT llalarm %" PRIu8 " alarm now: %" PRIu32 "\n", OCR2A, rtt_get_counter());
 
     /* Execute callback */
     if (rtt_state.alarm_cb != NULL) {

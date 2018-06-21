@@ -4,6 +4,9 @@ include $(RIOTBOARD)/common/arduino-atmega/Makefile.features
 # Peripherals are defined in common/arduino-atmega/Makefile.features
 # Add only additional Peripherals
 
+FEATURES_PROVIDED += periph_rtc
+FEATURES_PROVIDED += periph_rtt
+
 # The board MPU family (used for grouping by the CI system)
 FEATURES_MCU_GROUP = avr6
 
