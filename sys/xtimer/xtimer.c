@@ -84,14 +84,16 @@ void _xtimer_periodic_wakeup(uint32_t *last_wakeup, uint32_t period) {
         /* base timer overflowed between last_wakeup and now */
         if (!((now < target) && (target < (*last_wakeup)))) {
             /* target time has already passed */
-            goto out;
+            *last_wakeup = now;
+            return;
         }
     }
     else {
         /* base timer did not overflow */
         if ((((*last_wakeup) <= target) && (target <= now))) {
             /* target time has already passed */
-            goto out;
+            *last_wakeup = now;
+            return;
         }
     }
 
@@ -131,7 +133,7 @@ void _xtimer_periodic_wakeup(uint32_t *last_wakeup, uint32_t period) {
         _xtimer_set_absolute(&timer, target);
         mutex_lock(&mutex);
     }
-out:
+
     *last_wakeup = target;
 }
 
