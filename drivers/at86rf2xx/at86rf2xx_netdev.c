@@ -610,6 +610,7 @@ static void _isr(netdev_t *netdev)
     /* If transceiver is sleeping register access is impossible and frames are
      * lost anyway, so return immediately.
      */
+
     state = at86rf2xx_get_status(dev);
     if (state == AT86RF2XX_STATE_SLEEP) {
         return;

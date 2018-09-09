@@ -21,10 +21,21 @@
 #define BOARD_H
 
 #include "cpu.h"
+#include <util/delay_basic.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * @brief   Clock configuration
+ * @{
+ */
+#define CLOCK_CORECLOCK     (32000000ul)
+
+void _wait_ms(uint16_t count);
+/* F_CPU definition for <util/delay.h> _delay_ms() */
+#define F_CPU CLOCK_CORECLOCK
 
 /**
  * @name   Baudrate for STDIO terminal
@@ -49,16 +60,13 @@ extern "C" {
  * @name   LED pin definitions and handlers
  * @{
  */
-#define LED_PORT            PORTB
-#define LED_PORT_DDR        DDRB
+#define LED_PORT            PORTF
 
-#define LED0_PIN            GPIO_PIN(1, 5)
-#define LED1_PIN            GPIO_PIN(1, 6)
-#define LED2_PIN            GPIO_PIN(1, 7)
+#define LED0_PIN            GPIO_PIN(5, 2)
+#define LED1_PIN            GPIO_PIN(5, 3)
 
-#define LED0_MASK           (1 << DDB5)
-#define LED1_MASK           (1 << DDB6)
-#define LED2_MASK           (1 << DDB7)
+#define LED0_MASK           (PIN2_bm)
+#define LED1_MASK           (PIN3_bm)
 
 #define LED0_ON             (LED_PORT |=  LED0_MASK)
 #define LED0_OFF            (LED_PORT &= ~LED0_MASK)
@@ -67,24 +75,33 @@ extern "C" {
 #define LED1_ON             (LED_PORT |=  LED1_MASK)
 #define LED1_OFF            (LED_PORT &= ~LED1_MASK)
 #define LED1_TOGGLE         (LED_PORT ^=  LED1_MASK)
-
-#define LED2_ON             (LED_PORT |=  LED2_MASK)
-#define LED2_OFF            (LED_PORT &= ~LED2_MASK)
-#define LED2_TOGGLE         (LED_PORT ^=  LED2_MASK)
 /** @} */
 
 /**
  * @name xtimer configuration values
+ * if XTIMER_HZ > 1MHz then (XTIMER_HZ != (1000000ul << XTIMER_SHIFT))
+ * if XTIMER_HZ < 1MHz then ((XTIMER_HZ << XTIMER_SHIFT) != 1000000ul)
+ *
+ * 32MHz Core Clock
+ * XTIMER_HZ 4000000 (clkdiv 8 )    XTIMER_SHIFT 2
+ * XTIMER_HZ 1000000 ()             XTIMER_SHIFT 0
+ * XTIMER_HZ  500000 (clkdiv 64)    XTIMER_SHIFT 1
+ * XTIMER_HZ  250000 (clkdiv 128)   XTIMER_SHIFT 2
+ * XTIMER_HZ   31250 (clkdiv 1024)  XTIMER_SHIFT 5
+ *
  * @{
  */
-#define XTIMER_DEV          TIMER_DEV(0)
-#define XTIMER_CHAN         (0)
-#define XTIMER_WIDTH        (16)
-#define XTIMER_HZ           (125000UL)
+
+#define XTIMER_DEV					TIMER_DEV(0)   	// set ctx[0] as system counter
+#define XTIMER_CHAN 				(0)				// choose channel 0
+#define XTIMER_WIDTH                (16)			// 16bit timer
+#define XTIMER_HZ                   (4000000UL)		// set Timer frequency TODO think about slowing down timer for power saving
+#define XTIMER_BACKOFF              (150)			// TODO look into this , All timers that are less than XTIMER_BACKOFF microseconds in the future willjust spin. This is supposed to be defined per-device in e.g., periph_conf.h.
+/** @} */
 /** @} */
 
 /**
- * @brief Initialize board specific hardware, including clock, LEDs and std-IO
+ * @brief   Initialize board specific hardware, including clock, LEDs and std-IO
  */
 void board_init(void);
 

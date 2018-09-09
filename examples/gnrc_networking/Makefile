@@ -20,23 +20,52 @@ BOARD_INSUFFICIENT_MEMORY := arduino-duemilanove arduino-mega2560 arduino-uno \
 # NOTE: 6LoWPAN will be included if IEEE802.15.4 devices are present
 USEMODULE += gnrc_netdev_default
 USEMODULE += auto_init_gnrc_netif
+
 # Specify the mandatory networking modules for IPv6 and UDP
 USEMODULE += gnrc_ipv6_router_default
 USEMODULE += gnrc_udp
+
 # Add a routing protocol
 USEMODULE += gnrc_rpl
 USEMODULE += auto_init_gnrc_rpl
+
 # This application dumps received packets to STDIO using the pktdump module
 USEMODULE += gnrc_pktdump
+
 # Additional networking modules that can be dropped if not needed
 USEMODULE += gnrc_icmpv6_echo
+
 # Add also the shell, some shell commands
 USEMODULE += shell
 USEMODULE += shell_commands
 USEMODULE += ps
+
+# Activate each shell command seperatly
+CFLAGS += -DMODULE_PS_SHELL 
+CFLAGS += -DMODULE_GNRC_ICMPV6_ECHO_SHELL
+CFLAGS += -DMODULE_GNRC_NETIF_SHELL
+
 USEMODULE += netstats_l2
 USEMODULE += netstats_ipv6
 USEMODULE += netstats_rpl
+
+CFLAGS += -DTHREAD_STACKSIZE_DEFAULT=512
+CFLAGS += -DTHREAD_STACKSIZE_MAIN=612
+CFLAGS += -DTHREAD_STACKSIZE_IDLE=135
+CFLAGS += -DTHREAD_EXTRA_STACKSIZE_PRINTF=134
+
+CFLAGS += -DAT86RF2XX_MAC_STACKSIZE=512
+CFLAGS += -DGNRC_SIXLOWPAN_STACK_SIZE=400
+CFLAGS += -DGNRC_IPV6_STACK_SIZE=400
+CFLAGS += -DGNRC_RPL_STACK_SIZE=400
+CFLAGS += -DGNRC_PKTDUMP_STACKSIZE=400
+CFLAGS += -DGNRC_UDP_STACK_SIZE=400
+
+CFLAGS += -DGNRC_PKTBUF_SIZE=512 
+#-DGNRC_NETIF_IPV6_ADDRS_NUMOF=5 \
+#-DGNRC_NETIF_IPV6_GROUPS_NUMOF=2 \
+#-DGNRC_IPV6_NIB_NUMOF=2 \
+#-DGNRC_IPV6_NIB_OFFL_NUMOF=2 # be able to configure at least one route
 
 # Comment this out to disable code in RIOT that does safety checking
 # which is not needed in a production environment but helps in the

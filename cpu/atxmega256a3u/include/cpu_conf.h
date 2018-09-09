@@ -20,8 +20,6 @@
 #ifndef CPU_CONF_H
 #define CPU_CONF_H
 
-#include "atmega_regs_common.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -39,7 +37,7 @@ extern "C" {
  */
 #ifndef THREAD_EXTRA_STACKSIZE_PRINTF
 #define THREAD_EXTRA_STACKSIZE_PRINTF    (128)
-#endif 
+#endif
 
 #ifndef THREAD_STACKSIZE_DEFAULT
 #define THREAD_STACKSIZE_DEFAULT   (512)

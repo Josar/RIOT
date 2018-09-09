@@ -1,0 +1,5 @@
+/**
+ * @defgroup    cpu_atxmega_common Atmel ATmega CPU: common files
+ * @brief       AVR Atxmega specific code
+ * @ingroup     cpu
+ */

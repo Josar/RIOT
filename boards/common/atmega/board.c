@@ -22,18 +22,22 @@
 #include "cpu.h"
 #include "irq.h"
 #include "periph/gpio.h"
+#include "periph/init.h"
 
 #ifndef CPU_ATMEGA_CLK_SCALE_INIT
 #define CPU_ATMEGA_CLK_SCALE_INIT    CPU_ATMEGA_CLK_SCALE_DIV1
 #endif
 
-void led_init(void);
+//void led_init(void);
 
 void board_init(void)
 {
     atmega_set_prescaler(CPU_ATMEGA_CLK_SCALE_INIT);
-    atmega_stdio_init();
     cpu_init();
     led_init();
+    atmega_stdio_init();
+    /* Initialize peripherals for which modules are included in the makefile.*/
+    /* I2C, SPI, RTC, RTT, HWRNG */
+    periph_init();
     irq_enable();
 }

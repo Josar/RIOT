@@ -1,2 +1,2 @@
 USEMODULE += boards_common_atmega
-USEMODULE += at86rfr2
+USEMODULE += at86rf233
