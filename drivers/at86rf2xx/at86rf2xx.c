@@ -85,6 +85,7 @@ void at86rf2xx_reset(at86rf2xx_t *dev)
     /* enable safe mode (protect RX FIFO until reading data starts) */
     at86rf2xx_reg_write(dev, AT86RF2XX_REG__TRX_CTRL_2,
                         AT86RF2XX_TRX_CTRL_2_MASK__RX_SAFE_MODE);
+
 #ifdef MODULE_AT86RF212B
     at86rf2xx_set_page(dev, AT86RF2XX_DEFAULT_PAGE);
 #endif
@@ -101,12 +102,14 @@ void at86rf2xx_reset(at86rf2xx_t *dev)
     tmp |= (AT86RF2XX_TRX_CTRL_0_CLKM_CTRL__OFF);
     at86rf2xx_reg_write(dev, AT86RF2XX_REG__TRX_CTRL_0, tmp);
 
+    /* clear interrupt flags */
+    at86rf2xx_reg_read(dev, AT86RF2XX_REG__IRQ_STATUS);
     /* enable interrupts */
     at86rf2xx_reg_write(dev, AT86RF2XX_REG__IRQ_MASK,
                         AT86RF2XX_IRQ_STATUS_MASK__TRX_END);
-    /* clear interrupt flags */
-    at86rf2xx_reg_read(dev, AT86RF2XX_REG__IRQ_STATUS);
 
+    /* State to return after receiving or transmitting */
+    dev->idle_state = AT86RF2XX_STATE_RX_AACK_ON;
     /* go into RX state */
     at86rf2xx_set_state(dev, AT86RF2XX_STATE_RX_AACK_ON);
 

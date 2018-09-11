@@ -132,7 +132,7 @@ static void _print_stats(char *addr_str, int success, int count, uint64_t total_
         uint32_t avg_rtt = (uint32_t)(sum_rtt / success); /* get average */
         printf("%d packets transmitted, %d received, %d%% packet loss, time %"
                PRIu32 ".06%" PRIu32 " s\n", count, success,
-               (100 - ((success * 100) / count)),
+               (100 - (((uint32_t)success * 100) / count)),
                (uint32_t)total_time / US_PER_SEC, (uint32_t)total_time % US_PER_SEC);
         printf("rtt min/avg/max = "
                "%" PRIu32 ".%03" PRIu32 "/"

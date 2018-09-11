@@ -34,7 +34,11 @@
 void pm_off(void)
 {
 	// TODO
-	printf("pm_off\n");
+	//printf("pm_off\n");
+	PORTF.OUTSET = PIN3_bm;
+	PORTF.OUTSET = PIN2_bm;
+	PORTE.OUTSET = PIN7_bm;
+	PORTE.OUTSET = PIN6_bm;
 }
 
 void pm_reboot(void)
